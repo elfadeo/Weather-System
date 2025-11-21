@@ -25,7 +25,7 @@
       <div class="flex items-center space-x-4">
         <Icon :icon="insightIcon" class="h-10 w-10" :class="insightColor" />
         <div class="text-left">
-          <h3 class="text-lg font-bold text-text-main">Predictive Insight</h3>
+          <h3 class="text-lg font-bold text-text-main">Predictive Insights</h3>
           <p class="text-text-light">{{ insight.message }}</p>
           <div class="flex items-center space-x-2 mt-1">
             <span
