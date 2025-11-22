@@ -4,60 +4,70 @@ import { rtdb } from '@/firebase.js'
 import { ref as dbRef, query, orderByChild, limitToLast, onValue } from 'firebase/database'
 
 // --- Module-level state ---
-// These are created only ONCE and shared by the entire application.
 const latestData = ref(null)
+const summaryData = ref(null) // This will now hold the pre-calculated summary
 const isLoading = ref(true)
+const isSummaryLoading = ref(true)
 const error = ref(null)
 
-// --- Connection Logic ---
-// This function will only run ONCE in the entire application's lifecycle.
-const connect = () => {
-  console.log('Establishing permanent connection to Firebase Realtime Database...')
+// --- Realtime Database Connection (for LIVE data) ---
+const connectRTDB = () => {
+  console.log('Establishing connection to Realtime Database for live data...')
   try {
     const sensorLogsQuery = query(
       dbRef(rtdb, 'sensor_logs'),
       orderByChild('timestamp'),
-      limitToLast(1),
+      limitToLast(1)
     )
 
-    onValue(
-      sensorLogsQuery,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          latestData.value = Object.values(snapshot.val())[0]
-          error.value = null // Clear previous errors on successful fetch
-        } else {
-          error.value = 'No sensor data available in the database.'
-        }
-        isLoading.value = false // Set loading to false after the first data arrives
-      },
-      (err) => {
-        console.error('Firebase connection error:', err)
-        error.value = 'Failed to connect to the data source.'
-        isLoading.value = false
-      },
-    )
+    onValue(sensorLogsQuery, (snapshot) => {
+      if (snapshot.exists()) {
+        latestData.value = Object.values(snapshot.val())[0]
+      } else {
+        error.value = 'No live sensor data available.'
+      }
+      isLoading.value = false
+    }, (err) => {
+      console.error('Realtime Database connection error:', err)
+      error.value = 'Failed to connect to the live data source.'
+      isLoading.value = false
+    })
   } catch (err) {
-    console.error('Critical error setting up Firebase listener:', err)
-    error.value = 'An unexpected error occurred.'
+    console.error('Critical error setting up RTDB listener:', err)
+    error.value = 'An unexpected RTDB error occurred.'
     isLoading.value = false
   }
 }
 
-// --- Initialize the connection ---
-// This line runs automatically the very first time any component imports this file.
-connect()
+// --- Realtime Database Connection (for PRE-CALCULATED summary) ---
+const connectSummaryDB = () => {
+  console.log('Establishing connection to Realtime Database for summary data...')
+  const summaryRef = dbRef(rtdb, 'insights/daily_prediction');
+  onValue(summaryRef, (snapshot) => {
+    if (snapshot.exists()) {
+      summaryData.value = snapshot.val();
+    } else {
+      summaryData.value = null; // No summary data found
+    }
+    isSummaryLoading.value = false;
+  }, (err) => {
+    console.error('Summary data connection error:', err);
+    summaryData.value = { error: 'Failed to load summary.' };
+    isSummaryLoading.value = false;
+  })
+}
 
-/**
- * A robust, singleton Vue Composable that provides a persistent,
- * real-time weather data stream for the entire application.
- */
+
+// --- Initialize connections ---
+connectRTDB()
+connectSummaryDB()
+
 export function useWeatherData() {
-  // Every component that calls this function gets access to the SAME set of reactive variables.
-  // We use readonly to prevent components from accidentally modifying the shared state.
   return {
     latestData: readonly(latestData),
+    summaryData: readonly(summaryData),
     isLoading: readonly(isLoading),
+    isSummaryLoading: readonly(isSummaryLoading),
     error: readonly(error),
   }
 }

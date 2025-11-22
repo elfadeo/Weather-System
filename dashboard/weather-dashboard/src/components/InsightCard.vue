@@ -1,188 +1,279 @@
 <template>
   <div
-    class="bg-surface rounded-2xl shadow-sm p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md"
+    class="bg-surface rounded-2xl shadow-sm p-6 transition-all duration-300 hover:shadow-md"
+    role="region"
+    aria-label="Smart weather insights"
   >
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-bold text-text-main">Smart Insights</h3>
+        <p class="text-xs text-text-light">Data-driven weather analysis</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <Icon
+          icon="ph:arrow-clockwise-bold"
+          class="h-5 w-5 text-text-light cursor-pointer hover:text-primary transition-colors"
+          :class="{ 'animate-spin': isSummaryLoading }"
+          @click="refreshInsights"
+          title="Refresh insights"
+          aria-label="Refresh insights"
+        />
+        <Icon icon="ph:lightbulb-bold" class="h-6 w-6 text-amber-500" />
+      </div>
+    </div>
+
     <!-- Loading State -->
-    <div v-if="isLoading" class="text-text-light">
-      <div class="animate-pulse flex flex-col items-center">
-        <div class="h-10 w-10 bg-gray-200 rounded-full mb-4"></div>
-        <div class="h-4 w-32 bg-gray-200 rounded mb-2"></div>
-        <div class="h-3 w-24 bg-gray-100 rounded"></div>
+    <div v-if="isSummaryLoading" class="text-text-light">
+      <div class="animate-pulse space-y-3">
+        <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+        <div v-for="i in 3" :key="i" class="flex justify-between items-center">
+          <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div class="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
       </div>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="flex items-center space-x-4 text-red-500">
-      <Icon icon="ph:warning-circle-bold" class="h-10 w-10" />
+    <div v-else-if="summaryData?.error" class="flex items-center space-x-3 text-red-500">
+      <Icon icon="ph:warning-circle-bold" class="h-8 w-8" />
       <div>
-        <h3 class="text-lg font-bold text-text-main">Error</h3>
-        <p class="text-text-light">{{ error || 'Something went wrong.' }}</p>
+        <p class="font-semibold">Unable to load insights</p>
+        <p class="text-sm">{{ summaryData.error }}</p>
       </div>
     </div>
 
     <!-- Success State -->
-    <div v-else-if="insight" class="flex flex-col items-center space-y-4">
-      <div class="flex items-center space-x-4">
-        <Icon :icon="insightIcon" class="h-10 w-10" :class="insightColor" />
-        <div class="text-left">
-          <h3 class="text-lg font-bold text-text-main">Predictive Insights</h3>
-          <p class="text-text-light">{{ insight.message }}</p>
-          <div class="flex items-center space-x-2 mt-1">
-            <span
-              class="px-2 py-0.5 rounded-full text-xs font-medium"
-              :class="[insightColor, 'bg-opacity-10']"
-            >
-              {{ insight.likelihood.toUpperCase() }}
-            </span>
-            <span
-              v-if="insight.confidence"
-              class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
-            >
-              {{ getConfidenceLabel(insight.confidence) }}
-            </span>
+    <div v-else-if="summaryData" class="space-y-4">
+
+      <!-- Current Condition Status Card -->
+      <div
+        class="p-4 rounded-lg border transition-colors"
+        :class="conditionStyles.bgClass"
+      >
+        <div class="flex items-start space-x-3">
+          <Icon
+            :icon="conditionStyles.icon"
+            class="h-10 w-10 flex-shrink-0"
+            :class="conditionStyles.iconClass"
+          />
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-bold" :class="conditionStyles.textClass">
+                {{ conditionTitle }}
+              </h4>
+              <span
+                class="px-2 py-1 rounded-full text-xs font-semibold"
+                :class="conditionStyles.badgeClass"
+              >
+                {{ insightType }}
+              </span>
+            </div>
+            <p class="text-sm leading-relaxed" :class="conditionStyles.textClass">
+              {{ summaryData.message || 'Analyzing current conditions...' }}
+            </p>
           </div>
-          <p v-if="insight.updatedAt" class="text-xs text-gray-400 mt-1">
-            Updated: {{ formattedTimestamp }}
-          </p>
         </div>
       </div>
-      <div v-if="insight.details" class="w-full mt-4 pt-4 border-t border-gray-100">
-        <div class="grid grid-cols-2 gap-4 text-sm">
-          <div v-for="(value, key) in insight.details" :key="key" class="text-left">
-            <span class="text-gray-500">{{ key }}:</span>
-            <span class="ml-1 font-medium text-text-main">{{ value }}</span>
+
+      <!-- Pattern Detection (if available) -->
+      <div
+        v-if="summaryData.pattern"
+        class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+      >
+        <div class="flex items-start space-x-2">
+          <Icon icon="ph:trend-up-bold" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <div class="flex-1">
+            <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">Pattern Detected</p>
+            <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">{{ summaryData.pattern }}</p>
           </div>
+        </div>
+      </div>
+
+      <!-- 24-Hour Summary Metrics -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xs font-semibold text-text-light uppercase tracking-wide">
+            24-Hour Summary
+          </h5>
+          <span class="text-xs text-gray-400">{{ dataPointsCount }} readings</span>
+        </div>
+
+        <div
+          v-for="(value, key) in summaryData.details"
+          :key="key"
+          class="flex justify-between items-center text-sm py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
+        >
+          <span class="text-text-light flex items-center space-x-2">
+            <Icon :icon="getMetricIcon(key)" class="h-4 w-4" />
+            <span>{{ key }}</span>
+          </span>
+          <span class="font-semibold text-text-main">{{ value || 'N/A' }}</span>
+        </div>
+      </div>
+
+      <!-- Recommendation (if available) -->
+      <div
+        v-if="summaryData.recommendation"
+        class="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg"
+      >
+        <div class="flex items-start space-x-2">
+          <Icon icon="ph:info-bold" class="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
+          <div class="flex-1">
+            <p class="text-sm text-purple-900 dark:text-purple-100 font-medium">Suggestion</p>
+            <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">{{ summaryData.recommendation }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+        <p class="text-xs text-gray-400">
+          Updated {{ formattedTimestamp }}
+        </p>
+        <div class="flex items-center space-x-1 text-xs text-gray-400">
+          <Icon icon="ph:database-bold" class="h-3 w-3" />
+          <span>Sensor Data</span>
         </div>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-text-light">
-      <Icon icon="ph:info-bold" class="h-10 w-10 text-gray-400 mb-2" />
-      <p>Prediction data is not available yet.</p>
+    <div v-else class="text-center text-text-light py-8">
+      <Icon icon="ph:chart-line-up-bold" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
+      <p class="text-sm font-semibold mb-1">Collecting data...</p>
+      <p class="text-xs text-gray-400">Insights will appear soon</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue'
-import { rtdb } from '@/firebase.js'
-import { ref as dbRef, onValue } from 'firebase/database'
+import { computed } from 'vue'
+import { useWeatherData } from '@/composables/useWeatherData'
 import { Icon } from '@iconify/vue'
 
-// Constants
-const LIKELIHOOD = {
-  VERY_HIGH: 'very_high',
-  HIGH: 'high',
-  MODERATE: 'moderate',
-  LOW: 'low',
-  VERY_LOW: 'very_low',
-  DEFAULT: 'default',
-}
+const { summaryData, isSummaryLoading, fetchSummaryData } = useWeatherData()
 
-const ICONS = {
-  [LIKELIHOOD.VERY_HIGH]: 'ph:cloud-lightning-bold',
-  [LIKELIHOOD.HIGH]: 'ph:cloud-rain-bold',
-  [LIKELIHOOD.MODERATE]: 'ph:cloud-bold',
-  [LIKELIHOOD.LOW]: 'ph:sun-dim-bold',
-  [LIKELIHOOD.VERY_LOW]: 'ph:sun-bold',
-  [LIKELIHOOD.DEFAULT]: 'ph:question-bold',
-}
-
-const COLORS = {
-  [LIKELIHOOD.VERY_HIGH]: 'text-purple-500',
-  [LIKELIHOOD.HIGH]: 'text-blue-500',
-  [LIKELIHOOD.MODERATE]: 'text-yellow-500',
-  [LIKELIHOOD.LOW]: 'text-orange-500',
-  [LIKELIHOOD.VERY_LOW]: 'text-red-500',
-  [LIKELIHOOD.DEFAULT]: 'text-gray-400',
-}
-
-// State
-const insight = ref(null)
-const isLoading = ref(true)
-const error = ref(null)
-
-// Helper Functions
-const getConfidenceLabel = (confidence) => {
-  if (confidence >= 0.9) return 'Very High Confidence'
-  if (confidence >= 0.7) return 'High Confidence'
-  if (confidence >= 0.5) return 'Moderate Confidence'
-  if (confidence >= 0.3) return 'Low Confidence'
-  return 'Very Low Confidence'
-}
-
-const processInsightData = (data) => {
-  // Normalize likelihood (handle uppercase, camelCase, etc.)
-  const likelihood = data.likelihood?.toString().toLowerCase() || LIKELIHOOD.DEFAULT
-  const validLikelihoods = Object.values(LIKELIHOOD)
-
-  return {
-    likelihood: validLikelihoods.includes(likelihood) ? likelihood : LIKELIHOOD.DEFAULT,
-    message: data.message || 'No prediction available',
-    confidence:
-      typeof data.confidence === 'number' && data.confidence >= 0 && data.confidence <= 1
-        ? data.confidence
-        : null,
-    details: data.details || null,
-    updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : Date.now(),
+// Refresh function
+const refreshInsights = () => {
+  if (!isSummaryLoading.value && fetchSummaryData) {
+    fetchSummaryData()
   }
 }
 
-// Computed Properties
+// Insight type label
+const insightType = computed(() => {
+  const type = summaryData.value?.type?.toLowerCase()
+
+  const labels = {
+    'alert': 'Alert',
+    'warning': 'Warning',
+    'observation': 'Observation',
+    'normal': 'Normal',
+    'favorable': 'Favorable'
+  }
+
+  return labels[type] || 'Analysis'
+})
+
+// Condition title based on type
+const conditionTitle = computed(() => {
+  const type = summaryData.value?.type?.toLowerCase()
+
+  const titles = {
+    'alert': 'Adverse Conditions Detected',
+    'warning': 'Unusual Weather Pattern',
+    'observation': 'Notable Conditions',
+    'normal': 'Normal Weather Conditions',
+    'favorable': 'Favorable Weather'
+  }
+
+  return titles[type] || 'Weather Analysis'
+})
+
+// Data points count (if available)
+const dataPointsCount = computed(() => {
+  return summaryData.value?.dataPoints || '24h'
+})
+
+// Dynamic styling based on condition type
+const conditionStyles = computed(() => {
+  const type = summaryData.value?.type?.toLowerCase()
+
+  const styles = {
+    'alert': {
+      bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+      textClass: 'text-red-900 dark:text-red-100',
+      iconClass: 'text-red-600 dark:text-red-400',
+      badgeClass: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200',
+      icon: 'ph:warning-circle-bold'
+    },
+    'warning': {
+      bgClass: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
+      textClass: 'text-orange-900 dark:text-orange-100',
+      iconClass: 'text-orange-600 dark:text-orange-400',
+      badgeClass: 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200',
+      icon: 'ph:warning-bold'
+    },
+    'observation': {
+      bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+      textClass: 'text-blue-900 dark:text-blue-100',
+      iconClass: 'text-blue-600 dark:text-blue-400',
+      badgeClass: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200',
+      icon: 'ph:eye-bold'
+    },
+    'normal': {
+      bgClass: 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
+      textClass: 'text-gray-900 dark:text-gray-100',
+      iconClass: 'text-gray-600 dark:text-gray-400',
+      badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200',
+      icon: 'ph:check-circle-bold'
+    },
+    'favorable': {
+      bgClass: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+      textClass: 'text-green-900 dark:text-green-100',
+      iconClass: 'text-green-600 dark:text-green-400',
+      badgeClass: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200',
+      icon: 'ph:sun-bold'
+    }
+  }
+
+  return styles[type] || styles['observation']
+})
+
+// Get icon for each metric
+const getMetricIcon = (key) => {
+  const iconMap = {
+    'Avg Temp': 'ph:thermometer-simple-bold',
+    'Avg Humidity': 'ph:drop-bold',
+    'Total Rainfall': 'ph:cloud-rain-bold',
+    'Temp Range': 'ph:arrows-out-simple-bold',
+    'Wind Speed': 'ph:wind-bold',
+    'Pressure': 'ph:gauge-bold',
+    'Max Temp': 'ph:thermometer-hot-bold',
+    'Min Temp': 'ph:thermometer-cold-bold'
+  }
+
+  return iconMap[key] || 'ph:chart-line-bold'
+}
+
+// Format timestamp
 const formattedTimestamp = computed(() => {
-  if (!insight.value?.updatedAt) return ''
+  if (!summaryData.value?.updatedAt) return 'never'
 
   const now = Date.now()
-  const diffSeconds = Math.round((now - insight.value.updatedAt) / 1000)
+  const diffSeconds = Math.round((now - summaryData.value.updatedAt) / 1000)
 
   if (diffSeconds < 2) return 'just now'
   if (diffSeconds < 60) return `${diffSeconds}s ago`
   if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`
   if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`
 
-  return new Date(insight.value.updatedAt).toLocaleDateString()
-})
-
-const insightIcon = computed(() => ICONS[insight.value?.likelihood] || ICONS[LIKELIHOOD.DEFAULT])
-
-const insightColor = computed(() => COLORS[insight.value?.likelihood] || COLORS[LIKELIHOOD.DEFAULT])
-
-// Firebase Integration
-let unsubscribe = () => {}
-
-onMounted(() => {
-  const insightRef = dbRef(rtdb, 'insights/daily_prediction')
-
-  unsubscribe = onValue(
-    insightRef,
-    (snapshot) => {
-      try {
-        if (snapshot.exists()) {
-          const rawData = snapshot.val()
-          insight.value = processInsightData(rawData)
-          error.value = null
-        } else {
-          insight.value = null
-        }
-      } catch (err) {
-        console.error('Error processing insight data:', err)
-        error.value = 'Invalid prediction data received.'
-        insight.value = null
-      } finally {
-        isLoading.value = false
-      }
-    },
-    (err) => {
-      console.error('Error fetching insight:', err)
-      error.value = 'Failed to load prediction data.'
-      insight.value = null
-      isLoading.value = false
-    },
-  )
-})
-
-onUnmounted(() => {
-  unsubscribe()
+  return new Date(summaryData.value.updatedAt).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 })
 </script>
