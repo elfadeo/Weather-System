@@ -1,0 +1,9 @@
+{
+  "name": "weather-monitoring-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for weather monitoring system automation.",
+  "main": "generate-summary.js",
+  "dependencies": {
+    "firebase-admin": "^11.11.1"
+  }
+}
