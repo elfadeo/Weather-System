@@ -1,9 +1,15 @@
 {
   "rules": {
-    ".read": "true",
-    ".write": "true",
+    ".read": true,
+    
     "sensor_logs": {
+      ".write": "auth != null",
       ".indexOn": "timestamp"
+    },
+    
+    "insights": {
+      ".read": true,
+      ".write": "auth != null"
     }
   }
 }

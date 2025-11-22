@@ -1,13 +1,15 @@
-name: Generate Daily Weather Summary
+name: Generate Daily Weather Insights
 
 on:
   workflow_dispatch: # Allows manual runs
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight UTC
+    - cron: "0 * * * *" # Runs every hour (more frequent updates)
+    # If you prefer daily: "0 0 * * *" at midnight UTC
 
 jobs:
-  generate-summary:
+  generate-insights:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -15,14 +17,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "./scripts/package-lock.json"
 
       - name: Install dependencies
         run: npm install
         working-directory: ./scripts
 
-      - name: Run summary generation script
+      - name: Generate Smart Insights
         run: node generate-summary.js
         working-directory: ./scripts
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Success notification
+        if: success()
+        run: |
+          echo "✓ Smart insights generated successfully at $(date)"
+          echo "Check Firebase Realtime Database: insights/daily_prediction"
+
+      - name: Failure notification
+        if: failure()
+        run: |
+          echo "✗ Failed to generate insights at $(date)"
+          echo "Check the logs above for error details"
