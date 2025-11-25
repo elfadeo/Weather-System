@@ -1,50 +1,263 @@
-name: Generate Daily Weather Insights
+name: Weather Monitoring System - Complete Automation
 
 on:
-  workflow_dispatch: # Allows manual runs
+  workflow_dispatch: # Manual trigger for testing
+    inputs:
+      skip_alerts:
+        description: "Skip alert checking"
+        required: false
+        default: "false"
+      skip_insights:
+        description: "Skip insights generation"
+        required: false
+        default: "false"
+
   schedule:
-    - cron: "0 * * * *" # Runs every hour (more frequent updates)
-    # If you prefer daily: "0 0 * * *" at midnight UTC
+    # Alert monitoring - every 15 minutes (critical for agriculture)
+    - cron: "*/15 * * * *"
+
+    # Insights generation - every 6 hours (sufficient for trends)
+    # Runs at: 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: "0 */6 * * *"
+
+env:
+  NODE_VERSION: "18"
+  SCRIPTS_PATH: "./scripts"
 
 jobs:
-  generate-insights:
+  # ================================================================
+  # JOB 1: Alert Monitoring (Runs every 15 minutes)
+  # ================================================================
+  monitor-alerts:
+    name: Monitor Weather Alerts
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # Only run if it's the 15-minute schedule OR manual trigger
+    if: |
+      github.event.schedule == '*/15 * * * *' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_alerts != 'true')
 
-      - name: Set up Node.js
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1 # Shallow clone for faster checkout
+
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Cache dependencies
+      - name: 📦 Cache Node Modules
         uses: actions/cache@v3
+        id: npm-cache
         with:
-          path: scripts/node_modules
+          path: ${{ env.SCRIPTS_PATH }}/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('scripts/package.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Install dependencies
+      - name: 🔧 Install Dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
         run: npm install
-        working-directory: ./scripts
+        working-directory: ${{ env.SCRIPTS_PATH }}
 
-      - name: Generate Smart Insights
+      - name: 🚨 Check Weather Alerts
+        id: check-alerts
+        run: node check-all-alerts.js
+        working-directory: ${{ env.SCRIPTS_PATH }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        continue-on-error: true
+
+      - name: ✅ Alert Check Success
+        if: steps.check-alerts.outcome == 'success'
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "✅ Alert monitoring completed successfully!"
+          echo "════════════════════════════════════════════════════════"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Check Firestore: alerts_history collection"
+          echo "════════════════════════════════════════════════════════"
+
+      - name: ❌ Alert Check Failed
+        if: steps.check-alerts.outcome == 'failure'
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "❌ Alert monitoring failed!"
+          echo "════════════════════════════════════════════════════════"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Check the logs above for error details"
+          echo "════════════════════════════════════════════════════════"
+          exit 1
+
+  # ================================================================
+  # JOB 2: Insights Generation (Runs every 6 hours)
+  # ================================================================
+  generate-insights:
+    name: Generate Weather Insights
+    runs-on: ubuntu-latest
+
+    # Only run if it's the 6-hour schedule OR manual trigger
+    if: |
+      github.event.schedule == '0 */6 * * *' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_insights != 'true')
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Cache Node Modules
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ env.SCRIPTS_PATH }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('scripts/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: 🔧 Install Dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm install
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 💡 Generate Smart Insights
+        id: generate-insights
         run: node generate-summary.js
-        working-directory: ./scripts
+        working-directory: ${{ env.SCRIPTS_PATH }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        continue-on-error: true
+
+      - name: ✅ Insights Generation Success
+        if: steps.generate-insights.outcome == 'success'
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "✅ Smart insights generated successfully!"
+          echo "════════════════════════════════════════════════════════"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Check Realtime Database: insights/daily_prediction"
+          echo "════════════════════════════════════════════════════════"
+
+      - name: ❌ Insights Generation Failed
+        if: steps.generate-insights.outcome == 'failure'
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "❌ Insights generation failed!"
+          echo "════════════════════════════════════════════════════════"
+          echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "Check the logs above for error details"
+          echo "════════════════════════════════════════════════════════"
+          exit 1
+
+  # ================================================================
+  # JOB 3: Health Check & Reporting (Runs daily)
+  # ================================================================
+  system-health-check:
+    name: System Health Check
+    runs-on: ubuntu-latest
+    needs: [monitor-alerts, generate-insights]
+    if: always() && github.event.schedule == '0 */6 * * *'
+
+    steps:
+      - name: 📊 Generate Status Report
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "📊 WEATHER MONITORING SYSTEM - STATUS REPORT"
+          echo "════════════════════════════════════════════════════════"
+          echo ""
+          echo "Workflow Run: ${{ github.run_number }}"
+          echo "Triggered by: ${{ github.event_name }}"
+          echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          echo "Job Status:"
+          echo "  • Alert Monitoring: ${{ needs.monitor-alerts.result }}"
+          echo "  • Insights Generation: ${{ needs.generate-insights.result }}"
+          echo ""
+
+          if [ "${{ needs.monitor-alerts.result }}" == "success" ] && [ "${{ needs.generate-insights.result }}" == "success" ]; then
+            echo "✅ All systems operational"
+            echo ""
+            echo "Next scheduled runs:"
+            echo "  • Alerts: In 15 minutes"
+            echo "  • Insights: In 6 hours"
+          else
+            echo "⚠️  Some systems need attention"
+            echo ""
+            echo "Please check:"
+            echo "  1. Firebase service account key is valid"
+            echo "  2. Gmail credentials are correct"
+            echo "  3. Sensor is sending data"
+            echo "  4. Internet connection is stable"
+          fi
+          echo ""
+          echo "════════════════════════════════════════════════════════"
+
+      - name: ⚠️ Send Failure Notification
+        if: needs.monitor-alerts.result == 'failure' || needs.generate-insights.result == 'failure'
+        run: |
+          echo "🚨 SYSTEM ALERT: One or more monitoring jobs failed!"
+          echo "Please investigate immediately."
+          # In production, this would send an email/SMS to admins
+
+  # ================================================================
+  # JOB 4: Manual Testing Job (Only on workflow_dispatch)
+  # ================================================================
+  run-all-tests:
+    name: Run All Tests (Manual Only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔧 Install Dependencies
+        run: npm install
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 🧪 Run Alert Check Test
+        if: github.event.inputs.skip_alerts != 'true'
+        run: |
+          echo "Testing alert checking system..."
+          node check-all-alerts.js
+        working-directory: ${{ env.SCRIPTS_PATH }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+
+      - name: 🧪 Run Insights Generation Test
+        if: github.event.inputs.skip_insights != 'true'
+        run: |
+          echo "Testing insights generation..."
+          node generate-summary.js
+        working-directory: ${{ env.SCRIPTS_PATH }}
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
 
-      - name: Success notification
-        if: success()
+      - name: ✅ All Tests Passed
         run: |
-          echo "✓ Smart insights generated successfully at $(date)"
-          echo "Check Firebase Realtime Database: insights/daily_prediction"
-
-      - name: Failure notification
-        if: failure()
-        run: |
-          echo "✗ Failed to generate insights at $(date)"
-          echo "Check the logs above for error details"
+          echo "════════════════════════════════════════════════════════"
+          echo "✅ All manual tests completed successfully!"
+          echo "════════════════════════════════════════════════════════"
+          echo "Your system is ready for production!"
+          echo ""
+          echo "Configured schedules:"
+          echo "  • Alert monitoring: Every 15 minutes"
+          echo "  • Insights generation: Every 6 hours"
+          echo "════════════════════════════════════════════════════════"
