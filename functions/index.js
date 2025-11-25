@@ -1,3 +1,9 @@
+/**
+ * NOTE: This Cloud Function requires Firebase Blaze (paid) plan.
+ * Currently using GitHub Actions (check-alerts.js) for the free tier.
+ * This function is kept for future scalability and documentation purposes.
+ */
+
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
