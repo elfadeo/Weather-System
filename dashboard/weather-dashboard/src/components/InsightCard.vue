@@ -7,24 +7,24 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-text-main">Smart Insights</h3>
-        <p class="text-xs text-text-light">Data-driven weather analysis</p>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-text-main">24-Hour Weather Summary</h3>
+        <p class="text-xs text-gray-600 dark:text-text-light">Analyzing recent conditions & trends</p>
       </div>
       <div class="flex items-center space-x-2">
         <Icon
           icon="ph:arrow-clockwise-bold"
-          class="h-5 w-5 text-text-light cursor-pointer hover:text-primary transition-colors"
+          class="h-5 w-5 text-gray-600 dark:text-text-light cursor-pointer hover:text-primary transition-colors"
           :class="{ 'animate-spin': isSummaryLoading }"
           @click="refreshInsights"
           title="Refresh insights"
           aria-label="Refresh insights"
         />
-        <Icon icon="ph:lightbulb-bold" class="h-6 w-6 text-amber-500" />
+        <Icon icon="ph:chart-bar-bold" class="h-6 w-6 text-blue-500" />
       </div>
     </div>
 
     <!-- Loading State -->
-    <div v-if="isSummaryLoading" class="text-text-light">
+    <div v-if="isSummaryLoading" class="text-gray-600 dark:text-text-light">
       <div class="animate-pulse space-y-3">
         <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         <div v-for="i in 3" :key="i" class="flex justify-between items-center">
@@ -38,7 +38,7 @@
     <div v-else-if="summaryData?.error" class="flex items-center space-x-3 text-red-500">
       <Icon icon="ph:warning-circle-bold" class="h-8 w-8" />
       <div>
-        <p class="font-semibold">Unable to load insights</p>
+        <p class="font-semibold">Unable to load summary</p>
         <p class="text-sm">{{ summaryData.error }}</p>
       </div>
     </div>
@@ -46,7 +46,7 @@
     <!-- Success State -->
     <div v-else-if="summaryData" class="space-y-4">
 
-      <!-- Current Condition Status Card -->
+      <!-- Current Condition Summary Card -->
       <div
         class="p-4 rounded-lg border transition-colors"
         :class="conditionStyles.bgClass"
@@ -66,7 +66,7 @@
                 class="px-2 py-1 rounded-full text-xs font-semibold"
                 :class="conditionStyles.badgeClass"
               >
-                {{ insightType }}
+                {{ insightLabel }}
               </span>
             </div>
             <p class="text-sm leading-relaxed" :class="conditionStyles.textClass">
@@ -84,7 +84,7 @@
         <div class="flex items-start space-x-2">
           <Icon icon="ph:trend-up-bold" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div class="flex-1">
-            <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">Pattern Detected</p>
+            <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">Observed Pattern</p>
             <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">{{ summaryData.pattern }}</p>
           </div>
         </div>
@@ -93,8 +93,8 @@
       <!-- 24-Hour Summary Metrics -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <h5 class="text-xs font-semibold text-text-light uppercase tracking-wide">
-            24-Hour Summary
+          <h5 class="text-xs font-semibold text-gray-600 dark:text-text-light uppercase tracking-wide">
+            Statistical Summary
           </h5>
           <span class="text-xs text-gray-400">{{ dataPointsCount }} readings</span>
         </div>
@@ -104,15 +104,15 @@
           :key="key"
           class="flex justify-between items-center text-sm py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
         >
-          <span class="text-text-light flex items-center space-x-2">
+          <span class="text-gray-600 dark:text-text-light flex items-center space-x-2">
             <Icon :icon="getMetricIcon(key)" class="h-4 w-4" />
             <span>{{ key }}</span>
           </span>
-          <span class="font-semibold text-text-main">{{ value || 'N/A' }}</span>
+          <span class="font-semibold text-gray-900 dark:text-text-main">{{ value || 'N/A' }}</span>
         </div>
       </div>
 
-      <!-- Recommendation (if available) -->
+      <!-- Advisory (if available) -->
       <div
         v-if="summaryData.recommendation"
         class="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg"
@@ -120,10 +120,19 @@
         <div class="flex items-start space-x-2">
           <Icon icon="ph:info-bold" class="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
           <div class="flex-1">
-            <p class="text-sm text-purple-900 dark:text-purple-100 font-medium">Suggestion</p>
+            <p class="text-sm text-purple-900 dark:text-purple-100 font-medium">Advisory</p>
             <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">{{ summaryData.recommendation }}</p>
           </div>
         </div>
+      </div>
+
+      <!-- Note about real-time alerts -->
+      <div class="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-xs text-gray-500 dark:text-gray-400">
+        <Icon icon="ph:bell-bold" class="h-4 w-4 mt-0.5" />
+        <p>
+          <strong>Note:</strong> Real-time critical alerts are monitored separately and sent via email.
+          This summary provides historical analysis only.
+        </p>
       </div>
 
       <!-- Footer -->
@@ -133,16 +142,16 @@
         </p>
         <div class="flex items-center space-x-1 text-xs text-gray-400">
           <Icon icon="ph:database-bold" class="h-3 w-3" />
-          <span>Sensor Data</span>
+          <span>24h Analysis</span>
         </div>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center text-text-light py-8">
+    <div v-else class="text-center text-gray-600 dark:text-text-light py-8">
       <Icon icon="ph:chart-line-up-bold" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
       <p class="text-sm font-semibold mb-1">Collecting data...</p>
-      <p class="text-xs text-gray-400">Insights will appear soon</p>
+      <p class="text-xs text-gray-400">Summary will appear soon</p>
     </div>
   </div>
 </template>
@@ -161,16 +170,16 @@ const refreshInsights = () => {
   }
 }
 
-// Insight type label
-const insightType = computed(() => {
+// Insight label (changed from "Alert" to avoid confusion)
+const insightLabel = computed(() => {
   const type = summaryData.value?.type?.toLowerCase()
 
   const labels = {
-    'alert': 'Alert',
-    'warning': 'Warning',
-    'observation': 'Observation',
+    'severe': 'Severe',
+    'concerning': 'Concerning',
+    'notable': 'Notable',
     'normal': 'Normal',
-    'favorable': 'Favorable'
+    'favorable': 'Ideal'
   }
 
   return labels[type] || 'Analysis'
@@ -181,14 +190,14 @@ const conditionTitle = computed(() => {
   const type = summaryData.value?.type?.toLowerCase()
 
   const titles = {
-    'alert': 'Adverse Conditions Detected',
-    'warning': 'Unusual Weather Pattern',
-    'observation': 'Notable Conditions',
+    'severe': 'Severe Conditions Observed',
+    'concerning': 'Concerning Weather Pattern',
+    'notable': 'Notable Conditions',
     'normal': 'Normal Weather Conditions',
     'favorable': 'Favorable Weather'
   }
 
-  return titles[type] || 'Weather Analysis'
+  return titles[type] || 'Weather Summary'
 })
 
 // Data points count (if available)
@@ -201,21 +210,21 @@ const conditionStyles = computed(() => {
   const type = summaryData.value?.type?.toLowerCase()
 
   const styles = {
-    'alert': {
+    'severe': {
       bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
       textClass: 'text-red-900 dark:text-red-100',
       iconClass: 'text-red-600 dark:text-red-400',
       badgeClass: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200',
-      icon: 'ph:warning-circle-bold'
+      icon: 'ph:warning-octagon-bold'
     },
-    'warning': {
+    'concerning': {
       bgClass: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
       textClass: 'text-orange-900 dark:text-orange-100',
       iconClass: 'text-orange-600 dark:text-orange-400',
       badgeClass: 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200',
       icon: 'ph:warning-bold'
     },
-    'observation': {
+    'notable': {
       bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
       textClass: 'text-blue-900 dark:text-blue-100',
       iconClass: 'text-blue-600 dark:text-blue-400',
@@ -238,7 +247,7 @@ const conditionStyles = computed(() => {
     }
   }
 
-  return styles[type] || styles['observation']
+  return styles[type] || styles['notable']
 })
 
 // Get icon for each metric

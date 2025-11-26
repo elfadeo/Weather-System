@@ -1,22 +1,40 @@
 name: Weather Monitoring System - Complete Automation
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# IMPORTANT: This workflow runs TWO SEPARATE monitoring systems:
+#
+# 1. REAL-TIME ALERTS (Every 15 minutes)
+#    - Checks sensor readings against danger thresholds
+#    - Sends EMAIL notifications immediately when thresholds are exceeded
+#    - Script: check-all-alerts.js
+#    - Purpose: IMMEDIATE ACTION on critical conditions
+#
+# 2. HISTORICAL SUMMARIES (Every 6 hours)
+#    - Analyzes 24-hour trends and patterns
+#    - Displays insights in the dashboard
+#    - Script: generate-summary.js
+#    - Purpose: UNDERSTANDING weather trends over time
+#
+# These are DIFFERENT systems serving DIFFERENT purposes!
+# ═══════════════════════════════════════════════════════════════════════════════
+
 on:
   workflow_dispatch: # Manual trigger for testing
     inputs:
       skip_alerts:
-        description: "Skip alert checking"
+        description: "Skip real-time alert checking"
         required: false
         default: "false"
       skip_insights:
-        description: "Skip insights generation"
+        description: "Skip historical summary generation"
         required: false
         default: "false"
 
   schedule:
-    # Alert monitoring - every 15 minutes (critical for agriculture)
+    # REAL-TIME ALERTS - every 15 minutes (critical monitoring)
     - cron: "*/15 * * * *"
 
-    # Insights generation - every 6 hours (sufficient for trends)
+    # HISTORICAL SUMMARIES - every 6 hours (trend analysis)
     # Runs at: 00:00, 06:00, 12:00, 18:00 UTC
     - cron: "0 */6 * * *"
 
@@ -25,11 +43,16 @@ env:
   SCRIPTS_PATH: "./scripts"
 
 jobs:
-  # ================================================================
-  # JOB 1: Alert Monitoring (Runs every 15 minutes)
-  # ================================================================
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 1: REAL-TIME ALERT MONITORING (Every 15 minutes)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Purpose: Check current sensor readings against defined thresholds
+  #          Sends EMAIL alerts ONLY when thresholds are exceeded
+  # Action: Conditional email notifications to configured recipients
+  # Important: No email is sent if all readings are within safe ranges
+  # ════════════════════════════════════════════════════════════════════════════
   monitor-alerts:
-    name: Monitor Weather Alerts
+    name: 🚨 Real-Time Alert Monitoring
     runs-on: ubuntu-latest
 
     # Only run if it's the 15-minute schedule OR manual trigger
@@ -62,7 +85,7 @@ jobs:
         run: npm install
         working-directory: ${{ env.SCRIPTS_PATH }}
 
-      - name: 🚨 Check Weather Alerts
+      - name: 🚨 Check Thresholds (Email Only If Exceeded)
         id: check-alerts
         run: node check-all-alerts.js
         working-directory: ${{ env.SCRIPTS_PATH }}
@@ -72,32 +95,38 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         continue-on-error: true
 
-      - name: ✅ Alert Check Success
+      - name: ✅ Alert Monitoring Success
         if: steps.check-alerts.outcome == 'success'
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "✅ Alert monitoring completed successfully!"
+          echo "✅ Real-time alert monitoring completed!"
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "Check Firestore: alerts_history collection"
+          echo "✉️  Emails sent ONLY if thresholds were exceeded"
+          echo "📊 Check Firestore: alerts_history collection"
+          echo "🔄 Next check: In 15 minutes"
           echo "════════════════════════════════════════════════════════"
 
-      - name: ❌ Alert Check Failed
+      - name: ❌ Alert Monitoring Failed
         if: steps.check-alerts.outcome == 'failure'
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "❌ Alert monitoring failed!"
+          echo "❌ Real-time alert monitoring failed!"
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "⚠️  CRITICAL: Alerts may not be sent!"
           echo "Check the logs above for error details"
           echo "════════════════════════════════════════════════════════"
           exit 1
 
-  # ================================================================
-  # JOB 2: Insights Generation (Runs every 6 hours)
-  # ================================================================
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 2: HISTORICAL SUMMARY GENERATION (Every 6 hours)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Purpose: Analyze 24-hour weather trends and patterns for dashboard display
+  # Action: Saves analytical summary to Firebase (NO email alerts)
+  # ════════════════════════════════════════════════════════════════════════════
   generate-insights:
-    name: Generate Weather Insights
+    name: 📊 Historical Summary Generation
     runs-on: ubuntu-latest
 
     # Only run if it's the 6-hour schedule OR manual trigger
@@ -130,7 +159,7 @@ jobs:
         run: npm install
         working-directory: ${{ env.SCRIPTS_PATH }}
 
-      - name: 💡 Generate Smart Insights
+      - name: 📈 Generate 24-Hour Weather Summary
         id: generate-insights
         run: node generate-summary.js
         working-directory: ${{ env.SCRIPTS_PATH }}
@@ -138,32 +167,37 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         continue-on-error: true
 
-      - name: ✅ Insights Generation Success
+      - name: ✅ Summary Generation Success
         if: steps.generate-insights.outcome == 'success'
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "✅ Smart insights generated successfully!"
+          echo "✅ Historical weather summary generated!"
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "Check Realtime Database: insights/daily_prediction"
+          echo "📊 Analysis: Last 24 hours of sensor data"
+          echo "💾 Saved to: insights/daily_prediction (Realtime DB)"
+          echo "🖥️  Visible in: Dashboard 'Smart Insights' card"
+          echo "🔄 Next update: In 6 hours"
           echo "════════════════════════════════════════════════════════"
 
-      - name: ❌ Insights Generation Failed
+      - name: ❌ Summary Generation Failed
         if: steps.generate-insights.outcome == 'failure'
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "❌ Insights generation failed!"
+          echo "❌ Historical summary generation failed!"
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "ℹ️  Note: This is for dashboard display only"
+          echo "✅ Real-time alerts still work independently"
           echo "Check the logs above for error details"
           echo "════════════════════════════════════════════════════════"
           exit 1
 
-  # ================================================================
-  # JOB 3: Health Check & Reporting (Runs daily)
-  # ================================================================
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 3: SYSTEM HEALTH CHECK (Runs after both jobs complete)
+  # ════════════════════════════════════════════════════════════════════════════
   system-health-check:
-    name: System Health Check
+    name: 🏥 System Health Check
     runs-on: ubuntu-latest
     needs: [monitor-alerts, generate-insights]
     if: always() && github.event.schedule == '0 */6 * * *'
@@ -172,32 +206,48 @@ jobs:
       - name: 📊 Generate Status Report
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "📊 WEATHER MONITORING SYSTEM - STATUS REPORT"
+          echo "🏥 WEATHER MONITORING SYSTEM - HEALTH REPORT"
           echo "════════════════════════════════════════════════════════"
           echo ""
           echo "Workflow Run: ${{ github.run_number }}"
           echo "Triggered by: ${{ github.event_name }}"
           echo "Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo ""
-          echo "Job Status:"
-          echo "  • Alert Monitoring: ${{ needs.monitor-alerts.result }}"
-          echo "  • Insights Generation: ${{ needs.generate-insights.result }}"
+          echo "═══════════════════ JOB STATUS ═══════════════════════"
+          echo "  🚨 Real-Time Alerts: ${{ needs.monitor-alerts.result }}"
+          echo "  📊 Historical Summary: ${{ needs.generate-insights.result }}"
           echo ""
 
           if [ "${{ needs.monitor-alerts.result }}" == "success" ] && [ "${{ needs.generate-insights.result }}" == "success" ]; then
-            echo "✅ All systems operational"
+            echo "✅ ALL SYSTEMS OPERATIONAL"
+            echo ""
+            echo "System Status:"
+            echo "  • Alert monitoring: Active (every 15 min)"
+            echo "  • Summary analysis: Active (every 6 hours)"
+            echo "  • Email notifications: Configured"
             echo ""
             echo "Next scheduled runs:"
-            echo "  • Alerts: In 15 minutes"
-            echo "  • Insights: In 6 hours"
+            echo "  • Real-time alerts: In 15 minutes"
+            echo "  • Historical summary: In 6 hours"
           else
-            echo "⚠️  Some systems need attention"
+            echo "⚠️  ATTENTION REQUIRED"
             echo ""
-            echo "Please check:"
-            echo "  1. Firebase service account key is valid"
-            echo "  2. Gmail credentials are correct"
-            echo "  3. Sensor is sending data"
-            echo "  4. Internet connection is stable"
+            if [ "${{ needs.monitor-alerts.result }}" != "success" ]; then
+              echo "❌ CRITICAL: Real-time alert system failed!"
+              echo "   → Email notifications may not be sent"
+              echo "   → Immediate investigation required"
+            fi
+            if [ "${{ needs.generate-insights.result }}" != "success" ]; then
+              echo "⚠️  Warning: Summary generation failed"
+              echo "   → Dashboard insights not updated"
+              echo "   → Alerts still working independently"
+            fi
+            echo ""
+            echo "Troubleshooting checklist:"
+            echo "  1. ✓ Firebase service account key is valid"
+            echo "  2. ✓ Gmail credentials are correct"
+            echo "  3. ✓ Sensor is sending data regularly"
+            echo "  4. ✓ Network connectivity is stable"
           fi
           echo ""
           echo "════════════════════════════════════════════════════════"
@@ -206,14 +256,14 @@ jobs:
         if: needs.monitor-alerts.result == 'failure' || needs.generate-insights.result == 'failure'
         run: |
           echo "🚨 SYSTEM ALERT: One or more monitoring jobs failed!"
-          echo "Please investigate immediately."
-          # In production, this would send an email/SMS to admins
+          echo "Please investigate immediately to ensure proper monitoring."
+          # In production, configure this to send email/SMS to system admins
 
-  # ================================================================
-  # JOB 4: Manual Testing Job (Only on workflow_dispatch)
-  # ================================================================
+  # ════════════════════════════════════════════════════════════════════════════
+  # JOB 4: MANUAL TESTING (Only when manually triggered)
+  # ════════════════════════════════════════════════════════════════════════════
   run-all-tests:
-    name: Run All Tests (Manual Only)
+    name: 🧪 Run All Tests (Manual Only)
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
 
@@ -230,10 +280,12 @@ jobs:
         run: npm install
         working-directory: ${{ env.SCRIPTS_PATH }}
 
-      - name: 🧪 Run Alert Check Test
+      - name: 🧪 Test Real-Time Alert System
         if: github.event.inputs.skip_alerts != 'true'
         run: |
-          echo "Testing alert checking system..."
+          echo "════════════════════════════════════════════════════════"
+          echo "🧪 Testing real-time alert monitoring system..."
+          echo "════════════════════════════════════════════════════════"
           node check-all-alerts.js
         working-directory: ${{ env.SCRIPTS_PATH }}
         env:
@@ -241,10 +293,12 @@ jobs:
           GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
 
-      - name: 🧪 Run Insights Generation Test
+      - name: 🧪 Test Historical Summary Generation
         if: github.event.inputs.skip_insights != 'true'
         run: |
-          echo "Testing insights generation..."
+          echo "════════════════════════════════════════════════════════"
+          echo "🧪 Testing historical summary generation..."
+          echo "════════════════════════════════════════════════════════"
           node generate-summary.js
         working-directory: ${{ env.SCRIPTS_PATH }}
         env:
@@ -253,11 +307,20 @@ jobs:
       - name: ✅ All Tests Passed
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "✅ All manual tests completed successfully!"
+          echo "✅ ALL MANUAL TESTS COMPLETED SUCCESSFULLY!"
           echo "════════════════════════════════════════════════════════"
-          echo "Your system is ready for production!"
           echo ""
-          echo "Configured schedules:"
-          echo "  • Alert monitoring: Every 15 minutes"
-          echo "  • Insights generation: Every 6 hours"
+          echo "🎯 System is ready for production!"
+          echo ""
+          echo "Automated schedules configured:"
+          echo "  🚨 Real-time alerts: Every 15 minutes"
+          echo "     → Monitors thresholds & sends emails"
+          echo ""
+          echo "  📊 Historical summaries: Every 6 hours" 
+          echo "     → Analyzes trends for dashboard"
+          echo ""
+          echo "Remember:"
+          echo "  • These are TWO SEPARATE systems"
+          echo "  • Alerts = Immediate action (email)"
+          echo "  • Summaries = Understanding trends (dashboard)"
           echo "════════════════════════════════════════════════════════"

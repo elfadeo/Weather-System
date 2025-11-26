@@ -1,8 +1,9 @@
 // scripts/generate-summary.js
+// PURPOSE: Generate analytical summaries of weather conditions over time
+// NOTE: This is NOT for real-time alerts! check-all-alerts.js handles that.
+
 const admin = require('firebase-admin');
 
-// This script expects the Firebase service account key to be passed
-// as a JSON string in an environment variable.
 const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 if (!serviceAccountKey) {
   console.error('ERROR: FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set.');
@@ -21,9 +22,13 @@ try {
 
 const db = admin.database();
 
-async function generateSmartInsights() {
-  console.log('Starting smart insights generation...');
-  console.log(`[${new Date().toISOString()}] Analyzing last 24 hours of data...`);
+async function generateWeatherSummary() {
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('📊 WEATHER SUMMARY GENERATOR (Historical Analysis)');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log(`[${new Date().toISOString()}] Analyzing last 24 hours...`);
+  console.log('NOTE: Real-time alerts are handled separately by check-all-alerts.js');
+  console.log('═══════════════════════════════════════════════════════════\n');
 
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const sensorLogsRef = db.ref('sensor_logs');
@@ -36,12 +41,11 @@ async function generateSmartInsights() {
       .once('value');
     
     if (!snapshot.exists()) {
-      console.log('No data found in the last 24 hours.');
+      console.log('⚠️  No data found in the last 24 hours.');
       
-      // Save empty state
       await db.ref('insights/daily_prediction').set({
         type: 'normal',
-        message: 'No recent data available. Waiting for sensor readings.',
+        message: 'Insufficient data for analysis. Waiting for sensor readings.',
         details: {},
         dataPoints: 0,
         updatedAt: Date.now(),
@@ -55,13 +59,13 @@ async function generateSmartInsights() {
     const dataPoints = Object.values(data);
     
     if (dataPoints.length === 0) {
-      console.log('No data points found after filtering.');
+      console.log('⚠️  No data points found after filtering.');
       return;
     }
 
-    console.log(`Found ${dataPoints.length} data points to analyze.`);
+    console.log(`✓ Found ${dataPoints.length} data points to analyze.\n`);
 
-    // Calculate basic metrics
+    // Calculate statistical metrics
     let totalTemp = 0;
     let totalHumidity = 0;
     let maxTemp = -Infinity;
@@ -80,63 +84,68 @@ async function generateSmartInsights() {
     const avgTemp = totalTemp / dataPoints.length;
     const avgHumidity = totalHumidity / dataPoints.length;
 
-    console.log(`Metrics - Avg Temp: ${avgTemp.toFixed(1)}°C, Avg Humidity: ${avgHumidity.toFixed(0)}%, Total Rainfall: ${totalRainfall.toFixed(1)}mm`);
+    console.log('📈 CALCULATED METRICS:');
+    console.log(`   Average Temperature: ${avgTemp.toFixed(1)}°C`);
+    console.log(`   Average Humidity: ${avgHumidity.toFixed(0)}%`);
+    console.log(`   Total Rainfall: ${totalRainfall.toFixed(1)}mm`);
+    console.log(`   Temperature Range: ${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C\n`);
 
-    // HONEST ANALYSIS based on current conditions (not prediction!)
+    // ANALYSIS: Categorize conditions based on 24-hour trends
+    // (NOT immediate alerts - those are handled by check-all-alerts.js)
     let type, message, pattern, recommendation;
 
-    // ALERT: Extreme conditions requiring immediate attention
+    // SEVERE: Extreme conditions over extended period
     if (avgHumidity > 85 && totalRainfall > 15) {
-      type = 'alert';
-      message = 'Heavy rainfall and very high humidity recorded in the last 24 hours. Conditions remain severe.';
-      pattern = 'Sustained high moisture levels detected across multiple readings. Heavy rain activity observed.';
-      recommendation = 'Monitor for potential flooding. Check official weather warnings and advisories.';
+      type = 'severe';
+      message = 'Heavy rainfall with very high humidity recorded over the past 24 hours. Saturated conditions detected.';
+      pattern = 'Sustained high moisture levels across multiple readings. Significant rain accumulation observed.';
+      recommendation = 'Monitor drainage systems and check for standing water. Review flood risk areas.';
     }
-    // WARNING: Unusual or concerning patterns
+    // CONCERNING: Patterns that warrant attention
     else if (avgHumidity > 75 && totalRainfall > 10) {
-      type = 'warning';
-      message = 'Elevated humidity and significant rainfall observed over the past day.';
-      pattern = 'Moisture levels remain high. Similar conditions often precede continued rain activity.';
-      recommendation = 'Keep umbrella handy. Conditions may persist. Monitor weather updates.';
+      type = 'concerning';
+      message = 'Elevated humidity combined with significant rainfall over the monitoring period.';
+      pattern = 'Persistent moisture levels detected. Rain activity more frequent than typical.';
+      recommendation = 'Consider delaying outdoor agricultural activities. Monitor soil moisture levels.';
     }
-    // WARNING: High heat with humidity (discomfort warning)
+    // CONCERNING: Heat stress conditions
     else if (avgTemp > 32 && avgHumidity > 70) {
-      type = 'warning';
-      message = 'High temperature combined with elevated humidity detected.';
-      pattern = 'Heat index is elevated. Uncomfortable conditions for outdoor activities.';
-      recommendation = 'Stay hydrated, seek shade, and limit strenuous outdoor activities.';
+      type = 'concerning';
+      message = 'High temperature combined with elevated humidity creates uncomfortable conditions.';
+      pattern = 'Heat index elevated throughout the day. Reduced evaporation efficiency.';
+      recommendation = 'Ensure adequate hydration for crops and livestock. Provide shade where possible.';
     }
-    // OBSERVATION: Notable but not concerning patterns
+    // NOTABLE: Conditions worth noting but not critical
     else if (avgHumidity > 65 || totalRainfall > 5) {
-      type = 'observation';
-      message = 'Moderate humidity levels with some rainfall activity recorded.';
-      pattern = 'Typical tropical weather patterns observed. Conditions within normal range.';
+      type = 'notable';
+      message = 'Moderate humidity levels with some rainfall activity recorded over 24 hours.';
+      pattern = 'Typical tropical weather patterns. Moisture levels within expected seasonal range.';
       recommendation = null;
     }
-    // FAVORABLE: Ideal conditions
+    // FAVORABLE: Ideal growing conditions
     else if (avgHumidity < 50 && totalRainfall === 0 && avgTemp >= 22 && avgTemp <= 28) {
       type = 'favorable';
-      message = 'Comfortable weather conditions with low humidity and pleasant temperatures.';
-      pattern = 'Clear, dry conditions maintained throughout the period. Ideal weather observed.';
-      recommendation = 'Great weather for outdoor activities and events!';
+      message = 'Optimal weather conditions with comfortable temperatures and low humidity maintained.';
+      pattern = 'Stable, clear conditions throughout the period. Ideal for most agricultural activities.';
+      recommendation = 'Excellent conditions for planting, fertilizing, and harvesting activities.';
     }
-    // OBSERVATION: Low humidity but extreme temperature
+    // NOTABLE: Dry heat
     else if (avgHumidity < 40 && avgTemp > 33) {
-      type = 'observation';
-      message = 'Hot and dry conditions detected over the past 24 hours.';
-      pattern = 'Low humidity with high temperatures. Dry heat conditions present.';
-      recommendation = 'Stay hydrated and use sun protection during outdoor activities.';
+      type = 'notable';
+      message = 'Hot and dry conditions observed. Low moisture levels with elevated temperatures.';
+      pattern = 'Reduced humidity with high heat. Increased evaporation rates likely.';
+      recommendation = 'Monitor irrigation needs closely. Consider increasing watering frequency.';
     }
-    // NORMAL: Everything else
+    // NORMAL: Standard conditions
     else {
       type = 'normal';
-      message = 'Weather conditions within normal range for the region.';
+      message = 'Weather conditions within normal parameters for the region and season.';
       pattern = null;
       recommendation = null;
     }
 
-    // Prepare insights object
-    const insights = {
+    // Prepare summary object
+    const summary = {
       type: type,
       message: message,
       pattern: pattern,
@@ -153,22 +162,27 @@ async function generateSmartInsights() {
     };
 
     // Save to Firebase
-    await db.ref('insights/daily_prediction').set(insights);
+    await db.ref('insights/daily_prediction').set(summary);
     
-    console.log('✓ Successfully generated and saved smart insights');
-    console.log(`  Type: ${type.toUpperCase()}`);
-    console.log(`  Message: ${message}`);
-    if (pattern) console.log(`  Pattern: ${pattern}`);
-    if (recommendation) console.log(`  Recommendation: ${recommendation}`);
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('✅ SUMMARY GENERATED SUCCESSFULLY');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log(`📊 Condition Type: ${type.toUpperCase()}`);
+    console.log(`💬 Summary: ${message}`);
+    if (pattern) console.log(`📈 Pattern: ${pattern}`);
+    if (recommendation) console.log(`💡 Advisory: ${recommendation}`);
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('📍 Saved to: insights/daily_prediction');
+    console.log('🔔 Remember: Real-time alerts run separately every 15 minutes');
+    console.log('═══════════════════════════════════════════════════════════\n');
 
   } catch (error) {
-    console.error('✗ Error generating insights:', error.message);
+    console.error('❌ Error generating summary:', error.message);
     
-    // Save error state to Firebase
     try {
       await db.ref('insights/daily_prediction').set({
         type: 'normal',
-        message: 'Error analyzing data. Please try again later.',
+        message: 'Error analyzing historical data. Please try again later.',
         details: {},
         dataPoints: 0,
         updatedAt: Date.now(),
@@ -183,10 +197,10 @@ async function generateSmartInsights() {
 }
 
 // Run the function
-generateSmartInsights().then(() => {
-  console.log('\n[COMPLETE] Script finished successfully.');
+generateWeatherSummary().then(() => {
+  console.log('[COMPLETE] Weather summary generation finished successfully.\n');
   process.exit(0);
 }).catch((error) => {
-  console.error('\n[FAILED] Script encountered an error:', error);
+  console.error('[FAILED] Summary generation encountered an error:', error);
   process.exit(1);
 });
