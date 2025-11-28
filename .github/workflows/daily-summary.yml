@@ -77,12 +77,40 @@ jobs:
 
       - name: 🔧 Install Dependencies
         if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: npm install
+        run: |
+          echo "Installing dependencies..."
+          npm install --production
+          echo "Installation complete!"
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 🔍 Verify Setup
+        run: |
+          echo "Verifying installation..."
+          if [ ! -f "check-all-alerts.js" ]; then
+            echo "❌ ERROR: check-all-alerts.js not found!"
+            exit 1
+          fi
+          if [ ! -d "node_modules" ]; then
+            echo "❌ ERROR: node_modules not found!"
+            exit 1
+          fi
+          echo "✅ Setup verified"
         working-directory: ${{ env.SCRIPTS_PATH }}
 
       - name: 🚨 Check Thresholds (Email Only If Exceeded)
         id: check-alerts
-        run: node check-all-alerts.js
+        run: |
+          echo "Starting alert check..."
+          node check-all-alerts.js 2>&1 | tee alert-output.log
+          exit_code=${PIPESTATUS[0]}
+          if [ $exit_code -ne 0 ]; then
+            echo ""
+            echo "════════════════════════════════════════════════════════"
+            echo "❌ Script failed with exit code: $exit_code"
+            echo "════════════════════════════════════════════════════════"
+            cat alert-output.log
+            exit $exit_code
+          fi
         working-directory: ${{ env.SCRIPTS_PATH }}
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
@@ -148,12 +176,40 @@ jobs:
 
       - name: 🔧 Install Dependencies
         if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: npm install
+        run: |
+          echo "Installing dependencies..."
+          npm install --production
+          echo "Installation complete!"
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 🔍 Verify Setup
+        run: |
+          echo "Verifying installation..."
+          if [ ! -f "generate-summary.js" ]; then
+            echo "❌ ERROR: generate-summary.js not found!"
+            exit 1
+          fi
+          if [ ! -d "node_modules" ]; then
+            echo "❌ ERROR: node_modules not found!"
+            exit 1
+          fi
+          echo "✅ Setup verified"
         working-directory: ${{ env.SCRIPTS_PATH }}
 
       - name: 📈 Generate 24-Hour Weather Summary
         id: generate-insights
-        run: node generate-summary.js
+        run: |
+          echo "Starting summary generation..."
+          node generate-summary.js 2>&1 | tee summary-output.log
+          exit_code=${PIPESTATUS[0]}
+          if [ $exit_code -ne 0 ]; then
+            echo ""
+            echo "════════════════════════════════════════════════════════"
+            echo "❌ Script failed with exit code: $exit_code"
+            echo "════════════════════════════════════════════════════════"
+            cat summary-output.log
+            exit $exit_code
+          fi
         working-directory: ${{ env.SCRIPTS_PATH }}
         env:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
