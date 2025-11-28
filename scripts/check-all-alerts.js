@@ -12,6 +12,7 @@ const gmailPassword = process.env.GMAIL_APP_PASSWORD;
 
 if (!serviceAccountKey || !gmailEmail || !gmailPassword) {
   console.error('ERROR: Missing required environment variables.');
+  console.error('Required: FIREBASE_SERVICE_ACCOUNT_KEY, GMAIL_EMAIL, GMAIL_APP_PASSWORD');
   process.exit(1);
 }
 
@@ -20,8 +21,9 @@ try {
     credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
     databaseURL: 'https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app/'
   });
+  console.log('✅ Firebase Admin SDK initialized successfully');
 } catch (error) {
-  console.error('Error initializing Firebase Admin SDK:', error.message);
+  console.error('❌ Error initializing Firebase Admin SDK:', error.message);
   process.exit(1);
 }
 
@@ -42,69 +44,42 @@ const transporter = nodemailer.createTransport({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const THRESHOLDS = {
-  // TEMPERATURE THRESHOLDS
-  // Source: IRRI Rice Knowledge Bank - Heat Stress
-  // Citation: "High temperatures (>35°C) during flowering cause spikelet sterility"
   temperature: {
-    optimal_min: 25,    // °C - Below this is suboptimal
-    optimal_max: 33,    // °C - Above this stress begins
-    critical: 35        // °C - CRITICAL: Spikelet sterility (empty grains)
+    optimal_min: 25,
+    optimal_max: 33,
+    critical: 35
   },
-
-  // RAINFALL THRESHOLDS (PAGASA Color-Coded Warning System)
-  // Source: PAGASA Heavy Rainfall Warning System
-  // Citation: Defines Yellow/Orange/Red alerts based on mm/hour accumulation
   rainfall: {
-    yellow: 7.5,   // mm/hr - YELLOW: Monitor water levels
-    orange: 15,    // mm/hr - ORANGE: Prepare drainage, secure area
-    red: 30        // mm/hr - RED: Critical flooding risk, emergency action
+    yellow: 7.5,
+    orange: 15,
+    red: 30
   },
-
-  // HUMIDITY THRESHOLDS (Disease Risk Assessment)
   humidity: {
-    low: 70,       // % - Below this is generally safe
-    moderate: 85,  // % - Disease risk increases
-    high: 90       // % - High disease risk (especially with temperature factors)
+    low: 70,
+    moderate: 85,
+    high: 90
   }
 };
 
-// DISEASE RISK PATTERNS
-// These combine temperature + humidity to predict disease conditions
-
 const DISEASE_PATTERNS = {
-  // Rice Blast (Magnaporthe oryzae) - Fungal Disease
-  // Source: IRRI Rice Doctor - Rice Blast
-  // Citation: "Rice blast occurs with frequent rain, cool temperatures, and high humidity (near saturation)"
   rice_blast: {
     name: 'Rice Blast (Fungal)',
-    conditions: (temp, humidity) => {
-      return humidity >= 90 && temp >= 24 && temp <= 28;
-    },
+    conditions: (temp, humidity) => humidity >= 90 && temp >= 24 && temp <= 28,
     message: 'High risk of Rice Blast fungal disease. Cool + very humid conditions detected.',
     action: 'Apply preventive fungicide. Scout fields for lesions on leaves.',
     source: 'IRRI Rice Doctor'
   },
-
-  // Bacterial Leaf Blight (Xanthomonas oryzae)
-  // Source: IRRI Rice Doctor - Bacterial Blight  
-  // Citation: "Disease favored by temperatures 25-34°C with RH above 70%"
   bacterial_blight: {
     name: 'Bacterial Leaf Blight',
-    conditions: (temp, humidity) => {
-      return humidity >= 85 && temp >= 30 && temp <= 34;
-    },
+    conditions: (temp, humidity) => humidity >= 85 && temp >= 30 && temp <= 34,
     message: 'High risk of Bacterial Leaf Blight. Hot + humid conditions detected.',
     action: 'Monitor for yellowing leaf tips. Ensure balanced fertilization.',
     source: 'IRRI Rice Doctor'
   }
 };
 
-// Email recipients (configure these)
 const ALERT_RECIPIENTS = [
-  gmailEmail, // Default: send to the configured email
-  // Add more recipients here:
-  // 'admin@example.com',
-  // 'farmer@example.com'
+  gmailEmail
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -120,39 +95,90 @@ async function checkAlerts() {
   console.log('Note: Emails sent ONLY if thresholds are exceeded\n');
 
   try {
-    // Get the most recent sensor reading
-    const snapshot = await db.ref('sensor_logs')
-      .orderByChild('timestamp')
-      .limitToLast(1)
-      .once('value');
+    // Try to get latest data first
+    console.log('📡 Attempting to read latest sensor data...');
+    const latestSnapshot = await db.ref('sensor_data/latest').once('value');
+    
+    let latestReading = null;
+    let readingSource = '';
 
-    if (!snapshot.exists()) {
-      console.log('⚠️  No sensor data found.');
-      console.log('✅ No alerts to send.\n');
+    if (latestSnapshot.exists()) {
+      latestReading = latestSnapshot.val();
+      readingSource = 'sensor_data/latest';
+      console.log('✅ Found data in sensor_data/latest');
+    } else {
+      console.log('⚠️  No data in sensor_data/latest, checking sensor_logs...');
+      
+      // Fallback to sensor_logs
+      const logsSnapshot = await db.ref('sensor_logs')
+        .orderByChild('timestamp')
+        .limitToLast(1)
+        .once('value');
+
+      if (!logsSnapshot.exists()) {
+        console.log('❌ No sensor data found in either location.');
+        console.log('✅ No alerts to send.\n');
+        
+        await firestore.collection('alerts_history').add({
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          status: 'no_data',
+          message: 'No sensor data available',
+          error: 'No data in sensor_data/latest or sensor_logs'
+        });
+        
+        return;
+      }
+
+      const logsData = logsSnapshot.val();
+      latestReading = Object.values(logsData)[0];
+      readingSource = 'sensor_logs';
+      console.log('✅ Found data in sensor_logs');
+    }
+
+    if (!latestReading) {
+      console.log('❌ Could not extract reading from snapshot');
       return;
     }
 
-    const data = snapshot.val();
-    const latestReading = Object.values(data)[0];
+    // Extract values with fallbacks
+    const temperature = latestReading.temperature;
+    const humidity = latestReading.humidity;
+    const rainfall = latestReading.rainRateEstimated_mm_hr_bucket || 0;
+    const timestamp = latestReading.timestamp || Date.now();
     
-    const { temperature, humidity, rainfall, timestamp } = latestReading;
-    const readingTime = new Date(timestamp).toLocaleString();
+    // Validate essential readings
+    if (temperature === undefined || humidity === undefined) {
+      console.log('❌ Missing essential sensor readings (temperature or humidity)');
+      return;
+    }
 
-    console.log('📊 CURRENT READINGS:');
+    // Format time in Philippine Time
+    const readingTime = new Date(timestamp).toLocaleString('en-US', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
+    console.log('\n📊 CURRENT READINGS:');
+    console.log(`   Source: ${readingSource}`);
     console.log(`   Temperature: ${temperature}°C`);
     console.log(`   Humidity: ${humidity}%`);
-    console.log(`   Rainfall: ${rainfall}mm/hr`);
-    console.log(`   Time: ${readingTime}\n`);
+    console.log(`   Rainfall Rate (Est.): ${rainfall}mm/hr`);
+    console.log(`   Time: ${readingTime} (Philippine Time)\n`);
 
     // Array to collect triggered alerts
     const triggeredAlerts = [];
 
     // ═══════════════════════════════════════════════════════════
-    // CHECK 1: TEMPERATURE ALERTS (IRRI Heat Stress)
+    // CHECK 1: TEMPERATURE ALERTS
     // ═══════════════════════════════════════════════════════════
     
     if (temperature > THRESHOLDS.temperature.critical) {
-      // CRITICAL: Heat stress causing spikelet sterility
       triggeredAlerts.push({
         type: 'CRITICAL',
         metric: 'Temperature',
@@ -165,7 +191,6 @@ async function checkAlerts() {
         source: 'IRRI Rice Knowledge Bank - Heat Stress'
       });
     } else if (temperature > THRESHOLDS.temperature.optimal_max) {
-      // WARNING: Approaching heat stress levels
       triggeredAlerts.push({
         type: 'WARNING',
         metric: 'Temperature',
@@ -178,7 +203,6 @@ async function checkAlerts() {
         source: 'IRRI Optimal Growing Conditions'
       });
     } else if (temperature < THRESHOLDS.temperature.optimal_min) {
-      // WARNING: Too cold for optimal growth
       triggeredAlerts.push({
         type: 'WARNING',
         metric: 'Temperature',
@@ -193,14 +217,13 @@ async function checkAlerts() {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // CHECK 2: RAINFALL ALERTS (PAGASA Warning System)
+    // CHECK 2: RAINFALL ALERTS
     // ═══════════════════════════════════════════════════════════
     
     if (rainfall >= THRESHOLDS.rainfall.red) {
-      // RED ALERT: Critical flooding risk
       triggeredAlerts.push({
         type: 'CRITICAL',
-        metric: 'Rainfall',
+        metric: 'Rainfall Rate',
         value: `${rainfall}mm/hr`,
         threshold: `≥${THRESHOLDS.rainfall.red}mm/hr (RED)`,
         message: `PAGASA RED ALERT: Critical heavy rainfall. Flash flooding imminent. Seedlings will drown if submerged >3 days.`,
@@ -210,10 +233,9 @@ async function checkAlerts() {
         source: 'PAGASA Heavy Rainfall Warning System'
       });
     } else if (rainfall >= THRESHOLDS.rainfall.orange) {
-      // ORANGE ALERT: Flooding likely
       triggeredAlerts.push({
         type: 'WARNING',
-        metric: 'Rainfall',
+        metric: 'Rainfall Rate',
         value: `${rainfall}mm/hr`,
         threshold: `≥${THRESHOLDS.rainfall.orange}mm/hr (ORANGE)`,
         message: `PAGASA ORANGE ALERT: Heavy rainfall. Soil saturated, runoff beginning. Drainage canals may overflow.`,
@@ -223,10 +245,9 @@ async function checkAlerts() {
         source: 'PAGASA Heavy Rainfall Warning System'
       });
     } else if (rainfall >= THRESHOLDS.rainfall.yellow) {
-      // YELLOW ALERT: Monitor situation
       triggeredAlerts.push({
         type: 'ADVISORY',
-        metric: 'Rainfall',
+        metric: 'Rainfall Rate',
         value: `${rainfall}mm/hr`,
         threshold: `≥${THRESHOLDS.rainfall.yellow}mm/hr (YELLOW)`,
         message: `PAGASA YELLOW ALERT: Moderate to heavy rainfall. Soil getting soaked, puddles forming.`,
@@ -238,10 +259,9 @@ async function checkAlerts() {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // CHECK 3: DISEASE RISK ASSESSMENT (Combined Temp + Humidity)
+    // CHECK 3: DISEASE RISK ASSESSMENT
     // ═══════════════════════════════════════════════════════════
     
-    // Check for Rice Blast conditions
     if (DISEASE_PATTERNS.rice_blast.conditions(temperature, humidity)) {
       triggeredAlerts.push({
         type: 'WARNING',
@@ -256,7 +276,6 @@ async function checkAlerts() {
       });
     }
 
-    // Check for Bacterial Blight conditions
     if (DISEASE_PATTERNS.bacterial_blight.conditions(temperature, humidity)) {
       triggeredAlerts.push({
         type: 'WARNING',
@@ -271,7 +290,6 @@ async function checkAlerts() {
       });
     }
 
-    // Check for general high humidity without disease pattern
     if (humidity >= THRESHOLDS.humidity.high && 
         !DISEASE_PATTERNS.rice_blast.conditions(temperature, humidity) &&
         !DISEASE_PATTERNS.bacterial_blight.conditions(temperature, humidity)) {
@@ -296,16 +314,16 @@ async function checkAlerts() {
       console.log('✅ ALL READINGS WITHIN SAFE RANGES');
       console.log(`   Temperature: ${temperature}°C (Optimal: ${THRESHOLDS.temperature.optimal_min}-${THRESHOLDS.temperature.optimal_max}°C)`);
       console.log(`   Humidity: ${humidity}% (Safe: <${THRESHOLDS.humidity.moderate}%)`);
-      console.log(`   Rainfall: ${rainfall}mm/hr (Safe: <${THRESHOLDS.rainfall.yellow}mm/hr)`);
+      console.log(`   Rainfall Rate (Est.): ${rainfall}mm/hr (Safe: <${THRESHOLDS.rainfall.yellow}mm/hr)`);
       console.log('✅ No alerts triggered - No email sent\n');
       
-      // Log the check to Firestore
       await firestore.collection('alerts_history').add({
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         status: 'normal',
         message: 'All readings within safe thresholds',
         readings: { temperature, humidity, rainfall },
-        readingTime: readingTime
+        readingTime: readingTime,
+        source: readingSource
       });
       
       console.log('═══════════════════════════════════════════════════════════');
@@ -318,7 +336,6 @@ async function checkAlerts() {
     
     console.log(`⚠️  ${triggeredAlerts.length} ALERT(S) TRIGGERED - Preparing email...\n`);
     
-    // Log each alert
     triggeredAlerts.forEach((alert, index) => {
       console.log(`${alert.icon} Alert ${index + 1}/${triggeredAlerts.length}:`);
       console.log(`   Type: ${alert.type}`);
@@ -329,7 +346,6 @@ async function checkAlerts() {
       console.log(`   Source: ${alert.source}\n`);
     });
 
-    // Determine email urgency level
     const hasCritical = triggeredAlerts.some(a => a.severity === 'critical');
     const hasWarning = triggeredAlerts.some(a => a.severity === 'warning');
     
@@ -384,7 +400,7 @@ async function checkAlerts() {
     <div class="header">
       <h1>🚨 Weather Monitoring Alert</h1>
       <p>Threshold Exceeded - Action Required</p>
-      <p style="font-size: 13px; margin-top: 5px;">Detected at ${readingTime}</p>
+      <p style="font-size: 13px; margin-top: 5px;">Detected at ${readingTime} (Philippine Time)</p>
     </div>
     
     <div class="content">
@@ -456,7 +472,6 @@ async function checkAlerts() {
 </html>
     `;
 
-    // Send email to all recipients
     const mailOptions = {
       from: `Weather Monitoring System <${gmailEmail}>`,
       to: ALERT_RECIPIENTS.join(', '),
@@ -471,7 +486,6 @@ async function checkAlerts() {
     console.log(`   Subject: ${emailSubject}`);
     console.log(`   Alerts: ${triggeredAlerts.length}\n`);
 
-    // Save alert to Firestore for history tracking
     await firestore.collection('alerts_history').add({
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       status: 'alert',
@@ -488,7 +502,8 @@ async function checkAlerts() {
       readings: { temperature, humidity, rainfall },
       readingTime: readingTime,
       emailSent: true,
-      recipients: ALERT_RECIPIENTS
+      recipients: ALERT_RECIPIENTS,
+      source: readingSource
     });
 
     console.log('✅ Alert logged to Firestore: alerts_history collection\n');
@@ -496,7 +511,7 @@ async function checkAlerts() {
 
   } catch (error) {
     console.error('❌ Error checking alerts:', error.message);
-    console.error(error);
+    console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 }
