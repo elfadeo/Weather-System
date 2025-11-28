@@ -46,43 +46,30 @@ jobs:
   # ════════════════════════════════════════════════════════════════════════════
   # JOB 1: REAL-TIME ALERT MONITORING (Every 15 minutes)
   # ════════════════════════════════════════════════════════════════════════════
-  # Purpose: Check current sensor readings against defined thresholds
-  #          Sends EMAIL alerts ONLY when thresholds are exceeded
-  # Action: Conditional email notifications to configured recipients
-  # Important: No email is sent if all readings are within safe ranges
-  # ════════════════════════════════════════════════════════════════════════════
   monitor-alerts:
     name: 🚨 Real-Time Alert Monitoring
     runs-on: ubuntu-latest
 
-    # Only run if it's the 15-minute schedule OR manual trigger
+    # Only run if it's the 15-minute schedule OR manual trigger with alerts enabled
     if: |
-      github.event.schedule == '*/15 * * * *' || 
+      (github.event_name == 'schedule' && github.event.schedule == '*/15 * * * *') || 
       (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_alerts != 'true')
 
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 1 # Shallow clone for faster checkout
+          fetch-depth: 1
 
       - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: 📦 Cache Node Modules
-        uses: actions/cache@v3
-        id: npm-cache
-        with:
-          path: ${{ env.SCRIPTS_PATH }}/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('scripts/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: "npm"
+          cache-dependency-path: "${{ env.SCRIPTS_PATH }}/package-lock.json"
 
       - name: 🔧 Install Dependencies
-        if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: npm install
+        run: npm ci
         working-directory: ${{ env.SCRIPTS_PATH }}
 
       - name: 🚨 Check Thresholds (Email Only If Exceeded)
@@ -122,41 +109,30 @@ jobs:
   # ════════════════════════════════════════════════════════════════════════════
   # JOB 2: HISTORICAL SUMMARY GENERATION (Every 6 hours)
   # ════════════════════════════════════════════════════════════════════════════
-  # Purpose: Analyze 24-hour weather trends and patterns for dashboard display
-  # Action: Saves analytical summary to Firebase (NO email alerts)
-  # ════════════════════════════════════════════════════════════════════════════
   generate-insights:
     name: 📊 Historical Summary Generation
     runs-on: ubuntu-latest
 
-    # Only run if it's the 6-hour schedule OR manual trigger
+    # Only run if it's the 6-hour schedule OR manual trigger with insights enabled
     if: |
-      github.event.schedule == '0 */6 * * *' || 
+      (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *') || 
       (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_insights != 'true')
 
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: 📦 Cache Node Modules
-        uses: actions/cache@v3
-        id: npm-cache
-        with:
-          path: ${{ env.SCRIPTS_PATH }}/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('scripts/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: "npm"
+          cache-dependency-path: "${{ env.SCRIPTS_PATH }}/package-lock.json"
 
       - name: 🔧 Install Dependencies
-        if: steps.npm-cache.outputs.cache-hit != 'true'
-        run: npm install
+        run: npm ci
         working-directory: ${{ env.SCRIPTS_PATH }}
 
       - name: 📈 Generate 24-Hour Weather Summary
@@ -194,13 +170,13 @@ jobs:
           exit 1
 
   # ════════════════════════════════════════════════════════════════════════════
-  # JOB 3: SYSTEM HEALTH CHECK (Runs after both jobs complete)
+  # JOB 3: SYSTEM HEALTH CHECK (Runs after both jobs when on 6-hour schedule)
   # ════════════════════════════════════════════════════════════════════════════
   system-health-check:
     name: 🏥 System Health Check
     runs-on: ubuntu-latest
     needs: [monitor-alerts, generate-insights]
-    if: always() && github.event.schedule == '0 */6 * * *'
+    if: always() && github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *'
 
     steps:
       - name: 📊 Generate Status Report
@@ -252,75 +228,9 @@ jobs:
           echo ""
           echo "════════════════════════════════════════════════════════"
 
-      - name: ⚠️ Send Failure Notification
+      - name: ⚠️ Report System Failure
         if: needs.monitor-alerts.result == 'failure' || needs.generate-insights.result == 'failure'
         run: |
           echo "🚨 SYSTEM ALERT: One or more monitoring jobs failed!"
           echo "Please investigate immediately to ensure proper monitoring."
-          # In production, configure this to send email/SMS to system admins
-
-  # ════════════════════════════════════════════════════════════════════════════
-  # JOB 4: MANUAL TESTING (Only when manually triggered)
-  # ════════════════════════════════════════════════════════════════════════════
-  run-all-tests:
-    name: 🧪 Run All Tests (Manual Only)
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 🔧 Install Dependencies
-        run: npm install
-        working-directory: ${{ env.SCRIPTS_PATH }}
-
-      - name: 🧪 Test Real-Time Alert System
-        if: github.event.inputs.skip_alerts != 'true'
-        run: |
-          echo "════════════════════════════════════════════════════════"
-          echo "🧪 Testing real-time alert monitoring system..."
-          echo "════════════════════════════════════════════════════════"
-          node check-all-alerts.js
-        working-directory: ${{ env.SCRIPTS_PATH }}
-        env:
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-
-      - name: 🧪 Test Historical Summary Generation
-        if: github.event.inputs.skip_insights != 'true'
-        run: |
-          echo "════════════════════════════════════════════════════════"
-          echo "🧪 Testing historical summary generation..."
-          echo "════════════════════════════════════════════════════════"
-          node generate-summary.js
-        working-directory: ${{ env.SCRIPTS_PATH }}
-        env:
-          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
-
-      - name: ✅ All Tests Passed
-        run: |
-          echo "════════════════════════════════════════════════════════"
-          echo "✅ ALL MANUAL TESTS COMPLETED SUCCESSFULLY!"
-          echo "════════════════════════════════════════════════════════"
-          echo ""
-          echo "🎯 System is ready for production!"
-          echo ""
-          echo "Automated schedules configured:"
-          echo "  🚨 Real-time alerts: Every 15 minutes"
-          echo "     → Monitors thresholds & sends emails"
-          echo ""
-          echo "  📊 Historical summaries: Every 6 hours" 
-          echo "     → Analyzes trends for dashboard"
-          echo ""
-          echo "Remember:"
-          echo "  • These are TWO SEPARATE systems"
-          echo "  • Alerts = Immediate action (email)"
-          echo "  • Summaries = Understanding trends (dashboard)"
-          echo "════════════════════════════════════════════════════════"
+          exit 1
