@@ -5,7 +5,7 @@ name: Weather Monitoring System - Complete Automation
 #
 # 1. REAL-TIME ALERTS (Every 15 minutes)
 #    - Checks sensor readings against danger thresholds
-#    - Sends EMAIL and SMS notifications when thresholds are exceeded
+#    - Sends EMAIL, PUSH NOTIFICATIONS, and SMS when thresholds are exceeded
 #    - Script: check-all-alerts.js
 #    - Purpose: IMMEDIATE ACTION on critical conditions
 #
@@ -121,6 +121,124 @@ jobs:
           TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
         continue-on-error: true
 
+      - name: 📱 Send Push Notifications
+        if: steps.check-alerts.outcome == 'success'
+        run: |
+          echo "📱 Preparing to send push notifications..."
+
+          # Install Firebase Admin SDK
+          npm install firebase-admin
+
+          # Create notification script
+          cat > send-notifications.js << 'EOF'
+          const admin = require('firebase-admin');
+          const fs = require('fs');
+
+          // Initialize Firebase Admin
+          const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: "https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app"
+          });
+
+          const db = admin.firestore();
+
+          async function sendNotifications() {
+            try {
+              // Check if alerts file exists (created by check-all-alerts.js)
+              const alertsHistoryRef = db.collection('alerts_history').orderBy('timestamp', 'desc').limit(1);
+              const snapshot = await alertsHistoryRef.get();
+              
+              if (snapshot.empty) {
+                console.log('   ℹ️  No recent alerts found - no notifications to send');
+                return;
+              }
+              
+              const latestAlert = snapshot.docs[0].data();
+              
+              // Check if this alert was just created (within last 5 minutes)
+              const alertTime = latestAlert.timestamp?.toDate();
+              const now = new Date();
+              const timeDiff = (now - alertTime) / 1000 / 60; // minutes
+              
+              if (timeDiff > 5) {
+                console.log('   ℹ️  No new alerts in the last 5 minutes');
+                return;
+              }
+              
+              if (!latestAlert.alerts || latestAlert.alerts.length === 0) {
+                console.log('   ℹ️  No threshold violations in latest check');
+                return;
+              }
+              
+              // Get FCM tokens from Firestore
+              console.log('   📱 Fetching FCM tokens from Firestore...');
+              const tokensSnapshot = await db.collection('fcm_tokens').get();
+              
+              if (tokensSnapshot.empty) {
+                console.log('   ⚠️  No FCM tokens found in Firestore');
+                console.log('   💡 Users need to enable notifications in the app');
+                return;
+              }
+              
+              const tokens = tokensSnapshot.docs.map(doc => doc.data().token);
+              console.log(`   📱 Found ${tokens.length} registered device(s).`);
+              
+              // Prepare notification message
+              const alertMessages = latestAlert.alerts.map(alert => 
+                `${alert.parameter}: ${alert.value}${alert.unit} (threshold: ${alert.threshold}${alert.unit})`
+              ).join('\n');
+              
+              const message = {
+                notification: {
+                  title: '🚨 Weather Alert',
+                  body: alertMessages
+                },
+                data: {
+                  alertCount: latestAlert.alerts.length.toString(),
+                  timestamp: new Date().toISOString(),
+                  link: '/alerts'
+                },
+                tokens: tokens
+              };
+              
+              // Send to all devices
+              console.log('   📤 Sending notifications...');
+              const response = await admin.messaging().sendEachForMulticast(message);
+              
+              console.log(`   ✅ Successfully sent to ${response.successCount} device(s).`);
+              
+              if (response.failureCount > 0) {
+                console.log(`   ⚠️  Failed to send to ${response.failureCount} device(s).`);
+                response.responses.forEach((resp, idx) => {
+                  if (!resp.success) {
+                    console.log(`      Device ${idx + 1}: ${resp.error?.message}`);
+                  }
+                });
+              }
+              
+            } catch (error) {
+              console.error('   ❌ Error sending notifications:', error.message);
+              console.log('   ℹ️  Continuing workflow despite notification error...');
+            }
+          }
+
+          sendNotifications().then(() => {
+            console.log('   ✅ Push notification process completed');
+            process.exit(0);
+          }).catch(err => {
+            console.error('   ❌ Fatal error:', err);
+            process.exit(1);
+          });
+          EOF
+
+          # Run the notification script
+          node send-notifications.js
+        working-directory: ${{ env.SCRIPTS_PATH }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        continue-on-error: true
+
       - name: ✅ Alert Monitoring Success
         if: steps.check-alerts.outcome == 'success'
         run: |
@@ -129,6 +247,7 @@ jobs:
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "✉️  Emails sent ONLY if thresholds were exceeded"
+          echo "📱 Push notifications sent ONLY if thresholds were exceeded"
           echo "📱 SMS sent ONLY if enabled and thresholds exceeded"
           echo "📊 Check Firestore: alerts_history collection"
           echo "🔄 Next check: In 15 minutes"
@@ -277,6 +396,7 @@ jobs:
             echo "  • Alert monitoring: Active (every 15 min)"
             echo "  • Summary analysis: Active (every 6 hours)"
             echo "  • Email notifications: Configured"
+            echo "  • Push notifications: Configured"
             echo "  • SMS notifications: Configured (if enabled)"
             echo ""
             echo "Next scheduled runs:"
@@ -287,7 +407,7 @@ jobs:
             echo ""
             if [ "${{ needs.monitor-alerts.result }}" != "success" ]; then
               echo "❌ CRITICAL: Real-time alert system failed!"
-              echo "   → Email/SMS notifications may not be sent"
+              echo "   → Email/SMS/Push notifications may not be sent"
               echo "   → Immediate investigation required"
             fi
             if [ "${{ needs.generate-insights.result }}" != "success" ]; then

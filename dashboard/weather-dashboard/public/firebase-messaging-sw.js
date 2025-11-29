@@ -62,18 +62,21 @@ self.addEventListener('notificationclick', (event) => {
     return // Just close the notification
   }
 
-  // Open or focus the app
-  const urlToOpen = new URL(event.notification.data.url || '/alerts', self.location.origin).href
+  // Get the URL to open (default to alerts page)
+  const urlToOpen = new URL(event.notification.data?.url || '/alerts', self.location.origin).href
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Check if there's already a window open
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i]
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus()
+      // First, try to find an existing window with our app
+      for (const client of windowClients) {
+        // Check if this is our app's domain
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          // Navigate to the alerts page and focus the window
+          client.focus()
+          return client.navigate(urlToOpen)
         }
       }
+
       // If no window is open, open a new one
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen)
