@@ -5,7 +5,7 @@ name: Weather Monitoring System - Complete Automation
 #
 # 1. REAL-TIME ALERTS (Every 15 minutes)
 #    - Checks sensor readings against danger thresholds
-#    - Sends EMAIL notifications immediately when thresholds are exceeded
+#    - Sends EMAIL and SMS notifications when thresholds are exceeded
 #    - Script: check-all-alerts.js
 #    - Purpose: IMMEDIATE ACTION on critical conditions
 #
@@ -97,7 +97,7 @@ jobs:
           echo "✅ Setup verified"
         working-directory: ${{ env.SCRIPTS_PATH }}
 
-      - name: 🚨 Check Thresholds (Email Only If Exceeded)
+      - name: 🚨 Check Thresholds (Email & SMS If Exceeded)
         id: check-alerts
         run: |
           echo "Starting alert check..."
@@ -116,6 +116,9 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
         continue-on-error: true
 
       - name: ✅ Alert Monitoring Success
@@ -126,6 +129,7 @@ jobs:
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "✉️  Emails sent ONLY if thresholds were exceeded"
+          echo "📱 SMS sent ONLY if enabled and thresholds exceeded"
           echo "📊 Check Firestore: alerts_history collection"
           echo "🔄 Next check: In 15 minutes"
           echo "════════════════════════════════════════════════════════"
@@ -273,6 +277,7 @@ jobs:
             echo "  • Alert monitoring: Active (every 15 min)"
             echo "  • Summary analysis: Active (every 6 hours)"
             echo "  • Email notifications: Configured"
+            echo "  • SMS notifications: Configured (if enabled)"
             echo ""
             echo "Next scheduled runs:"
             echo "  • Real-time alerts: In 15 minutes"
@@ -282,7 +287,7 @@ jobs:
             echo ""
             if [ "${{ needs.monitor-alerts.result }}" != "success" ]; then
               echo "❌ CRITICAL: Real-time alert system failed!"
-              echo "   → Email notifications may not be sent"
+              echo "   → Email/SMS notifications may not be sent"
               echo "   → Immediate investigation required"
             fi
             if [ "${{ needs.generate-insights.result }}" != "success" ]; then
@@ -294,8 +299,9 @@ jobs:
             echo "Troubleshooting checklist:"
             echo "  1. ✓ Firebase service account key is valid"
             echo "  2. ✓ Gmail credentials are correct"
-            echo "  3. ✓ Sensor is sending data regularly"
-            echo "  4. ✓ Network connectivity is stable"
+            echo "  3. ✓ Twilio credentials are correct"
+            echo "  4. ✓ Sensor is sending data regularly"
+            echo "  5. ✓ Network connectivity is stable"
           fi
           echo ""
           echo "════════════════════════════════════════════════════════"

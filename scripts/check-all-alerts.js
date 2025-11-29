@@ -1,14 +1,18 @@
 // scripts/check-all-alerts.js
-// PURPOSE: Monitor real-time sensor readings and send EMAIL alerts ONLY when thresholds are exceeded
+// PURPOSE: Monitor real-time sensor readings and send EMAIL + SMS alerts when thresholds are exceeded
 // THRESHOLDS: Based on IRRI and PAGASA existing studies (see documentation)
-// IMPORTANT: No email is sent if all readings are within safe ranges
+// IMPORTANT: No notifications sent if all readings are within safe ranges
 
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
+const twilio = require('twilio');
 
 const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 const gmailEmail = process.env.GMAIL_EMAIL;
 const gmailPassword = process.env.GMAIL_APP_PASSWORD;
+const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
 if (!serviceAccountKey || !gmailEmail || !gmailPassword) {
   console.error('ERROR: Missing required environment variables.');
@@ -38,6 +42,15 @@ const transporter = nodemailer.createTransport({
     pass: gmailPassword
   }
 });
+
+// Configure Twilio client
+let twilioClient = null;
+if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
+  twilioClient = twilio(twilioAccountSid, twilioAuthToken);
+  console.log('✅ Twilio SMS client initialized successfully');
+} else {
+  console.log('ℹ️  Twilio credentials not found - SMS notifications disabled');
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // THRESHOLD DEFINITIONS (Based on Existing Studies)
@@ -83,6 +96,91 @@ const ALERT_RECIPIENTS = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// SMS NOTIFICATION FUNCTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendAlertSms(recipientPhone, alerts, temperature, humidity, rainfall) {
+  if (!twilioClient || !recipientPhone) {
+    console.log('⚠️  SMS notification skipped - Twilio not configured or no recipient phone');
+    return false;
+  }
+
+  try {
+    // Format alerts for SMS (keep it concise - SMS has character limits)
+    let smsBody = '🚨 WEATHER ALERT\n\n';
+    
+    // Add readings
+    smsBody += `📊 Current:\n`;
+    smsBody += `Temp: ${temperature}°C\n`;
+    smsBody += `Humidity: ${humidity}%\n`;
+    smsBody += `Rainfall: ${rainfall}mm/hr\n\n`;
+    
+    // Add top 3 most critical alerts
+    const topAlerts = alerts.slice(0, 3);
+    smsBody += `⚠️ Alerts (${alerts.length}):\n`;
+    topAlerts.forEach((alert, index) => {
+      smsBody += `${index + 1}. ${alert.icon} ${alert.metric}: ${alert.value}\n`;
+      smsBody += `   ${alert.message.substring(0, 80)}...\n`;
+    });
+    
+    if (alerts.length > 3) {
+      smsBody += `\n+ ${alerts.length - 3} more alert(s)\n`;
+    }
+    
+    smsBody += `\nCheck dashboard for full details.`;
+    
+    // Ensure message is within SMS limits (1600 chars for concatenated SMS)
+    if (smsBody.length > 1500) {
+      smsBody = smsBody.substring(0, 1497) + '...';
+    }
+
+    const message = await twilioClient.messages.create({
+      body: smsBody,
+      from: twilioPhoneNumber,
+      to: recipientPhone
+    });
+
+    console.log(`✅ SMS SENT SUCCESSFULLY`);
+    console.log(`   To: ${recipientPhone}`);
+    console.log(`   Message SID: ${message.sid}`);
+    console.log(`   Status: ${message.status}\n`);
+    
+    return true;
+  } catch (error) {
+    console.error(`❌ SMS FAILED:`, error.message);
+    if (error.code === 21211) {
+      console.error('   Error: Invalid phone number format. Use E.164 format (+639171234567)');
+    } else if (error.code === 21608) {
+      console.error('   Error: Phone number is not verified (required for trial accounts)');
+    }
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET SMS SETTINGS FROM FIRESTORE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function getSmsSettings() {
+  try {
+    const settingsDoc = await firestore.collection('settings').doc('thresholds').get();
+    
+    if (!settingsDoc.exists) {
+      return { enabled: false, phone: null };
+    }
+    
+    const data = settingsDoc.data();
+    return {
+      enabled: data.sms_notifications_enabled || false,
+      phone: data.recipient_phone_number || null
+    };
+  } catch (error) {
+    console.error('⚠️  Error fetching SMS settings:', error.message);
+    return { enabled: false, phone: null };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ALERT CHECKING FUNCTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -92,7 +190,7 @@ async function checkAlerts() {
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`[${new Date().toISOString()}] Checking sensor readings...`);
   console.log('Thresholds based on: IRRI Research + PAGASA Standards');
-  console.log('Note: Emails sent ONLY if thresholds are exceeded\n');
+  console.log('Note: Notifications sent ONLY if thresholds are exceeded\n');
 
   try {
     // Try to get latest data first
@@ -307,7 +405,7 @@ async function checkAlerts() {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // DECISION: Send Email Only If Alerts Were Triggered
+    // DECISION: Send Notifications Only If Alerts Were Triggered
     // ═══════════════════════════════════════════════════════════
     
     if (triggeredAlerts.length === 0) {
@@ -315,7 +413,7 @@ async function checkAlerts() {
       console.log(`   Temperature: ${temperature}°C (Optimal: ${THRESHOLDS.temperature.optimal_min}-${THRESHOLDS.temperature.optimal_max}°C)`);
       console.log(`   Humidity: ${humidity}% (Safe: <${THRESHOLDS.humidity.moderate}%)`);
       console.log(`   Rainfall Rate (Est.): ${rainfall}mm/hr (Safe: <${THRESHOLDS.rainfall.yellow}mm/hr)`);
-      console.log('✅ No alerts triggered - No email sent\n');
+      console.log('✅ No alerts triggered - No notifications sent\n');
       
       await firestore.collection('alerts_history').add({
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -331,10 +429,10 @@ async function checkAlerts() {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // ALERTS TRIGGERED - Prepare and Send Email
+    // ALERTS TRIGGERED - Prepare and Send Notifications
     // ═══════════════════════════════════════════════════════════
     
-    console.log(`⚠️  ${triggeredAlerts.length} ALERT(S) TRIGGERED - Preparing email...\n`);
+    console.log(`⚠️  ${triggeredAlerts.length} ALERT(S) TRIGGERED - Preparing notifications...\n`);
     
     triggeredAlerts.forEach((alert, index) => {
       console.log(`${alert.icon} Alert ${index + 1}/${triggeredAlerts.length}:`);
@@ -479,6 +577,7 @@ async function checkAlerts() {
       html: emailBody
     };
 
+    // Send EMAIL notification
     await transporter.sendMail(mailOptions);
     
     console.log('✅ EMAIL SENT SUCCESSFULLY');
@@ -486,6 +585,28 @@ async function checkAlerts() {
     console.log(`   Subject: ${emailSubject}`);
     console.log(`   Alerts: ${triggeredAlerts.length}\n`);
 
+    // Get SMS settings from Firestore
+    const smsSettings = await getSmsSettings();
+    
+    let smsSent = false;
+    
+    // Send SMS notification if enabled
+    if (smsSettings.enabled && smsSettings.phone) {
+      console.log('📱 SMS notifications enabled - sending SMS...');
+      smsSent = await sendAlertSms(
+        smsSettings.phone, 
+        triggeredAlerts, 
+        temperature, 
+        humidity, 
+        rainfall
+      );
+    } else if (!smsSettings.enabled) {
+      console.log('ℹ️  SMS notifications disabled in dashboard settings\n');
+    } else if (!smsSettings.phone) {
+      console.log('⚠️  SMS enabled but no recipient phone number configured\n');
+    }
+
+    // Log to Firestore
     await firestore.collection('alerts_history').add({
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       status: 'alert',
@@ -502,7 +623,9 @@ async function checkAlerts() {
       readings: { temperature, humidity, rainfall },
       readingTime: readingTime,
       emailSent: true,
+      smsSent: smsSent,
       recipients: ALERT_RECIPIENTS,
+      smsRecipient: smsSettings.enabled ? smsSettings.phone : null,
       source: readingSource
     });
 
