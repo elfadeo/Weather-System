@@ -236,7 +236,7 @@ async function generateWeatherSummary() {
       details: {
         "Avg Temp": `${avgTemp.toFixed(1)}°C`,
         "Avg Humidity": `${avgHumidity.toFixed(0)}%`,
-        "Total Rainfall (24h Est.)": `${totalRainfall.toFixed(1)}mm`,
+        "Total Rainfall 24h Est": `${totalRainfall.toFixed(1)}mm`,
         "Temp Range": `${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C`
       },
       dataPoints: dataPoints.length,
