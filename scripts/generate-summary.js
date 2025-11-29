@@ -15,8 +15,9 @@ try {
     credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
     databaseURL: 'https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app/'
   });
+  console.log('✅ Firebase Admin SDK initialized successfully');
 } catch (error) {
-  console.error('Error initializing Firebase Admin SDK:', error.message);
+  console.error('❌ Error initializing Firebase Admin SDK:', error.message);
   process.exit(1);
 }
 
@@ -34,6 +35,8 @@ async function generateWeatherSummary() {
   const sensorLogsRef = db.ref('sensor_logs');
 
   try {
+    console.log('📡 Fetching sensor data from last 24 hours...');
+    
     // Fetch recent data from the last 24 hours
     const snapshot = await sensorLogsRef
       .orderByChild('timestamp')
@@ -52,14 +55,25 @@ async function generateWeatherSummary() {
         error: null
       });
       
+      console.log('✅ Saved "no data" state to Firebase\n');
       return;
     }
 
     const data = snapshot.val();
     const dataPoints = Object.values(data);
     
-    if (dataPoints.length === 0) {
-      console.log('⚠️  No data points found after filtering.');
+    if (dataPoints.length < 2) {
+      console.log('⚠️  Not enough data points (< 2) found for a meaningful summary.');
+      
+      await db.ref('insights/daily_prediction').set({
+        type: 'normal',
+        message: 'Collecting more data for analysis. Please check back shortly.',
+        details: {},
+        dataPoints: dataPoints.length,
+        updatedAt: Date.now(),
+        error: null
+      });
+      
       return;
     }
 
@@ -70,29 +84,51 @@ async function generateWeatherSummary() {
     let totalHumidity = 0;
     let maxTemp = -Infinity;
     let minTemp = Infinity;
-    let totalRainfall = 0;
+    let validTempCount = 0;
+    let validHumidityCount = 0;
+    
+    // Calculate rainfall accumulation
+    // Method 1: Use the ESP32's accumulated total (most accurate)
+    const firstReading = dataPoints[0];
+    const lastReading = dataPoints[dataPoints.length - 1];
+    
+    const firstRainfallTotal = firstReading.rainfall_total_estimated_mm_bucket || 0;
+    const lastRainfallTotal = lastReading.rainfall_total_estimated_mm_bucket || 0;
+    const totalRainfall = Math.max(0, lastRainfallTotal - firstRainfallTotal);
 
+    console.log('📊 Processing data points...');
+    
     dataPoints.forEach(point => {
-      totalTemp += point.temperature || 0;
-      totalHumidity += point.humidity || 0;
-      totalRainfall += point.rainfall || 0;
+      // Temperature
+      if (point.temperature !== undefined && !isNaN(point.temperature)) {
+        totalTemp += point.temperature;
+        validTempCount++;
+        if (point.temperature > maxTemp) maxTemp = point.temperature;
+        if (point.temperature < minTemp) minTemp = point.temperature;
+      }
       
-      if (point.temperature > maxTemp) maxTemp = point.temperature;
-      if (point.temperature < minTemp) minTemp = point.temperature;
+      // Humidity
+      if (point.humidity !== undefined && !isNaN(point.humidity)) {
+        totalHumidity += point.humidity;
+        validHumidityCount++;
+      }
     });
 
-    const avgTemp = totalTemp / dataPoints.length;
-    const avgHumidity = totalHumidity / dataPoints.length;
+    // Calculate averages
+    const avgTemp = validTempCount > 0 ? totalTemp / validTempCount : 0;
+    const avgHumidity = validHumidityCount > 0 ? totalHumidity / validHumidityCount : 0;
 
     console.log('📈 CALCULATED METRICS:');
     console.log(`   Average Temperature: ${avgTemp.toFixed(1)}°C`);
     console.log(`   Average Humidity: ${avgHumidity.toFixed(0)}%`);
-    console.log(`   Total Rainfall: ${totalRainfall.toFixed(1)}mm`);
-    console.log(`   Temperature Range: ${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C\n`);
+    console.log(`   Total Rainfall (24h): ${totalRainfall.toFixed(1)}mm`);
+    console.log(`   Temperature Range: ${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C`);
+    console.log(`   Valid Readings: ${validTempCount} temp, ${validHumidityCount} humidity\n`);
 
     // ANALYSIS: Categorize conditions based on 24-hour trends
-    // (NOT immediate alerts - those are handled by check-all-alerts.js)
     let type, message, pattern, recommendation;
+
+    console.log('🔍 Analyzing weather patterns...\n');
 
     // SEVERE: Extreme conditions over extended period
     if (avgHumidity > 85 && totalRainfall > 15) {
@@ -153,7 +189,7 @@ async function generateWeatherSummary() {
       details: {
         "Avg Temp": `${avgTemp.toFixed(1)}°C`,
         "Avg Humidity": `${avgHumidity.toFixed(0)}%`,
-        "Total Rainfall": `${totalRainfall.toFixed(1)}mm`,
+        "Total Rainfall (24h Est.)": `${totalRainfall.toFixed(1)}mm`,
         "Temp Range": `${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C`
       },
       dataPoints: dataPoints.length,
@@ -162,6 +198,7 @@ async function generateWeatherSummary() {
     };
 
     // Save to Firebase
+    console.log('💾 Saving summary to Firebase...');
     await db.ref('insights/daily_prediction').set(summary);
     
     console.log('═══════════════════════════════════════════════════════════');
@@ -173,11 +210,13 @@ async function generateWeatherSummary() {
     if (recommendation) console.log(`💡 Advisory: ${recommendation}`);
     console.log('═══════════════════════════════════════════════════════════');
     console.log('📍 Saved to: insights/daily_prediction');
+    console.log('🖥️  Visible in: Dashboard "Smart Insights" card');
     console.log('🔔 Remember: Real-time alerts run separately every 15 minutes');
     console.log('═══════════════════════════════════════════════════════════\n');
 
   } catch (error) {
     console.error('❌ Error generating summary:', error.message);
+    console.error('Stack trace:', error.stack);
     
     try {
       await db.ref('insights/daily_prediction').set({
@@ -188,8 +227,9 @@ async function generateWeatherSummary() {
         updatedAt: Date.now(),
         error: error.message
       });
+      console.log('✅ Saved error state to Firebase');
     } catch (saveError) {
-      console.error('Failed to save error state:', saveError.message);
+      console.error('❌ Failed to save error state:', saveError.message);
     }
     
     process.exit(1);
