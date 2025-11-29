@@ -24,29 +24,62 @@ const clearMessages = () => {
   successMessage.value = ''
 }
 
+// --- Auto-clear messages after delay ---
+let messageTimeout = null
+const showMessage = (type, message, duration = 5000) => {
+  clearMessages()
+  if (messageTimeout) clearTimeout(messageTimeout)
+
+  if (type === 'error') errorMessage.value = message
+  else successMessage.value = message
+
+  messageTimeout = setTimeout(clearMessages, duration)
+}
+
+// --- Email validation ---
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 // --- Email/Password Sign In ---
 const signIn = async () => {
+  if (!isValidEmail(email.value)) {
+    showMessage('error', 'Please enter a valid email address.')
+    return
+  }
+
   try {
     isLoading.value = true
     clearMessages()
     const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
-    console.log('Successfully signed in:', userCredential.user)
-    router.push({ name: 'dashboard' }) // ✅ make sure 'dashboard' exists in routes
+    console.log('Successfully signed in:', userCredential.user.uid)
+
+    await router.push({ name: 'dashboard' }).catch(err => {
+      console.error('Navigation error:', err)
+      throw new Error('Navigation failed')
+    })
   } catch (error) {
-    console.error('Login Error:', error.message)
-    successMessage.value = ''
+    console.error('Login Error:', error.code)
+
     switch (error.code) {
       case 'auth/invalid-email':
-        errorMessage.value = 'Please enter a valid email address.'
+        showMessage('error', 'Please enter a valid email address.')
         break
+      case 'auth/user-disabled':
+        showMessage('error', 'This account has been disabled.')
+        break
+      case 'auth/invalid-credential':
       case 'auth/user-not-found':
-        errorMessage.value = 'No account found with this email.'
-        break
       case 'auth/wrong-password':
-        errorMessage.value = 'Incorrect password. Please try again.'
+        showMessage('error', 'Invalid email or password. Please try again.')
+        break
+      case 'auth/too-many-requests':
+        showMessage('error', 'Too many failed attempts. Please try again later.')
         break
       default:
-        errorMessage.value = 'An unexpected error occurred. Please try again.'
+        showMessage('error', error.message === 'Navigation failed'
+          ? 'Navigation failed. Please try again.'
+          : 'An unexpected error occurred. Please try again.')
         break
     }
   } finally {
@@ -57,28 +90,38 @@ const signIn = async () => {
 // --- Password Reset ---
 const handlePasswordReset = async () => {
   if (!email.value) {
-    errorMessage.value = 'Please enter your email address to reset your password.'
-    successMessage.value = ''
+    showMessage('error', 'Please enter your email address to reset your password.')
     return
   }
+
+  if (!isValidEmail(email.value)) {
+    showMessage('error', 'Please enter a valid email address.')
+    return
+  }
+
   try {
+    isLoading.value = true
     await sendPasswordResetEmail(auth, email.value)
-    clearMessages()
-    successMessage.value = `A password reset link has been sent to ${email.value}. Please check your inbox.`
+    showMessage('success', `A password reset link has been sent to ${email.value}. Please check your inbox.`)
   } catch (error) {
-    console.error('Password Reset Error:', error.message)
-    successMessage.value = ''
+    console.error('Password Reset Error:', error.code)
+
     switch (error.code) {
       case 'auth/invalid-email':
-        errorMessage.value = 'Please enter a valid email address.'
+        showMessage('error', 'Please enter a valid email address.')
         break
       case 'auth/user-not-found':
-        errorMessage.value = 'No account found with this email.'
+        showMessage('error', 'No account found with this email.')
+        break
+      case 'auth/too-many-requests':
+        showMessage('error', 'Too many requests. Please try again later.')
         break
       default:
-        errorMessage.value = 'An error occurred. Please try again.'
+        showMessage('error', 'An error occurred. Please try again.')
         break
     }
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -89,19 +132,32 @@ const signInWithGoogle = async () => {
     isLoading.value = true
     clearMessages()
     const result = await signInWithPopup(auth, provider)
-    console.log('Successfully signed in with Google:', result.user)
-    router.push({ name: 'dashboard' })
+    console.log('Successfully signed in with Google:', result.user.uid)
+
+    await router.push({ name: 'dashboard' }).catch(err => {
+      console.error('Navigation error:', err)
+      throw new Error('Navigation failed')
+    })
   } catch (error) {
-    console.error('Google Sign-In Error:', error)
+    console.error('Google Sign-In Error:', error.code)
+
     switch (error.code) {
       case 'auth/popup-closed-by-user':
-        errorMessage.value = 'Google sign-in was canceled.'
+        showMessage('error', 'Google sign-in was canceled.')
+        break
+      case 'auth/popup-blocked':
+        showMessage('error', 'Popup was blocked. Please allow popups for this site.')
         break
       case 'auth/network-request-failed':
-        errorMessage.value = 'Network error. Please check your connection.'
+        showMessage('error', 'Network error. Please check your connection.')
+        break
+      case 'auth/cancelled-popup-request':
+        // User opened multiple popups, ignore this error
         break
       default:
-        errorMessage.value = `Failed to sign in with Google.`
+        showMessage('error', error.message === 'Navigation failed'
+          ? 'Navigation failed. Please try again.'
+          : 'Failed to sign in with Google.')
         break
     }
   } finally {
@@ -258,7 +314,6 @@ const signInWithGoogle = async () => {
 </style>
 
 <style>
-/* ✅ animation moved global so it applies */
 @keyframes fade-in {
   from {
     opacity: 0;

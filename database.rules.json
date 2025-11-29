@@ -1,12 +1,13 @@
 {
   "rules": {
     ".read": true,
-    
+    ".write": "auth != null",
+
     "sensor_logs": {
       ".write": "auth != null",
       ".indexOn": "timestamp"
     },
-    
+
     "insights": {
       ".read": true,
       ".write": "auth != null"

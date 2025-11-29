@@ -9,5 +9,18 @@
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            .then(function(registration) {
+              console.log('Service Worker registered with scope: ', registration.scope);
+            })
+            .catch(function(err) {
+              console.log('Service Worker registration failed: ', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

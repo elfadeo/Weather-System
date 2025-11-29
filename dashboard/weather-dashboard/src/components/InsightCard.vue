@@ -7,8 +7,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-gray-900 dark:text-text-main">24-Hour Weather Summary</h3>
-        <p class="text-xs text-gray-600 dark:text-text-light">Analyzing recent conditions & trends</p>
+        <h3 class="text-lg font-bold text-[var(--color-text-main)] tracking-tight">24-Hour Weather Summary</h3>
+        <p class="text-[var(--color-text-light)] mt-2">Analyzing recent conditions & trends</p>
       </div>
       <div class="flex items-center space-x-2">
         <Icon
@@ -255,7 +255,7 @@ const getMetricIcon = (key) => {
   const iconMap = {
     'Avg Temp': 'ph:thermometer-simple-bold',
     'Avg Humidity': 'ph:drop-bold',
-    'Total Rainfall': 'ph:cloud-rain-bold',
+    'Total Rainfall (24h Est.)': 'ph:cloud-rain-bold',
     'Temp Range': 'ph:arrows-out-simple-bold',
     'Wind Speed': 'ph:wind-bold',
     'Pressure': 'ph:gauge-bold',

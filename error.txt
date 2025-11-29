@@ -1,3 +1,9 @@
-Run node generate-summary.js
-Starting 24-hour summary generation...
-[2025-11-22T11:21:37.917Z]  @firebase/database: FIREBASE WARNING: Firebase error. Please ensure that you have the URL of your Firebase Realtime Database instance configured correctly. (https://weather-monitoring-syste-3c1ea.firebaseio.com/) 
+Run echo "════════════════════════════════════════════════════════"
+════════════════════════════════════════════════════════
+❌ Real-time alert monitoring failed!
+════════════════════════════════════════════════════════
+Timestamp: 2025-11-28 14:42:54 UTC
+⚠️  CRITICAL: Alerts may not be sent!
+Check the logs above for error details
+════════════════════════════════════════════════════════
+Error: Process completed with exit code 1.

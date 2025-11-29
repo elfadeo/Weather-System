@@ -67,6 +67,14 @@
       <!-- Weather Cards -->
       <WeatherCards :weather-data="weatherData" :is-loading="isLoading" />
 
+      <!-- Calibration Note -->
+      <section class="mt-6 text-center">
+        <p class="text-xs text-[var(--color-text-light)] italic">
+          Note: Rainfall data is based on provisional calibration values. For highest accuracy,
+          sensor calibration against a reference gauge is recommended.
+        </p>
+      </section>
+
       <!-- Predictive Insight Card -->
       <section class="mt-10">
         <InsightCard />
@@ -84,7 +92,7 @@
           :device-address="deviceAddress"
           :temperature="temperature"
           :humidity="humidity"
-          :rainfall="rainfall"
+          :rainfall="rainfallRate"
         />
 
         <!-- Fallback -->
@@ -119,7 +127,12 @@ const deviceAddress = ref('Weather Station Location')
 // Computed properties derived from the composable's state
 const temperature = computed(() => latestData.value?.temperature?.toFixed(1) ?? 'N/A')
 const humidity = computed(() => latestData.value?.humidity?.toFixed(0) ?? 'N/A')
-const rainfall = computed(() => latestData.value?.rainfall?.toFixed(1) ?? 'N/A')
+const rainfallRate = computed(
+  () => latestData.value?.rainRateEstimated_mm_hr_bucket?.toFixed(2) ?? 'N/A'
+)
+const totalRainfall = computed(
+  () => latestData.value?.rainfall_total_estimated_mm_bucket?.toFixed(2) ?? 'N/A'
+)
 const lastUpdated = computed(() => latestData.value?.timestamp)
 
 // Device status
@@ -151,14 +164,24 @@ const weatherData = computed(() => [
       'bg-blue-200 dark:bg-blue-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
   {
-    id: 'rainfall',
-    title: 'Rainfall',
-    value: rainfall.value,
-    unit: 'mm',
+    id: 'rainfall_rate',
+    title: 'Rainfall Rate (Est.)',
+    value: rainfallRate.value,
+    unit: 'mm/hr',
     icon: 'ph:cloud-rain-bold',
     color: 'text-indigo-600 dark:text-indigo-400',
     bgColor:
       'bg-indigo-200 dark:bg-indigo-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+  },
+  {
+    id: 'total_rainfall',
+    title: 'Total Rainfall (Est.)',
+    value: totalRainfall.value,
+    unit: 'mm',
+    icon: 'ph:chart-line-up-bold',
+    color: 'text-teal-600 dark:text-teal-400',
+    bgColor:
+      'bg-teal-200 dark:bg-teal-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
 ])
 

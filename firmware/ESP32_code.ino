@@ -30,6 +30,10 @@ DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 unsigned long sendDataPrevMillis = 0;
 unsigned long dataSendInterval = 5000;
 
+// --- RAINFALL ACCUMULATION ---
+float total_mm = 0.0;
+unsigned long rainLastMillis = 0;
+
 // --- TOKEN STATUS CALLBACK ---
 void tokenStatusCallback(TokenInfo info)
 {
@@ -101,6 +105,7 @@ void setup()
   // --- START FIREBASE ---
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
+  rainLastMillis = millis(); // Initialize rain calculation timer
 }
 
 void loop()
@@ -113,8 +118,30 @@ void loop()
     // --- READ SENSORS ---
     float temperature = dht_sensor.readTemperature();
     float humidity = dht_sensor.readHumidity();
+
+    // --- READ RAIN SENSOR ---
     int rainRaw = analogRead(RAIN_SENSOR_PIN);
+    int adjustedRainRaw = 4095 - rainRaw;
     int rainPercent = map(rainRaw, 4095, 0, 0, 100);
+
+    // --- CONVERT TO REALISTIC BUCKETED RAINFALL (mm/hr estimate) ---
+    float mm_per_hr_bucket = 0.0;
+    if (rainPercent <= 20)
+      mm_per_hr_bucket = 0.0;
+    else if (rainPercent <= 40)
+      mm_per_hr_bucket = 4.0; // ≈2 mm in 30 mins
+    else if (rainPercent <= 60)
+      mm_per_hr_bucket = 10.0; // ≈5 mm in 30 mins
+    else if (rainPercent <= 80)
+      mm_per_hr_bucket = 16.0; // ≈8 mm in 30 mins
+    else
+      mm_per_hr_bucket = 24.0; // ≈12 mm in 30 mins
+
+    // --- ACCUMULATE TOTAL RAINFALL BASED ON ELAPSED TIME ---
+    unsigned long now = millis();
+    float dt_hours = (now - rainLastMillis) / 3600000.0;
+    total_mm += mm_per_hr_bucket * dt_hours;
+    rainLastMillis = now;
 
     if (isnan(temperature) || isnan(humidity))
     {
@@ -126,13 +153,19 @@ void loop()
     Serial.println("Preparing to send data to Firebase...");
     Serial.printf("Temperature: %.2f °C\n", temperature);
     Serial.printf("Humidity: %.2f %%\n", humidity);
-    Serial.printf("Rainfall Level: %d %%\n", rainPercent);
+    Serial.printf("Rainfall Level (%%): %d %%\n", rainPercent);
+    Serial.printf("Rainfall Rate (Est. mm/hr): %.2f mm/hr\n", mm_per_hr_bucket);
+    Serial.printf("Total Rainfall (Est. mm): %.2f mm\n", total_mm);
 
     // --- JSON DATA ---
     FirebaseJson jsonData;
     jsonData.set("temperature", temperature);
     jsonData.set("humidity", humidity);
-    jsonData.set("rainfall", rainPercent);
+    jsonData.set("rainLevelPercent", rainPercent);
+    jsonData.set("rainRaw", rainRaw);
+    jsonData.set("rainAdjustedRaw", adjustedRainRaw);
+    jsonData.set("rainRateEstimated_mm_hr_bucket", mm_per_hr_bucket);
+    jsonData.set("rainfall_total_estimated_mm_bucket", total_mm);
     jsonData.set("timestamp/.sv", "timestamp");
     jsonData.set("location/lat", DEVICE_LATITUDE);
     jsonData.set("location/lng", DEVICE_LONGITUDE);

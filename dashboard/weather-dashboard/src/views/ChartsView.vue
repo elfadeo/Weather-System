@@ -2,66 +2,157 @@
   <div class="p-4 sm:p-6 lg:p-8 font-sans">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-10">
+      <div class="mb-8">
         <h1 class="text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
           Charts & Trends
         </h1>
         <p class="text-[var(--color-text-light)] mt-2">
-          View historical graphs of weather parameters.
+          View historical graphs of weather parameters
         </p>
       </div>
 
       <!-- Control Panel -->
-      <div
-        class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-8 transition-colors border border-gray-200 dark:border-white/10"
-      >
+      <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-hover">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h3 class="text-lg font-semibold text-[var(--color-text-main)]">Data Time Range</h3>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Data Time Range</h3>
+            <p class="text-sm text-gray-600 dark:text-text-light mt-1">Select the time period to visualize</p>
+          </div>
           <select
             v-model="selectedTimeRange"
             :disabled="isLoading"
-            class="bg-[var(--color-background)] border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-2.5 px-4 text-sm text-gray-900 dark:text-text-main focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="last7">Last 7 Readings</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
+            <option value="weekly">Weekly Average</option>
+            <option value="monthly">Monthly Average</option>
+            <option value="yearly">Yearly Average</option>
           </select>
         </div>
       </div>
 
-      <!-- Chart Display -->
-      <div
-        class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 transition-colors border border-gray-200 dark:border-white/10 min-h-[400px] flex items-center justify-center"
-      >
-        <!-- Loading state -->
-        <div v-if="isLoading" class="flex items-center justify-center gap-3 text-gray-500">
-          <svg
-            class="animate-spin h-6 w-6 text-blue-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"
-            ></path>
-          </svg>
-          <span>Loading chart data...</span>
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Temperature Chart -->
+        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-red-500"></div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Temperature</h3>
+            </div>
+            <span class="text-xs text-gray-500 dark:text-gray-400">°Celsius</span>
+          </div>
+          <div class="h-[300px]">
+            <SingleMetricChart
+              v-if="!isLoading && temperatureChartData.data.length > 0"
+              :chart-data="temperatureChartData"
+              :color="'#ef4444'"
+              :label="'Temperature (°C)'"
+              :suffix="'°C'"
+            />
+            <LoadingState v-else-if="isLoading" />
+            <EmptyState v-else message="No temperature data available" />
+          </div>
         </div>
 
-        <!-- Chart -->
-        <div v-else v-memo="[processedChartData]" class="w-full h-[400px]">
-          <WeatherChart :chart-data="processedChartData" />
+        <!-- Humidity Chart -->
+        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Humidity</h3>
+            </div>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Percentage</span>
+          </div>
+          <div class="h-[300px]">
+            <SingleMetricChart
+              v-if="!isLoading && humidityChartData.data.length > 0"
+              :chart-data="humidityChartData"
+              :color="'#3b82f6'"
+              :label="'Humidity (%)'"
+              :suffix="'%'"
+            />
+            <LoadingState v-else-if="isLoading" />
+            <EmptyState v-else message="No humidity data available" />
+          </div>
+        </div>
+
+        <!-- Rainfall Rate Chart -->
+        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Rainfall Rate (Est.)</h3>
+            </div>
+            <span class="text-xs text-gray-500 dark:text-gray-400">mm/hr</span>
+          </div>
+          <div class="h-[300px]">
+            <SingleMetricChart
+              v-if="!isLoading && rainfallChartData.data.length > 0"
+              :chart-data="rainfallChartData"
+              :color="'#6366f1'"
+              :label="'Rainfall Rate (mm/hr)'"
+              :suffix="' mm/hr'"
+            />
+            <LoadingState v-else-if="isLoading" />
+            <EmptyState v-else message="No rainfall rate data available" />
+          </div>
+        </div>
+
+        <!-- Total Rainfall Chart -->
+        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full bg-teal-500"></div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Total Rainfall (Est.)</h3>
+            </div>
+            <span class="text-xs text-gray-500 dark:text-gray-400">mm</span>
+          </div>
+          <div class="h-[300px]">
+            <SingleMetricChart
+              v-if="!isLoading && totalRainfallChartData.data.length > 0"
+              :chart-data="totalRainfallChartData"
+              :color="'#14b8a6'"
+              :label="'Total Rainfall (mm)'"
+              :suffix="' mm'"
+            />
+            <LoadingState v-else-if="isLoading" />
+            <EmptyState v-else message="No total rainfall data available" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Summary -->
+      <div v-if="!isLoading && chartData.labels.length > 0" class="mt-6 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main mb-4">Period Summary</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <p class="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Temperature</p>
+            <p class="text-2xl font-bold text-red-700 dark:text-red-300">
+              {{ averageTemp.toFixed(1) }}°C
+            </p>
+            <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+              {{ minTemp.toFixed(1) }}°C - {{ maxTemp.toFixed(1) }}°C
+            </p>
+          </div>
+          <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Humidity</p>
+            <p class="text-2xl font-bold text-blue-700 dark:text-blue-300">
+              {{ averageHumidity.toFixed(1) }}%
+            </p>
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              {{ minHumidity.toFixed(1) }}% - {{ maxHumidity.toFixed(1) }}%
+            </p>
+          </div>
+          <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+            <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">Total Rainfall (Est.)</p>
+            <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
+              {{ totalRainfall.toFixed(1) }}mm
+            </p>
+            <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+              over period
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -80,7 +171,20 @@ import {
   orderByChild,
   startAt,
 } from 'firebase/database'
-import WeatherChart from '@/components/WeatherChart.vue'
+import SingleMetricChart from '@/components/SingleMetricChart.vue'
+import LoadingState from '@/components/LoadingState.vue'
+
+// Simple empty state component (inline)
+const EmptyState = {
+  props: ['message'],
+  template: `
+    <div class="flex items-center justify-center h-full">
+      <div class="text-center">
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ message }}</p>
+      </div>
+    </div>
+  `
+}
 
 // --- STATE ---
 const isLoading = ref(true)
@@ -90,44 +194,69 @@ let unsubscribeCallback = null
 
 const chartData = ref({
   labels: [],
-  datasets: [
-    {
-      label: 'Temperature (°C)',
-      borderColor: 'rgba(239, 68, 68, 1)',
-      backgroundColor: 'rgba(239, 68, 68, 0.2)',
-      data: [],
-      borderWidth: 2,
-      tension: 0.4,
-      yAxisID: 'y',
-    },
-    {
-      label: 'Humidity (%)',
-      borderColor: 'rgba(59, 130, 246, 1)',
-      backgroundColor: 'rgba(59, 130, 246, 0.2)',
-      data: [],
-      borderWidth: 2,
-      tension: 0.4,
-      yAxisID: 'y1',
-    },
-    {
-      label: 'Rainfall (mm)',
-      borderColor: 'rgba(99, 102, 241, 1)',
-      backgroundColor: 'rgba(99, 102, 241, 0.2)',
-      data: [],
-      borderWidth: 2,
-      tension: 0.4,
-      yAxisID: 'y2',
-    },
-  ],
+  temperature: [],
+  humidity: [],
+  rainfall: [],
+  rainfallTotals: []
 })
 
-const processedChartData = computed(() => ({
+// Separate chart data for each metric
+const temperatureChartData = computed(() => ({
   labels: chartData.value.labels,
-  datasets: chartData.value.datasets.map((ds) => ({
-    ...ds,
-    data: ds.data.map((v) => Number(v) || 0),
-  })),
+  data: chartData.value.temperature
 }))
+
+const humidityChartData = computed(() => ({
+  labels: chartData.value.labels,
+  data: chartData.value.humidity
+}))
+
+const rainfallChartData = computed(() => ({
+  labels: chartData.value.labels,
+  data: chartData.value.rainfall
+}))
+
+const totalRainfallChartData = computed(() => ({
+  labels: chartData.value.labels,
+  data: chartData.value.rainfallTotals
+}))
+
+// Summary statistics with safe fallbacks
+const averageTemp = computed(() => {
+  const data = chartData.value.temperature.filter(v => v > 0)
+  return data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0
+})
+
+const minTemp = computed(() => {
+  const data = chartData.value.temperature.filter(v => v > 0)
+  return data.length ? Math.min(...data) : 0
+})
+
+const maxTemp = computed(() => {
+  const data = chartData.value.temperature.filter(v => v > 0)
+  return data.length ? Math.max(...data) : 0
+})
+
+const averageHumidity = computed(() => {
+  const data = chartData.value.humidity.filter(v => v > 0)
+  return data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0
+})
+
+const minHumidity = computed(() => {
+  const data = chartData.value.humidity.filter(v => v > 0)
+  return data.length ? Math.min(...data) : 0
+})
+
+const maxHumidity = computed(() => {
+  const data = chartData.value.humidity.filter(v => v > 0)
+  return data.length ? Math.max(...data) : 0
+})
+
+const totalRainfall = computed(() => {
+  const totals = chartData.value.rainfallTotals.filter(v => v >= 0)
+  if (totals.length < 2) return 0
+  return Math.max(0, totals[totals.length - 1] - totals[0])
+})
 
 // --- HELPERS ---
 const TIME_RANGES = {
@@ -138,17 +267,30 @@ const TIME_RANGES = {
 }
 
 const formatTimestamp = (date, range) => {
+  const phtDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Manila' }))
+
   switch (range) {
     case TIME_RANGES.LAST_7:
-      return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' })
+      return phtDate.toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
     case TIME_RANGES.WEEKLY:
-      return `Week ${getWeekNumber(date)}`
+      return `Week ${getWeekNumber(phtDate)}, ${phtDate.getFullYear()}`
     case TIME_RANGES.MONTHLY:
-      return date.toLocaleString([], { month: 'short', year: 'numeric' })
+      return phtDate.toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
+        month: 'short',
+        year: 'numeric'
+      })
     case TIME_RANGES.YEARLY:
-      return date.getFullYear().toString()
+      return phtDate.getFullYear().toString()
     default:
-      return date.toLocaleString()
+      return phtDate.toLocaleString('en-US', { timeZone: 'Asia/Manila' })
   }
 }
 
@@ -165,9 +307,10 @@ const processRecords = (records, range) => {
   if (range === TIME_RANGES.LAST_7) {
     return {
       labels: records.map((r) => formatTimestamp(new Date(r.timestamp), range)),
-      temp: records.map((r) => Number(r.temperature) || 0),
-      hum: records.map((r) => Number(r.humidity) || 0),
-      rain: records.map((r) => Number(r.rainfall) || 0),
+      temperature: records.map((r) => Number(r.temperature) || 0),
+      humidity: records.map((r) => Number(r.humidity) || 0),
+      rainfall: records.map((r) => Number(r.rainRateEstimated_mm_hr_bucket) || 0),
+      rainfallTotals: records.map((r) => Number(r.rainfall_total_estimated_mm_bucket) || 0)
     }
   }
 
@@ -183,34 +326,66 @@ const processRecords = (records, range) => {
       key = `${date.getFullYear()}`
     }
 
-    if (!acc[key]) acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 }
-    acc[key].temps.push(Number(record.temperature) || 0)
-    acc[key].hums.push(Number(record.humidity) || 0)
-    acc[key].rains.push(Number(record.rainfall) || 0)
+    if (!acc[key]) {
+      acc[key] = {
+        timestamp: date,
+        temps: [],
+        hums: [],
+        rains: [],
+        rainTotals: [],
+        count: 0
+      }
+    }
+
+    // Only add valid numbers
+    const temp = Number(record.temperature)
+    const hum = Number(record.humidity)
+    const rain = Number(record.rainRateEstimated_mm_hr_bucket)
+    const rainTotal = Number(record.rainfall_total_estimated_mm_bucket)
+
+    if (!isNaN(temp)) acc[key].temps.push(temp)
+    if (!isNaN(hum)) acc[key].hums.push(hum)
+    if (!isNaN(rain)) acc[key].rains.push(rain)
+    if (!isNaN(rainTotal)) acc[key].rainTotals.push(rainTotal)
     acc[key].count++
+
     return acc
   }, {})
 
   const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp)
-  const labels = [],
-    temp = [],
-    hum = [],
-    rain = []
+  const labels = []
+  const temperature = []
+  const humidity = []
+  const rainfall = []
+  const rainfallTotals = []
+
   sortedGroups.forEach((g) => {
     labels.push(formatTimestamp(g.timestamp, range))
-    temp.push(g.count ? g.temps.reduce((a, b) => a + b, 0) / g.count : 0)
-    hum.push(g.count ? g.hums.reduce((a, b) => a + b, 0) / g.count : 0)
-    rain.push(g.count ? g.rains.reduce((a, b) => a + b, 0) / g.count : 0)
+
+    // Calculate averages safely
+    temperature.push(g.temps.length ? g.temps.reduce((a, b) => a + b, 0) / g.temps.length : 0)
+    humidity.push(g.hums.length ? g.hums.reduce((a, b) => a + b, 0) / g.hums.length : 0)
+    rainfall.push(g.rains.length ? g.rains.reduce((a, b) => a + b, 0) / g.rains.length : 0)
+
+    // For rainfall total, use the maximum value in the group (cumulative)
+    if (g.rainTotals.length) {
+      rainfallTotals.push(Math.max(...g.rainTotals))
+    } else {
+      rainfallTotals.push(0)
+    }
   })
-  return { labels, temp, hum, rain }
+
+  return { labels, temperature, humidity, rainfall, rainfallTotals }
 }
 
 // --- FIREBASE LISTENER ---
 const listenForHistoricalData = () => {
   isLoading.value = true
+
   if (unsubscribeRef && unsubscribeCallback) {
     off(unsubscribeRef, 'value', unsubscribeCallback)
   }
+
   const historyRef = dbRef(rtdb, 'sensor_logs')
   const range = selectedTimeRange.value
   let historyQuery
@@ -218,7 +393,6 @@ const listenForHistoricalData = () => {
   if (range === TIME_RANGES.LAST_7) {
     historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7))
   } else {
-    // Pull last 1 year of data to allow grouping
     const startTime = Date.now() - 365 * 86400000
     historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime))
   }
@@ -226,18 +400,16 @@ const listenForHistoricalData = () => {
   unsubscribeRef = historyRef
   unsubscribeCallback = (snap) => {
     if (!snap.exists()) {
-      chartData.value.labels = []
-      chartData.value.datasets.forEach((ds) => (ds.data = []))
-    } else {
-      const { labels, temp, hum, rain } = processRecords(Object.values(snap.val()), range)
       chartData.value = {
-        labels,
-        datasets: [
-          { ...chartData.value.datasets[0], data: temp },
-          { ...chartData.value.datasets[1], data: hum },
-          { ...chartData.value.datasets[2], data: rain },
-        ],
+        labels: [],
+        temperature: [],
+        humidity: [],
+        rainfall: [],
+        rainfallTotals: []
       }
+    } else {
+      const processed = processRecords(Object.values(snap.val()), range)
+      chartData.value = processed
     }
     isLoading.value = false
   }

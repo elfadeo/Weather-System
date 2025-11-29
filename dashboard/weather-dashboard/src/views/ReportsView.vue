@@ -173,6 +173,9 @@
                   Avg. Humidity (%)
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                  Avg. Rainfall Rate (mm/hr)
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
                   Total Rainfall (mm)
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
@@ -196,7 +199,10 @@
                   {{ record.humidity }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
-                  {{ record.rainfall }}
+                  {{ record.rainfallRate }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
+                  {{ record.totalRainfall }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-light)]">
                   {{ record.count }}
@@ -341,7 +347,7 @@ const dataTimeRange = computed(() => {
   return `${formatTime(earliest)} to ${formatTime(latest)}`
 })
 
-// Aggregate data
+// Aggregate data with correct ESP32 field names
 const aggregatedData = computed(() => {
   if (!rawReportData.value.length) return []
 
@@ -431,33 +437,55 @@ const aggregatedData = computed(() => {
         tempCount: 0,
         humiditySum: 0,
         humidityCount: 0,
-        rainfallSum: 0,
+        rainfallRateSum: 0,
+        rainfallRateCount: 0,
+        rainfallTotals: [],
         recordCount: 0
       }
     }
 
-    if (record.temperature != null) {
-      groups[key].tempSum += record.temperature
+    // Use correct ESP32 field names
+    if (record.temperature != null && !isNaN(record.temperature)) {
+      groups[key].tempSum += Number(record.temperature)
       groups[key].tempCount++
     }
-    if (record.humidity != null) {
-      groups[key].humiditySum += record.humidity
+
+    if (record.humidity != null && !isNaN(record.humidity)) {
+      groups[key].humiditySum += Number(record.humidity)
       groups[key].humidityCount++
     }
-    if (record.rainfall != null) {
-      groups[key].rainfallSum += record.rainfall
+
+    // Rainfall rate: rainRateEstimated_mm_hr_bucket
+    if (record.rainRateEstimated_mm_hr_bucket != null && !isNaN(record.rainRateEstimated_mm_hr_bucket)) {
+      groups[key].rainfallRateSum += Number(record.rainRateEstimated_mm_hr_bucket)
+      groups[key].rainfallRateCount++
     }
+
+    // Total rainfall: rainfall_total_estimated_mm_bucket
+    if (record.rainfall_total_estimated_mm_bucket != null && !isNaN(record.rainfall_total_estimated_mm_bucket)) {
+      groups[key].rainfallTotals.push(Number(record.rainfall_total_estimated_mm_bucket))
+    }
+
     groups[key].recordCount++
   })
 
   return Object.keys(groups)
     .map((key) => {
       const group = groups[key]
+
+      // Calculate total rainfall for period (difference between max and min)
+      let totalRainfall = 0
+      if (group.rainfallTotals.length > 0) {
+        const sortedTotals = group.rainfallTotals.sort((a, b) => a - b)
+        totalRainfall = sortedTotals[sortedTotals.length - 1] - sortedTotals[0]
+      }
+
       return {
         period: group.label,
         temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
         humidity: group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-        rainfall: group.rainfallSum.toFixed(1),
+        rainfallRate: group.rainfallRateCount > 0 ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2) : 'N/A',
+        totalRainfall: totalRainfall.toFixed(2),
         count: group.recordCount,
         sortKey: key
       }
@@ -465,18 +493,19 @@ const aggregatedData = computed(() => {
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 })
 
-// Export CSV
+// Export CSV with correct field names
 const exportToCSV = () => {
   if (!aggregatedData.value.length) return
   isExporting.value = 'csv'
 
   try {
     const csv = Papa.unparse(
-      aggregatedData.value.map(({ period, temperature, humidity, rainfall, count }) => ({
+      aggregatedData.value.map(({ period, temperature, humidity, rainfallRate, totalRainfall, count }) => ({
         Period: period,
         'Avg Temperature (°C)': temperature,
         'Avg Humidity (%)': humidity,
-        'Total Rainfall (mm)': rainfall,
+        'Avg Rainfall Rate (mm/hr)': rainfallRate,
+        'Total Rainfall (mm)': totalRainfall,
         'Number of Readings': count
       }))
     )
@@ -496,7 +525,7 @@ const exportToCSV = () => {
   }
 }
 
-// Export PDF
+// Export PDF with correct field names
 const exportToPDF = () => {
   if (!aggregatedData.value.length) return
   isExporting.value = 'pdf'
@@ -516,13 +545,14 @@ const exportToPDF = () => {
     doc.text(`Total Periods: ${aggregatedData.value.length}`, 14, 46)
     doc.text(`Total Readings: ${rawReportData.value.length}`, 14, 52)
 
-    // Table
-    const tableColumn = ['Period', 'Avg. Temp (°C)', 'Avg. Humidity (%)', 'Total Rainfall (mm)', 'Readings']
+    // Table with correct columns
+    const tableColumn = ['Period', 'Avg. Temp (°C)', 'Avg. Humidity (%)', 'Avg. Rainfall Rate (mm/hr)', 'Total Rainfall (mm)', 'Readings']
     const tableRows = aggregatedData.value.map((row) => [
       row.period,
       row.temperature,
       row.humidity,
-      row.rainfall,
+      row.rainfallRate,
+      row.totalRainfall,
       row.count
     ])
 
@@ -530,7 +560,7 @@ const exportToPDF = () => {
       head: [tableColumn],
       body: tableRows,
       startY: 58,
-      styles: { fontSize: 8 },
+      styles: { fontSize: 7 },
       headStyles: { fillColor: [59, 130, 246] }
     })
 

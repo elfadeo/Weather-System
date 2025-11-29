@@ -21,23 +21,29 @@
 
             <!-- Current Data Display -->
             <div v-if="isDataLoading" class="mt-4 text-text-light">Fetching latest data...</div>
-            <div v-else-if="latestData" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div v-else-if="latestData" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div class="flex items-center gap-2">
                 <Icon icon="ph:thermometer-bold" class="h-5 w-5 text-red-500" />
                 <span class="text-text-main">
-                  Temp: <strong>{{ latestData.temperature.toFixed(1) }}°C</strong>
+                  Temp: <strong>{{ latestData.temperature?.toFixed(1) || 'N/A' }}°C</strong>
                 </span>
               </div>
               <div class="flex items-center gap-2">
                 <Icon icon="ph:drop-bold" class="h-5 w-5 text-blue-500" />
                 <span class="text-text-main">
-                  Humidity: <strong>{{ latestData.humidity.toFixed(0) }}%</strong>
+                  Humidity: <strong>{{ latestData.humidity?.toFixed(0) || 'N/A' }}%</strong>
                 </span>
               </div>
               <div class="flex items-center gap-2">
-                <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 text-cyan-500" />
+                <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 text-indigo-500" />
                 <span class="text-text-main">
-                  Rainfall: <strong>{{ latestData.rainfall.toFixed(1) }} mm</strong>
+                  Rate: <strong>{{ rainfallRate }} mm/hr</strong>
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <Icon icon="ph:chart-line-up-bold" class="h-5 w-5 text-cyan-500" />
+                <span class="text-text-main">
+                  Total: <strong>{{ totalRainfall }} mm</strong>
                 </span>
               </div>
             </div>
@@ -51,7 +57,7 @@
             class="w-full sm:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             <Icon icon="ph:sparkle-bold" class="h-5 w-5 mr-2" />
-            {{ isGenerating ? 'Analyzing...' : 'Generate' }}
+            {{ isGenerating ? 'Analyzing...' : 'Generate Recommendations' }}
           </button>
         </div>
       </div>
@@ -61,7 +67,7 @@
         <!-- Loading Skeleton -->
         <div v-if="isGenerating" class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div
-            v-for="n in 2"
+            v-for="n in 3"
             :key="n"
             class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6 animate-pulse"
           >
@@ -72,6 +78,7 @@
             <div class="space-y-2">
               <div class="h-4 rounded bg-gray-200 dark:bg-gray-700 w-full"></div>
               <div class="h-4 rounded bg-gray-200 dark:bg-gray-700 w-5/6"></div>
+              <div class="h-4 rounded bg-gray-200 dark:bg-gray-700 w-4/6"></div>
             </div>
           </div>
         </div>
@@ -81,25 +88,38 @@
           v-else-if="generationError"
           class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg p-6 text-center"
         >
+          <Icon icon="ph:warning-circle-bold" class="h-12 w-12 mx-auto mb-3" />
           <h3 class="font-bold text-lg">Analysis Failed</h3>
-          <p>{{ generationError }}</p>
+          <p class="mt-2">{{ generationError }}</p>
           <button
             @click="handleGenerate"
-            class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Try Again
           </button>
         </div>
 
+        <!-- Empty State -->
+        <div
+          v-else-if="!recommendations.length"
+          class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-12 text-center"
+        >
+          <Icon icon="ph:lightbulb-bold" class="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 class="text-lg font-semibold text-text-main mb-2">No Recommendations Yet</h3>
+          <p class="text-text-light mb-6">
+            Click "Generate Recommendations" to get AI-powered insights based on current weather conditions.
+          </p>
+        </div>
+
         <!-- Recommendations List -->
         <div
-          v-else-if="recommendations.length"
+          v-else
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <div
             v-for="(rec, index) in recommendations"
             :key="index"
-            class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6"
+            class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow"
           >
             <div class="flex items-center mb-3">
               <div
@@ -112,7 +132,7 @@
                   :class="getIconDetails(rec.category).text"
                 />
               </div>
-              <h3 class="ml-4 text-xl font-bold text-text-main">
+              <h3 class="ml-4 text-lg font-bold text-text-main">
                 {{ rec.category }}
               </h3>
             </div>
@@ -127,15 +147,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { rtdb } from '@/firebase.js'
 import { query, ref as dbRef, orderByChild, get, startAt } from 'firebase/database'
 import { Icon } from '@iconify/vue'
 import { useWeatherData } from '@/composables/useWeatherData.js'
 
 // --- CONFIGURATION ---
-const GEMINI_API_KEY = 'AIzaSyD0qDNzCaAvWc0skFlIZftZjYvBw1pUSeA'
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`
 
 const props = defineProps({
   deviceAddress: { type: String, default: 'Philippines' },
@@ -143,12 +163,21 @@ const props = defineProps({
 
 const { latestData, isLoading: isDataLoading } = useWeatherData()
 
+// Computed values for correct field names
+const rainfallRate = computed(() => {
+  return latestData.value?.rainRateEstimated_mm_hr_bucket?.toFixed(2) || 'N/A'
+})
+
+const totalRainfall = computed(() => {
+  return latestData.value?.rainfall_total_estimated_mm_bucket?.toFixed(2) || 'N/A'
+})
+
 const historicalSummary = ref(null)
 const recommendations = ref([])
 const isGenerating = ref(false)
 const generationError = ref(null)
 
-// --- Fetch historical rainfall data ---
+// --- Fetch historical rainfall data (24 hours) ---
 const fetchHistoricalData = async () => {
   try {
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
@@ -159,13 +188,47 @@ const fetchHistoricalData = async () => {
     )
     const historicalSnapshot = await get(historicalQuery)
 
-    let totalRainfall = 0
+    let totalRainfall24h = 0
+    let avgTemp = 0
+    let avgHumidity = 0
+    let count = 0
+
     if (historicalSnapshot.exists()) {
-      Object.values(historicalSnapshot.val()).forEach((log) => {
-        if (log.rainfall != null) totalRainfall += log.rainfall
+      const logs = Object.values(historicalSnapshot.val())
+
+      // Get first and last rainfall totals to calculate 24h accumulation
+      const rainfallTotals = logs
+        .map(log => log.rainfall_total_estimated_mm_bucket)
+        .filter(val => val != null)
+
+      if (rainfallTotals.length > 0) {
+        const sortedTotals = rainfallTotals.sort((a, b) => a - b)
+        totalRainfall24h = sortedTotals[sortedTotals.length - 1] - sortedTotals[0]
+      }
+
+      // Calculate averages
+      logs.forEach((log) => {
+        if (log.temperature != null) {
+          avgTemp += log.temperature
+          count++
+        }
+        if (log.humidity != null) {
+          avgHumidity += log.humidity
+        }
       })
+
+      if (count > 0) {
+        avgTemp /= count
+        avgHumidity /= count
+      }
     }
-    historicalSummary.value = { totalRainfall24h: totalRainfall }
+
+    historicalSummary.value = {
+      totalRainfall24h,
+      avgTemp24h: avgTemp,
+      avgHumidity24h: avgHumidity
+    }
+
     return true
   } catch (err) {
     console.error('Error fetching historical data:', err)
@@ -176,11 +239,21 @@ const fetchHistoricalData = async () => {
 
 // --- Gemini API Call ---
 const generateAIAssistantResponse = async (prompt) => {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY') {
-    throw new Error('Gemini API key is not set. Please add it in the script.')
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY' || !GEMINI_API_KEY) {
+    throw new Error('Gemini API key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.')
   }
 
-  const payload = { contents: [{ parts: [{ text: prompt }] }] }
+  const payload = {
+    contents: [{
+      parts: [{ text: prompt }]
+    }],
+    generationConfig: {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 1024,
+    }
+  }
 
   const response = await fetch(GEMINI_API_URL, {
     method: 'POST',
@@ -227,38 +300,83 @@ const handleGenerate = async () => {
   try {
     const currentDate = new Date()
     const month = currentDate.toLocaleString('en-US', { month: 'long' })
+    const season = ['June', 'July', 'August', 'September', 'October', 'November'].includes(month)
+      ? 'typhoon season'
+      : 'dry season'
 
     const prompt = `
-      Persona: You are a senior agricultural and disaster-preparedness advisor from PAGASA.
-      Context:
-      - Location: ${props.deviceAddress}
-      - Date: ${currentDate.toDateString()} (The current month is ${month}, peak typhoon season).
-      - Current Weather:
-        - Temperature: ${latestData.value.temperature.toFixed(1)}°C
-        - Humidity: ${latestData.value.humidity.toFixed(0)}%
-        - Recent Rainfall: ${latestData.value.rainfall.toFixed(1)} mm
-      - 24-Hour History:
-        - Total Rainfall: ${historicalSummary.value?.totalRainfall24h.toFixed(1) || 0} mm
+You are a senior agricultural and disaster-preparedness advisor from PAGASA (Philippine Atmospheric, Geophysical and Astronomical Services Administration).
 
-      Task: Generate exactly three actionable recommendations.
-      Instructions:
-      1. Categorize each as "Crop Management", "Health & Safety", or "Typhoon Preparedness".
-      2. Provide expert rationale referencing the data.
-      3. Format: Valid JSON array of { "category": string, "recommendation": string }.
-    `
+CURRENT SITUATION:
+- Location: ${props.deviceAddress}
+- Date: ${currentDate.toDateString()}
+- Season: ${month} (${season})
+
+CURRENT WEATHER CONDITIONS:
+- Temperature: ${latestData.value.temperature?.toFixed(1) || 'N/A'}°C
+- Humidity: ${latestData.value.humidity?.toFixed(0) || 'N/A'}%
+- Current Rainfall Rate: ${rainfallRate.value} mm/hr
+- Cumulative Rainfall: ${totalRainfall.value} mm
+
+24-HOUR HISTORICAL DATA:
+- Total Rainfall: ${historicalSummary.value?.totalRainfall24h?.toFixed(1) || 0} mm
+- Average Temperature: ${historicalSummary.value?.avgTemp24h?.toFixed(1) || 'N/A'}°C
+- Average Humidity: ${historicalSummary.value?.avgHumidity24h?.toFixed(0) || 'N/A'}%
+
+TASK:
+Generate exactly THREE actionable recommendations based on the current weather conditions.
+
+CATEGORIES (choose from these):
+1. "Crop Management" - Agricultural advice for rice farming
+2. "Health & Safety" - Public health and safety guidance
+3. "Typhoon Preparedness" - Storm and flood preparation
+4. "Irrigation Management" - Water management advice
+5. "Disease Prevention" - Crop disease risk and prevention
+
+REQUIREMENTS:
+- Each recommendation must be specific, actionable, and evidence-based
+- Reference the actual weather data in your reasoning
+- Consider both immediate actions and preventive measures
+- Be practical for Filipino rice farmers and communities
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON array (no markdown, no extra text):
+[
+  {
+    "category": "Category Name",
+    "recommendation": "Detailed recommendation with specific actions to take"
+  },
+  {
+    "category": "Category Name",
+    "recommendation": "Detailed recommendation with specific actions to take"
+  },
+  {
+    "category": "Category Name",
+    "recommendation": "Detailed recommendation with specific actions to take"
+  }
+]
+`
 
     const rawResponse = await generateAIAssistantResponse(prompt)
 
-    // Clean response
+    // Clean response - remove markdown code blocks if present
     const cleanedResponse = rawResponse
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
       .trim()
 
-    recommendations.value = JSON.parse(cleanedResponse)
+    const parsed = JSON.parse(cleanedResponse)
+
+    // Validate response
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('Invalid response format: expected an array of recommendations')
+    }
+
+    recommendations.value = parsed.slice(0, 3) // Ensure exactly 3 recommendations
+
   } catch (err) {
     console.error('Error generating recommendations:', err)
-    generationError.value = `An error occurred: ${err.message}`
+    generationError.value = `Failed to generate recommendations: ${err.message}`
   } finally {
     isGenerating.value = false
   }
@@ -266,31 +384,45 @@ const handleGenerate = async () => {
 
 // --- Category Icons ---
 const getIconDetails = (category) => {
-  switch (category) {
-    case 'Typhoon Preparedness':
-      return {
-        bg: 'bg-blue-100 dark:bg-blue-900/40',
-        text: 'text-blue-600 dark:text-blue-300',
-        icon: 'ph:wind-bold',
-      }
-    case 'Crop Management':
-      return {
-        bg: 'bg-green-100 dark:bg-green-900/40',
-        text: 'text-green-600 dark:text-green-300',
-        icon: 'ph:plant-bold',
-      }
-    case 'Health & Safety':
-      return {
-        bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-        text: 'text-yellow-700 dark:text-yellow-300',
-        icon: 'ph:first-aid-kit-bold',
-      }
-    default:
-      return {
-        bg: 'bg-gray-100 dark:bg-gray-800',
-        text: 'text-gray-600 dark:text-gray-300',
-        icon: 'ph:info-bold',
-      }
+  const categoryLower = category.toLowerCase()
+
+  if (categoryLower.includes('typhoon') || categoryLower.includes('storm') || categoryLower.includes('flood')) {
+    return {
+      bg: 'bg-blue-100 dark:bg-blue-900/40',
+      text: 'text-blue-600 dark:text-blue-300',
+      icon: 'ph:wind-bold',
+    }
+  }
+
+  if (categoryLower.includes('crop') || categoryLower.includes('farming') || categoryLower.includes('irrigation')) {
+    return {
+      bg: 'bg-green-100 dark:bg-green-900/40',
+      text: 'text-green-600 dark:text-green-300',
+      icon: 'ph:plant-bold',
+    }
+  }
+
+  if (categoryLower.includes('health') || categoryLower.includes('safety')) {
+    return {
+      bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+      text: 'text-yellow-700 dark:text-yellow-300',
+      icon: 'ph:first-aid-kit-bold',
+    }
+  }
+
+  if (categoryLower.includes('disease')) {
+    return {
+      bg: 'bg-red-100 dark:bg-red-900/40',
+      text: 'text-red-600 dark:text-red-300',
+      icon: 'ph:bug-bold',
+    }
+  }
+
+  // Default
+  return {
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    text: 'text-gray-600 dark:text-gray-300',
+    icon: 'ph:info-bold',
   }
 }
 </script>

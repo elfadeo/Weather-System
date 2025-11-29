@@ -1,9 +1,9 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <!-- Skeleton Loader Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Skeleton Loader Cards (4 cards to match weather data) -->
     <template v-if="isLoading">
       <div
-        v-for="i in 3"
+        v-for="i in 4"
         :key="i"
         class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 animate-pulse transition-colors duration-500"
       >
@@ -57,7 +57,7 @@
 
         <!-- Sparkline (takes remaining space) -->
         <div class="flex-grow flex items-end">
-          <Sparkline :data="historicalData[card.id] || []" :color-class="card.color" />
+          <Sparkline :data="getSparklineData(card.id) || []" :color-class="card.color" />
         </div>
       </div>
     </template>
@@ -83,10 +83,12 @@ defineProps({
 })
 
 // Store historical sensor values for sparkline charts
+// IMPORTANT: Keys must match card IDs from Dashboard.vue
 const historicalData = ref({
   temp: [],
   humidity: [],
-  rainfall: [],
+  rainfall_rate: [],
+  total_rainfall: [],
 })
 
 let historyRef = null
@@ -99,9 +101,12 @@ onMounted(() => {
     const data = snapshot.val()
     if (data) {
       const records = Object.values(data)
+
+      // Map to the correct field names from your ESP32
       historicalData.value.temp = records.map((r) => r.temperature ?? 0)
       historicalData.value.humidity = records.map((r) => r.humidity ?? 0)
-      historicalData.value.rainfall = records.map((r) => r.rainfall ?? 0)
+      historicalData.value.rainfall_rate = records.map((r) => r.rainRateEstimated_mm_hr_bucket ?? 0)
+      historicalData.value.total_rainfall = records.map((r) => r.rainfall_total_estimated_mm_bucket ?? 0)
     }
   })
 })
@@ -110,4 +115,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (historyRef) off(historyRef)
 })
+
+// Function to get sparkline data based on card ID
+// Card IDs: 'temp', 'humidity', 'rainfall_rate', 'total_rainfall'
+const getSparklineData = (cardId) => {
+  return historicalData.value[cardId] || []
+}
 </script>

@@ -3,10 +3,10 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-text-main tracking-tight">
+        <h1 class="text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
           Alert System
         </h1>
-        <p class="text-gray-600 dark:text-text-light mt-2">
+        <p class="text-[var(--color-text-light)] mt-2">
           Real-time monitoring with scientifically validated thresholds
         </p>
       </div>
