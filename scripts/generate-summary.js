@@ -10,15 +10,21 @@ if (!serviceAccountKey) {
   process.exit(1);
 }
 
-try {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
-    databaseURL: 'https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app/'
-  });
-  console.log('✅ Firebase Admin SDK initialized successfully');
-} catch (error) {
-  console.error('❌ Error initializing Firebase Admin SDK:', error.message);
-  process.exit(1);
+// Initialize Firebase Admin SDK (check if already initialized)
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
+      databaseURL: 'https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app/'
+    });
+    console.log('✅ Firebase Admin SDK initialized successfully');
+  } catch (error) {
+    console.error('❌ Error initializing Firebase Admin SDK:', error.message);
+    console.error('Error details:', error);
+    process.exit(1);
+  }
+} else {
+  console.log('✅ Firebase Admin SDK already initialized');
 }
 
 const db = admin.database();
@@ -216,9 +222,16 @@ async function generateWeatherSummary() {
 
   } catch (error) {
     console.error('❌ Error generating summary:', error.message);
-    console.error('Stack trace:', error.stack);
+    console.error('Error name:', error.name);
+    console.error('Error code:', error.code);
+    console.error('Full error:', error);
+    
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
     
     try {
+      console.log('\n💾 Attempting to save error state to Firebase...');
       await db.ref('insights/daily_prediction').set({
         type: 'normal',
         message: 'Error analyzing historical data. Please try again later.',
