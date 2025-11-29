@@ -4,9 +4,21 @@
 
 const admin = require('firebase-admin');
 
+// Validate environment variable
 const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 if (!serviceAccountKey) {
   console.error('ERROR: FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set.');
+  process.exit(1);
+}
+
+// Parse and validate service account key
+let parsedKey;
+try {
+  parsedKey = JSON.parse(serviceAccountKey);
+  console.log('✅ Service account key parsed successfully');
+} catch (error) {
+  console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', error.message);
+  console.error('The key must be valid JSON');
   process.exit(1);
 }
 
@@ -14,13 +26,14 @@ if (!serviceAccountKey) {
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(serviceAccountKey)),
+      credential: admin.credential.cert(parsedKey),
       databaseURL: 'https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app/'
     });
     console.log('✅ Firebase Admin SDK initialized successfully');
   } catch (error) {
     console.error('❌ Error initializing Firebase Admin SDK:', error.message);
-    console.error('Error details:', error);
+    if (error.code) console.error('Error code:', error.code);
+    if (error.stack) console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 } else {
@@ -42,6 +55,8 @@ async function generateWeatherSummary() {
 
   try {
     console.log('📡 Fetching sensor data from last 24 hours...');
+    console.log(`   Query start time: ${new Date(twentyFourHoursAgo).toISOString()}`);
+    console.log(`   Current time: ${new Date().toISOString()}\n`);
     
     // Fetch recent data from the last 24 hours
     const snapshot = await sensorLogsRef
@@ -49,41 +64,69 @@ async function generateWeatherSummary() {
       .startAt(twentyFourHoursAgo)
       .once('value');
     
+    console.log(`   Snapshot received: ${snapshot.exists() ? 'YES' : 'NO'}`);
+    
     if (!snapshot.exists()) {
       console.log('⚠️  No data found in the last 24 hours.');
+      console.log('   This could mean:');
+      console.log('   - ESP32 has not sent data in 24 hours');
+      console.log('   - Data is stored in a different location');
+      console.log('   - Database permissions issue\n');
       
-      await db.ref('insights/daily_prediction').set({
+      const fallbackData = {
         type: 'normal',
         message: 'Insufficient data for analysis. Waiting for sensor readings.',
         details: {},
         dataPoints: 0,
         updatedAt: Date.now(),
         error: null
-      });
+      };
       
+      console.log('💾 Saving fallback state to Firebase...');
+      await db.ref('insights/daily_prediction').set(fallbackData);
       console.log('✅ Saved "no data" state to Firebase\n');
+      
       return;
     }
 
     const data = snapshot.val();
+    console.log(`   Raw data type: ${typeof data}`);
+    console.log(`   Is null: ${data === null}`);
+    console.log(`   Keys count: ${data ? Object.keys(data).length : 0}\n`);
+    
+    if (!data || typeof data !== 'object') {
+      console.log('❌ Data is null or not an object');
+      return;
+    }
+    
     const dataPoints = Object.values(data);
+    console.log(`✓ Found ${dataPoints.length} data points to analyze.`);
     
     if (dataPoints.length < 2) {
-      console.log('⚠️  Not enough data points (< 2) found for a meaningful summary.');
+      console.log('⚠️  Not enough data points (< 2) found for a meaningful summary.\n');
       
-      await db.ref('insights/daily_prediction').set({
+      const insufficientData = {
         type: 'normal',
         message: 'Collecting more data for analysis. Please check back shortly.',
         details: {},
         dataPoints: dataPoints.length,
         updatedAt: Date.now(),
         error: null
-      });
+      };
+      
+      await db.ref('insights/daily_prediction').set(insufficientData);
+      console.log('✅ Saved "insufficient data" state to Firebase\n');
       
       return;
     }
 
-    console.log(`✓ Found ${dataPoints.length} data points to analyze.\n`);
+    // Show sample of first data point for debugging
+    const samplePoint = dataPoints[0];
+    console.log('\n📋 Sample data point structure:');
+    console.log(`   temperature: ${samplePoint.temperature}`);
+    console.log(`   humidity: ${samplePoint.humidity}`);
+    console.log(`   rainfall_total_estimated_mm_bucket: ${samplePoint.rainfall_total_estimated_mm_bucket}`);
+    console.log(`   timestamp: ${samplePoint.timestamp}\n`);
 
     // Calculate statistical metrics
     let totalTemp = 0;
@@ -94,7 +137,6 @@ async function generateWeatherSummary() {
     let validHumidityCount = 0;
     
     // Calculate rainfall accumulation
-    // Method 1: Use the ESP32's accumulated total (most accurate)
     const firstReading = dataPoints[0];
     const lastReading = dataPoints[dataPoints.length - 1];
     
@@ -104,7 +146,7 @@ async function generateWeatherSummary() {
 
     console.log('📊 Processing data points...');
     
-    dataPoints.forEach(point => {
+    dataPoints.forEach((point, index) => {
       // Temperature
       if (point.temperature !== undefined && !isNaN(point.temperature)) {
         totalTemp += point.temperature;
@@ -124,12 +166,11 @@ async function generateWeatherSummary() {
     const avgTemp = validTempCount > 0 ? totalTemp / validTempCount : 0;
     const avgHumidity = validHumidityCount > 0 ? totalHumidity / validHumidityCount : 0;
 
-    console.log('📈 CALCULATED METRICS:');
-    console.log(`   Average Temperature: ${avgTemp.toFixed(1)}°C`);
-    console.log(`   Average Humidity: ${avgHumidity.toFixed(0)}%`);
+    console.log('\n📈 CALCULATED METRICS:');
+    console.log(`   Average Temperature: ${avgTemp.toFixed(1)}°C (from ${validTempCount} readings)`);
+    console.log(`   Average Humidity: ${avgHumidity.toFixed(0)}% (from ${validHumidityCount} readings)`);
     console.log(`   Total Rainfall (24h): ${totalRainfall.toFixed(1)}mm`);
-    console.log(`   Temperature Range: ${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C`);
-    console.log(`   Valid Readings: ${validTempCount} temp, ${validHumidityCount} humidity\n`);
+    console.log(`   Temperature Range: ${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C\n`);
 
     // ANALYSIS: Categorize conditions based on 24-hour trends
     let type, message, pattern, recommendation;
@@ -206,6 +247,7 @@ async function generateWeatherSummary() {
     // Save to Firebase
     console.log('💾 Saving summary to Firebase...');
     await db.ref('insights/daily_prediction').set(summary);
+    console.log('✅ Successfully saved to insights/daily_prediction\n');
     
     console.log('═══════════════════════════════════════════════════════════');
     console.log('✅ SUMMARY GENERATED SUCCESSFULLY');
@@ -221,17 +263,22 @@ async function generateWeatherSummary() {
     console.log('═══════════════════════════════════════════════════════════\n');
 
   } catch (error) {
-    console.error('❌ Error generating summary:', error.message);
+    console.error('\n❌ ERROR GENERATING SUMMARY');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('Error message:', error.message);
     console.error('Error name:', error.name);
-    console.error('Error code:', error.code);
-    console.error('Full error:', error);
+    if (error.code) console.error('Error code:', error.code);
+    if (error.errno) console.error('Error number:', error.errno);
+    console.error('\nFull error object:', JSON.stringify(error, null, 2));
     
     if (error.stack) {
-      console.error('Stack trace:', error.stack);
+      console.error('\nStack trace:');
+      console.error(error.stack);
     }
+    console.error('═══════════════════════════════════════════════════════════\n');
     
     try {
-      console.log('\n💾 Attempting to save error state to Firebase...');
+      console.log('💾 Attempting to save error state to Firebase...');
       await db.ref('insights/daily_prediction').set({
         type: 'normal',
         message: 'Error analyzing historical data. Please try again later.',
@@ -250,10 +297,14 @@ async function generateWeatherSummary() {
 }
 
 // Run the function
-generateWeatherSummary().then(() => {
-  console.log('[COMPLETE] Weather summary generation finished successfully.\n');
-  process.exit(0);
-}).catch((error) => {
-  console.error('[FAILED] Summary generation encountered an error:', error);
-  process.exit(1);
-});
+console.log('🚀 Starting weather summary generation...\n');
+
+generateWeatherSummary()
+  .then(() => {
+    console.log('[COMPLETE] Weather summary generation finished successfully.\n');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('[FATAL] Unhandled promise rejection:', error);
+    process.exit(1);
+  });
