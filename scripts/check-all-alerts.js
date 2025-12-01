@@ -329,10 +329,7 @@ async function checkAlerts() {
     // Array to collect triggered alerts
     const triggeredAlerts = [];
 
-    // ═══════════════════════════════════════════════════════════
-    // CHECK 1: TEMPERATURE ALERTS
-    // ═══════════════════════════════════════════════════════════
-    
+    // CHECK TEMPERATURE
     if (temperature > THRESHOLDS.temperature.critical) {
       triggeredAlerts.push({
         type: 'CRITICAL',
@@ -371,10 +368,7 @@ async function checkAlerts() {
       });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // CHECK 2: RAINFALL ALERTS
-    // ═══════════════════════════════════════════════════════════
-    
+    // CHECK RAINFALL
     if (rainfall >= THRESHOLDS.rainfall.red) {
       triggeredAlerts.push({
         type: 'CRITICAL',
@@ -413,10 +407,7 @@ async function checkAlerts() {
       });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // CHECK 3: DISEASE RISK ASSESSMENT
-    // ═══════════════════════════════════════════════════════════
-    
+    // CHECK DISEASE RISK
     if (DISEASE_PATTERNS.rice_blast.conditions(temperature, humidity)) {
       triggeredAlerts.push({
         type: 'WARNING',
@@ -461,10 +452,7 @@ async function checkAlerts() {
       });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // DECISION: Send Notifications Only If Alerts Were Triggered
-    // ═══════════════════════════════════════════════════════════
-    
+    // NO ALERTS - EXIT EARLY
     if (triggeredAlerts.length === 0) {
       console.log('✅ ALL READINGS WITHIN SAFE RANGES');
       console.log(`   Temperature: ${temperature}°C (Optimal: ${THRESHOLDS.temperature.optimal_min}-${THRESHOLDS.temperature.optimal_max}°C)`);
@@ -485,10 +473,7 @@ async function checkAlerts() {
       return;
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ALERTS TRIGGERED - Prepare and Send Notifications
-    // ═══════════════════════════════════════════════════════════
-    
+    // ALERTS TRIGGERED - SEND NOTIFICATIONS
     console.log(`⚠️  ${triggeredAlerts.length} ALERT(S) TRIGGERED - Preparing notifications...\n`);
     
     triggeredAlerts.forEach((alert, index) => {
@@ -510,8 +495,76 @@ async function checkAlerts() {
       ? '⚠️ Weather Alert - Attention Needed'
       : '📋 Weather Advisory - For Your Information';
 
-    // Build email content (keeping your existing email HTML - not showing for brevity)
-    const emailBody = `<!DOCTYPE html>...`; // Your existing email template
+    // Build complete email HTML
+    const emailBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+    .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .header { background: ${hasCritical ? '#dc2626' : hasWarning ? '#f59e0b' : '#3b82f6'}; color: white; padding: 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 20px; }
+    .alert-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 4px; }
+    .critical { background: #fee2e2; border-left-color: #dc2626; }
+    .warning { background: #fef3c7; border-left-color: #f59e0b; }
+    .advisory { background: #dbeafe; border-left-color: #3b82f6; }
+    .alert-title { font-weight: bold; font-size: 18px; margin-bottom: 8px; }
+    .alert-detail { margin: 5px 0; font-size: 14px; }
+    .readings { background: #f9fafb; padding: 15px; border-radius: 4px; margin: 20px 0; }
+    .reading-item { display: inline-block; margin: 5px 15px 5px 0; }
+    .footer { background: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${hasCritical ? '🚨' : hasWarning ? '⚠️' : '📋'} Weather Alert</h1>
+      <p style="margin: 5px 0 0 0;">${readingTime}</p>
+    </div>
+    
+    <div class="content">
+      <div class="readings">
+        <h3 style="margin-top: 0;">Current Readings:</h3>
+        <div class="reading-item">🌡️ <strong>${temperature}°C</strong></div>
+        <div class="reading-item">💧 <strong>${humidity}%</strong></div>
+        <div class="reading-item">🌧️ <strong>${rainfall}mm/hr</strong></div>
+      </div>
+      
+      <h3>${triggeredAlerts.length} Alert(s) Triggered:</h3>
+      
+      ${triggeredAlerts.map((alert, index) => `
+        <div class="alert-box ${alert.severity}">
+          <div class="alert-title">${alert.icon} ${alert.type}: ${alert.metric}</div>
+          <div class="alert-detail"><strong>Current:</strong> ${alert.value}</div>
+          <div class="alert-detail"><strong>Threshold:</strong> ${alert.threshold}</div>
+          <div class="alert-detail" style="margin-top: 10px;">${alert.message}</div>
+          <div class="alert-detail" style="margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px;">
+            <strong>Recommended Action:</strong> ${alert.action}
+          </div>
+          <div class="alert-detail" style="margin-top: 8px; font-size: 12px; color: #666;">
+            <em>Source: ${alert.source}</em>
+          </div>
+        </div>
+      `).join('')}
+      
+      <p style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 4px; border-left: 4px solid #3b82f6;">
+        <strong>📌 Note:</strong> This is an automated alert from your Weather Monitoring System. 
+        Please check your dashboard for real-time updates and historical trends.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Weather Monitoring System - Philippine Rice Farming</p>
+      <p>Based on IRRI Research & PAGASA Standards</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
 
     const mailOptions = {
       from: `Weather Monitoring System <${gmailEmail}>`,
@@ -520,7 +573,7 @@ async function checkAlerts() {
       html: emailBody
     };
 
-    // Send EMAIL notification
+    // SEND EMAIL
     await transporter.sendMail(mailOptions);
     
     console.log('✅ EMAIL SENT SUCCESSFULLY');
@@ -528,12 +581,11 @@ async function checkAlerts() {
     console.log(`   Subject: ${emailSubject}`);
     console.log(`   Alerts: ${triggeredAlerts.length}\n`);
 
-    // Get SMS settings from Firestore
+    // GET SMS SETTINGS AND SEND SMS
     const smsSettings = await getSmsSettings();
     
     let smsSent = false;
     
-    // Send SMS notification if enabled
     if (smsSettings.enabled && smsSettings.phone) {
       console.log('📱 SMS notifications enabled - sending via Semaphore...');
       smsSent = await sendAlertSms(
@@ -549,7 +601,7 @@ async function checkAlerts() {
       console.log('⚠️  SMS enabled but no recipient phone number configured\n');
     }
 
-    // Log to Firestore
+    // LOG TO FIRESTORE
     await firestore.collection('alerts_history').add({
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       status: 'alert',
