@@ -503,64 +503,242 @@ async function checkAlerts() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-    .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .header { background: ${hasCritical ? '#dc2626' : hasWarning ? '#f59e0b' : '#3b82f6'}; color: white; padding: 20px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { padding: 20px; }
-    .alert-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 4px; }
-    .critical { background: #fee2e2; border-left-color: #dc2626; }
-    .warning { background: #fef3c7; border-left-color: #f59e0b; }
-    .advisory { background: #dbeafe; border-left-color: #3b82f6; }
-    .alert-title { font-weight: bold; font-size: 18px; margin-bottom: 8px; }
-    .alert-detail { margin: 5px 0; font-size: 14px; }
-    .readings { background: #f9fafb; padding: 15px; border-radius: 4px; margin: 20px 0; }
-    .reading-item { display: inline-block; margin: 5px 15px 5px 0; }
-    .footer { background: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      line-height: 1.6;
+      color: #374151;
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+      border: 1px solid #e5e7eb;
+    }
+
+    /* Gradient header */
+    .header {
+      background: linear-gradient(120deg, 
+        ${hasCritical ? '#ef4444, #b91c1c' :
+        hasWarning ? '#fbbf24, #d97706' :
+        '#3b82f6, #1e40af'});
+      color: #ffffff;
+      padding: 26px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      margin: 6px 0 0 0;
+      font-size: 13px;
+      opacity: 0.92;
+    }
+
+    .content {
+      padding: 26px 28px;
+    }
+
+    /* Readings box */
+    .readings {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .reading-item {
+      flex: 1;
+      min-width: 120px;
+      background: #ffffff;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.04);
+      margin: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    /* Alert cards */
+    .alert-box {
+      padding: 20px;
+      border-radius: 14px;
+      margin: 18px 0;
+      border-left: 6px solid;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      background: #ffffff;
+      transition: 0.2s ease;
+    }
+
+    .alert-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    .alert-box.critical {
+      border-left-color: #b91c1c;
+      background: #fef2f2;
+    }
+
+    .alert-box.warning {
+      border-left-color: #d97706;
+      background: #fffbeb;
+    }
+
+    .alert-box.advisory {
+      border-left-color: #1e40af;
+      background: #eff6ff;
+    }
+
+    .alert-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #111827;
+    }
+
+    .alert-detail {
+      font-size: 14px;
+      margin: 6px 0;
+      color: #1f2937;
+    }
+
+    .alert-action {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.04);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .alert-source {
+      font-size: 12px;
+      color: #6b7280;
+      font-style: italic;
+      margin-top: 8px;
+      display: block;
+    }
+
+    /* Auto note */
+    .note {
+      margin-top: 26px;
+      padding: 18px;
+      background: #f0f9ff;
+      border-left: 5px solid #2563eb;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Footer */
+    .footer {
+      background: linear-gradient(to top, #f9fafb, #ffffff);
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .footer .brand {
+      font-size: 13px;
+      font-weight: 700;
+      color: #065f46;
+      margin-bottom: 4px;
+    }
+
+    .footer .tagline {
+      font-size: 11px;
+      background: #e0f2fe;
+      padding: 6px 15px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 600;
+      color: #0c4a6e;
+      margin-top: 6px;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <div class="header">
-      <h1>${hasCritical ? '🚨' : hasWarning ? '⚠️' : '📋'} Weather Alert</h1>
-      <p style="margin: 5px 0 0 0;">${readingTime}</p>
-    </div>
     
+    <div class="header ${hasCritical ? 'critical' : hasWarning ? 'warning' : 'normal'}">
+      <h1>${hasCritical ? '🚨' : hasWarning ? '⚠️' : '📋'} Weather Alert</h1>
+      <p>${readingTime}</p>
+    </div>
+
     <div class="content">
+      
       <div class="readings">
-        <h3 style="margin-top: 0;">Current Readings:</h3>
-        <div class="reading-item">🌡️ <strong>${temperature}°C</strong></div>
-        <div class="reading-item">💧 <strong>${humidity}%</strong></div>
-        <div class="reading-item">🌧️ <strong>${rainfall}mm/hr</strong></div>
+        <div class="reading-item">🌡️ ${temperature}°C</div>
+        <div class="reading-item">💧 ${humidity}%</div>
+        <div class="reading-item">🌧️ ${rainfall}mm/hr</div>
       </div>
-      
-      <h3>${triggeredAlerts.length} Alert(s) Triggered:</h3>
-      
-      ${triggeredAlerts.map((alert, index) => `
+
+      <hr style="border: none; height: 1px; background: #e5e7eb; margin: 20px 0;">
+
+      <h3 style="font-size:17px;font-weight:700;color:#111827;">
+        ${triggeredAlerts.length} Alert(s) Triggered:
+      </h3>
+
+      ${triggeredAlerts.map(alert => `
         <div class="alert-box ${alert.severity}">
           <div class="alert-title">${alert.icon} ${alert.type}: ${alert.metric}</div>
           <div class="alert-detail"><strong>Current:</strong> ${alert.value}</div>
           <div class="alert-detail"><strong>Threshold:</strong> ${alert.threshold}</div>
-          <div class="alert-detail" style="margin-top: 10px;">${alert.message}</div>
-          <div class="alert-detail" style="margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px;">
-            <strong>Recommended Action:</strong> ${alert.action}
+          <div class="alert-detail">${alert.message}</div>
+
+          <div class="alert-action">
+            📌 <strong>Recommended Action:</strong> ${alert.action}
           </div>
-          <div class="alert-detail" style="margin-top: 8px; font-size: 12px; color: #666;">
-            <em>Source: ${alert.source}</em>
-          </div>
+
+          <span class="alert-source">Source: ${alert.source}</span>
         </div>
       `).join('')}
-      
-      <p style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 4px; border-left: 4px solid #3b82f6;">
+
+      ${triggeredAlerts.length === 0 ? `
+        <div class="alert-box advisory">
+          <div class="alert-title">✅ System Normal</div>
+          <div class="alert-detail">No thresholds breached at this time.</div>
+        </div>
+      ` : ''}
+
+      <div class="note">
         <strong>📌 Note:</strong> This is an automated alert from your Weather Monitoring System. 
         Please check your dashboard for real-time updates and historical trends.
-      </p>
+      </div>
+
     </div>
-    
+
     <div class="footer">
-      <p>Weather Monitoring System - Philippine Rice Farming</p>
-      <p>Based on IRRI Research & PAGASA Standards</p>
+      <div class="brand">🌾 AgriSmart Weather Monitoring System</div>
+      <div class="tagline">Smart alerts for Filipino rice farmers</div>
+      <p style="margin-top:8px;">Powered by IoT • Inspired by IRRI & PAGASA Standards</p>
     </div>
+
   </div>
 </body>
 </html>
