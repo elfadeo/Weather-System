@@ -18,8 +18,7 @@
   <!-- Sidebar -->
   <aside
     @click.stop
-    class="fixed lg:static top-0 left-0 z-40 h-screen bg-surface text-text-main border-r border-hover
-           flex flex-col transition-all duration-300 ease-in-out will-change-transform"
+    class="fixed lg:static top-0 left-0 z-40 h-screen bg-surface text-text-main border-r border-hover flex flex-col transition-all duration-300 ease-in-out will-change-transform"
     :class="{
       'w-64': isExpanded,
       'w-20': !isExpanded,
@@ -28,7 +27,11 @@
     }"
     :aria-hidden="!isMobileOpen && 'true'"
   >
-    <nav class="flex-1 px-4 space-y-3 mt-4 overflow-y-auto no-scrollbar" role="navigation" aria-label="Main navigation">
+    <nav
+      class="flex-1 px-4 space-y-3 mt-4 overflow-y-auto no-scrollbar"
+      role="navigation"
+      aria-label="Main navigation"
+    >
       <!-- Mobile Close Button -->
       <div class="flex lg:hidden justify-end mb-4">
         <button
@@ -43,8 +46,7 @@
       <!-- Desktop Expand Button -->
       <button
         @click="toggleExpand"
-        class="hidden lg:flex items-center w-full p-3 rounded-xl bg-surface shadow-sm hover:bg-primary/5
-               transition-all duration-300"
+        class="hidden lg:flex items-center w-full p-3 rounded-xl bg-surface shadow-sm hover:bg-primary/5 transition-all duration-300"
         :class="{ 'justify-center': !isExpanded }"
         :aria-label="isExpanded ? 'Collapse sidebar' : 'Expand sidebar'"
         :aria-expanded="isExpanded"
@@ -66,7 +68,12 @@
       >
         <a
           :href="href"
-          @click="(e) => { navigate(e); closeMobileOnNavigate(); }"
+          @click="
+            (e) => {
+              navigate(e)
+              closeMobileOnNavigate()
+            }
+          "
           class="relative flex items-center p-3 rounded-xl transition-all duration-300 group"
           :class="[
             isExpanded ? '' : 'justify-center',
@@ -83,8 +90,7 @@
           <!-- Tooltip -->
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md
-                   opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
+            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
             role="tooltip"
           >
             {{ item.name }}
@@ -99,7 +105,12 @@
       <router-link to="/profile" custom v-slot="{ href, navigate, isActive }">
         <a
           :href="href"
-          @click="(e) => { navigate(e); closeMobileOnNavigate(); }"
+          @click="
+            (e) => {
+              navigate(e)
+              closeMobileOnNavigate()
+            }
+          "
           class="relative flex items-center p-3 rounded-xl group transition-all duration-300"
           :class="[
             isExpanded ? '' : 'justify-center',
@@ -115,8 +126,7 @@
           <!-- Tooltip -->
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md
-                   opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
             role="tooltip"
           >
             Profile
@@ -127,8 +137,7 @@
       <!-- Logout -->
       <button
         @click="handleLogout"
-        class="relative flex w-full items-center p-3 rounded-xl group
-               text-text-light opacity-80 hover:bg-primary/5 hover:text-red-500 transition-all duration-300"
+        class="relative flex w-full items-center p-3 rounded-xl group text-text-light opacity-80 hover:bg-primary/5 hover:text-red-500 transition-all duration-300"
         :class="{ 'justify-center': !isExpanded }"
         aria-label="Logout"
       >
@@ -138,8 +147,7 @@
         <!-- Tooltip -->
         <div
           v-if="!isExpanded"
-          class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md
-                 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+          class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
           role="tooltip"
         >
           Logout
@@ -150,30 +158,30 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
-import { Icon } from "@iconify/vue"
-import { auth } from "@/firebase"
-import { signOut } from "firebase/auth"
-import { useRouter } from "vue-router"
+import { ref } from 'vue'
+import { Icon } from '@iconify/vue'
+import { auth } from '@/firebase'
+import { signOut } from 'firebase/auth'
+import { useRouter } from 'vue-router'
 
 const isExpanded = ref(true)
 const isMobileOpen = ref(false)
 
 const router = useRouter()
 
-const emit = defineEmits(["update:expanded"])
+const emit = defineEmits(['update:expanded'])
 
 const navItems = [
-  { name: "Dashboard", routeName: "dashboard", icon: "ph:layout-bold" },
-  { name: "Charts", routeName: "charts", icon: "ph:chart-line-up-bold" },
-  { name: "Reports", routeName: "reports", icon: "ph:file-text-bold" },
-  { name: "Alerts", routeName: "alerts", icon: "ph:bell-ringing-bold" },
-  { name: "Recommendations", routeName: "recommendations", icon: "ph:plant-bold" },
+  { name: 'Dashboard', routeName: 'dashboard', icon: 'ph:layout-bold' },
+  { name: 'Charts', routeName: 'charts', icon: 'ph:chart-line-up-bold' },
+  { name: 'Reports', routeName: 'reports', icon: 'ph:file-text-bold' },
+  { name: 'Alerts', routeName: 'alerts', icon: 'ph:bell-ringing-bold' },
+  { name: 'Recommendations', routeName: 'recommendations', icon: 'ph:plant-bold' },
 ]
 
 const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
-  emit("update:expanded", isExpanded.value)
+  emit('update:expanded', isExpanded.value)
 }
 
 const toggleMobile = () => {
@@ -196,9 +204,9 @@ defineExpose({ toggleMobile, isMobileOpen })
 const handleLogout = async () => {
   try {
     await signOut(auth)
-    router.push({ name: "login" })
+    router.push({ name: 'login' })
   } catch (error) {
-    console.error("Logout failed:", error)
+    console.error('Logout failed:', error)
   }
 }
 </script>

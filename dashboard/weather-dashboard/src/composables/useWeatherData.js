@@ -17,21 +17,25 @@ const connectRTDB = () => {
     const sensorLogsQuery = query(
       dbRef(rtdb, 'sensor_logs'),
       orderByChild('timestamp'),
-      limitToLast(1)
+      limitToLast(1),
     )
 
-    onValue(sensorLogsQuery, (snapshot) => {
-      if (snapshot.exists()) {
-        latestData.value = Object.values(snapshot.val())[0]
-      } else {
-        error.value = 'No live sensor data available.'
-      }
-      isLoading.value = false
-    }, (err) => {
-      console.error('Realtime Database connection error:', err)
-      error.value = 'Failed to connect to the live data source.'
-      isLoading.value = false
-    })
+    onValue(
+      sensorLogsQuery,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          latestData.value = Object.values(snapshot.val())[0]
+        } else {
+          error.value = 'No live sensor data available.'
+        }
+        isLoading.value = false
+      },
+      (err) => {
+        console.error('Realtime Database connection error:', err)
+        error.value = 'Failed to connect to the live data source.'
+        isLoading.value = false
+      },
+    )
   } catch (err) {
     console.error('Critical error setting up RTDB listener:', err)
     error.value = 'An unexpected RTDB error occurred.'
@@ -42,21 +46,24 @@ const connectRTDB = () => {
 // --- Realtime Database Connection (for PRE-CALCULATED summary) ---
 const connectSummaryDB = () => {
   console.log('Establishing connection to Realtime Database for summary data...')
-  const summaryRef = dbRef(rtdb, 'insights/daily_prediction');
-  onValue(summaryRef, (snapshot) => {
-    if (snapshot.exists()) {
-      summaryData.value = snapshot.val();
-    } else {
-      summaryData.value = null; // No summary data found
-    }
-    isSummaryLoading.value = false;
-  }, (err) => {
-    console.error('Summary data connection error:', err);
-    summaryData.value = { error: 'Failed to load summary.' };
-    isSummaryLoading.value = false;
-  })
+  const summaryRef = dbRef(rtdb, 'insights/daily_prediction')
+  onValue(
+    summaryRef,
+    (snapshot) => {
+      if (snapshot.exists()) {
+        summaryData.value = snapshot.val()
+      } else {
+        summaryData.value = null // No summary data found
+      }
+      isSummaryLoading.value = false
+    },
+    (err) => {
+      console.error('Summary data connection error:', err)
+      summaryData.value = { error: 'Failed to load summary.' }
+      isSummaryLoading.value = false
+    },
+  )
 }
-
 
 // --- Initialize connections ---
 connectRTDB()

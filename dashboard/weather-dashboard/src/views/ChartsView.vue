@@ -12,11 +12,15 @@
       </div>
 
       <!-- Control Panel -->
-      <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-hover">
+      <div
+        class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-hover"
+      >
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Data Time Range</h3>
-            <p class="text-sm text-gray-600 dark:text-text-light mt-1">Select the time period to visualize</p>
+            <p class="text-sm text-gray-600 dark:text-text-light mt-1">
+              Select the time period to visualize
+            </p>
           </div>
           <select
             v-model="selectedTimeRange"
@@ -34,7 +38,9 @@
       <!-- Charts Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Temperature Chart -->
-        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+        <div
+          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-red-500"></div>
@@ -56,7 +62,9 @@
         </div>
 
         <!-- Humidity Chart -->
-        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+        <div
+          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -78,11 +86,15 @@
         </div>
 
         <!-- Rainfall Rate Chart -->
-        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+        <div
+          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Rainfall Rate (Est.)</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">
+                Rainfall Rate (Est.)
+              </h3>
             </div>
             <span class="text-xs text-gray-500 dark:text-gray-400">mm/hr</span>
           </div>
@@ -100,11 +112,15 @@
         </div>
 
         <!-- Total Rainfall Chart -->
-        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+        <div
+          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-teal-500"></div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Total Rainfall (Est.)</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">
+                Total Rainfall (Est.)
+              </h3>
             </div>
             <span class="text-xs text-gray-500 dark:text-gray-400">mm</span>
           </div>
@@ -123,7 +139,10 @@
       </div>
 
       <!-- Data Summary -->
-      <div v-if="!isLoading && chartData.labels.length > 0" class="mt-6 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
+      <div
+        v-if="!isLoading && chartData.labels.length > 0"
+        class="mt-6 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+      >
         <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main mb-4">Period Summary</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
@@ -145,13 +164,13 @@
             </p>
           </div>
           <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-            <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">Total Rainfall (Est.)</p>
+            <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">
+              Total Rainfall (Est.)
+            </p>
             <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
               {{ totalRainfall.toFixed(1) }}mm
             </p>
-            <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
-              over period
-            </p>
+            <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">over period</p>
           </div>
         </div>
       </div>
@@ -183,7 +202,7 @@ const EmptyState = {
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ message }}</p>
       </div>
     </div>
-  `
+  `,
 }
 
 // --- STATE ---
@@ -197,63 +216,63 @@ const chartData = ref({
   temperature: [],
   humidity: [],
   rainfall: [],
-  rainfallTotals: []
+  rainfallTotals: [],
 })
 
 // Separate chart data for each metric
 const temperatureChartData = computed(() => ({
   labels: chartData.value.labels,
-  data: chartData.value.temperature
+  data: chartData.value.temperature,
 }))
 
 const humidityChartData = computed(() => ({
   labels: chartData.value.labels,
-  data: chartData.value.humidity
+  data: chartData.value.humidity,
 }))
 
 const rainfallChartData = computed(() => ({
   labels: chartData.value.labels,
-  data: chartData.value.rainfall
+  data: chartData.value.rainfall,
 }))
 
 const totalRainfallChartData = computed(() => ({
   labels: chartData.value.labels,
-  data: chartData.value.rainfallTotals
+  data: chartData.value.rainfallTotals,
 }))
 
 // Summary statistics with safe fallbacks
 const averageTemp = computed(() => {
-  const data = chartData.value.temperature.filter(v => v > 0)
+  const data = chartData.value.temperature.filter((v) => v > 0)
   return data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0
 })
 
 const minTemp = computed(() => {
-  const data = chartData.value.temperature.filter(v => v > 0)
+  const data = chartData.value.temperature.filter((v) => v > 0)
   return data.length ? Math.min(...data) : 0
 })
 
 const maxTemp = computed(() => {
-  const data = chartData.value.temperature.filter(v => v > 0)
+  const data = chartData.value.temperature.filter((v) => v > 0)
   return data.length ? Math.max(...data) : 0
 })
 
 const averageHumidity = computed(() => {
-  const data = chartData.value.humidity.filter(v => v > 0)
+  const data = chartData.value.humidity.filter((v) => v > 0)
   return data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0
 })
 
 const minHumidity = computed(() => {
-  const data = chartData.value.humidity.filter(v => v > 0)
+  const data = chartData.value.humidity.filter((v) => v > 0)
   return data.length ? Math.min(...data) : 0
 })
 
 const maxHumidity = computed(() => {
-  const data = chartData.value.humidity.filter(v => v > 0)
+  const data = chartData.value.humidity.filter((v) => v > 0)
   return data.length ? Math.max(...data) : 0
 })
 
 const totalRainfall = computed(() => {
-  const totals = chartData.value.rainfallTotals.filter(v => v >= 0)
+  const totals = chartData.value.rainfallTotals.filter((v) => v >= 0)
   if (totals.length < 2) return 0
   return Math.max(0, totals[totals.length - 1] - totals[0])
 })
@@ -277,7 +296,7 @@ const formatTimestamp = (date, range) => {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       })
     case TIME_RANGES.WEEKLY:
       return `Week ${getWeekNumber(phtDate)}, ${phtDate.getFullYear()}`
@@ -285,7 +304,7 @@ const formatTimestamp = (date, range) => {
       return phtDate.toLocaleString('en-US', {
         timeZone: 'Asia/Manila',
         month: 'short',
-        year: 'numeric'
+        year: 'numeric',
       })
     case TIME_RANGES.YEARLY:
       return phtDate.getFullYear().toString()
@@ -310,7 +329,7 @@ const processRecords = (records, range) => {
       temperature: records.map((r) => Number(r.temperature) || 0),
       humidity: records.map((r) => Number(r.humidity) || 0),
       rainfall: records.map((r) => Number(r.rainRateEstimated_mm_hr_bucket) || 0),
-      rainfallTotals: records.map((r) => Number(r.rainfall_total_estimated_mm_bucket) || 0)
+      rainfallTotals: records.map((r) => Number(r.rainfall_total_estimated_mm_bucket) || 0),
     }
   }
 
@@ -333,7 +352,7 @@ const processRecords = (records, range) => {
         hums: [],
         rains: [],
         rainTotals: [],
-        count: 0
+        count: 0,
       }
     }
 
@@ -405,7 +424,7 @@ const listenForHistoricalData = () => {
         temperature: [],
         humidity: [],
         rainfall: [],
-        rainfallTotals: []
+        rainfallTotals: [],
       }
     } else {
       const processed = processRecords(Object.values(snap.val()), range)

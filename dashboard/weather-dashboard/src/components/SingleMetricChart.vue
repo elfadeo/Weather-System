@@ -10,7 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 } from 'chart.js'
 
 ChartJS.register(
@@ -21,26 +21,26 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
 )
 
 const props = defineProps({
   chartData: {
     type: Object,
-    required: true
+    required: true,
   },
   color: {
     type: String,
-    default: '#3b82f6'
+    default: '#3b82f6',
   },
   label: {
     type: String,
-    default: 'Data'
+    default: 'Data',
   },
   suffix: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 })
 
 // Dark mode detection
@@ -53,7 +53,7 @@ onMounted(() => {
   })
   observer.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ['class']
+    attributeFilter: ['class'],
   })
 })
 
@@ -79,9 +79,9 @@ const processedData = computed(() => ({
       pointBorderColor: '#fff',
       pointBorderWidth: 2,
       pointHoverBackgroundColor: props.color,
-      pointHoverBorderColor: '#fff'
-    }
-  ]
+      pointHoverBorderColor: '#fff',
+    },
+  ],
 }))
 
 // Chart options
@@ -94,11 +94,11 @@ const chartOptions = computed(() => {
     maintainAspectRatio: false,
     interaction: {
       mode: 'index',
-      intersect: false
+      intersect: false,
     },
     plugins: {
       legend: {
-        display: false
+        display: false,
       },
       tooltip: {
         backgroundColor: isDark.value ? '#1f2937' : '#ffffff',
@@ -112,9 +112,9 @@ const chartOptions = computed(() => {
           label: (context) => {
             const value = context.parsed.y
             return `${props.label}: ${value.toFixed(1)}${props.suffix}`
-          }
-        }
-      }
+          },
+        },
+      },
     },
     scales: {
       x: {
@@ -124,13 +124,13 @@ const chartOptions = computed(() => {
           minRotation: 0,
           color: textColor,
           font: {
-            size: 11
-          }
+            size: 11,
+          },
         },
         grid: {
           color: gridColor,
-          drawBorder: false
-        }
+          drawBorder: false,
+        },
       },
       y: {
         beginAtZero: false,
@@ -138,15 +138,15 @@ const chartOptions = computed(() => {
           callback: (value) => `${value.toFixed(0)}${props.suffix}`,
           color: textColor,
           font: {
-            size: 11
-          }
+            size: 11,
+          },
         },
         grid: {
           color: gridColor,
-          drawBorder: false
-        }
-      }
-    }
+          drawBorder: false,
+        },
+      },
+    },
   }
 })
 </script>

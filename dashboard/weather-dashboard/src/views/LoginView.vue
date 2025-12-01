@@ -54,7 +54,7 @@ const signIn = async () => {
     const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
     console.log('Successfully signed in:', userCredential.user.uid)
 
-    await router.push({ name: 'dashboard' }).catch(err => {
+    await router.push({ name: 'dashboard' }).catch((err) => {
       console.error('Navigation error:', err)
       throw new Error('Navigation failed')
     })
@@ -77,9 +77,12 @@ const signIn = async () => {
         showMessage('error', 'Too many failed attempts. Please try again later.')
         break
       default:
-        showMessage('error', error.message === 'Navigation failed'
-          ? 'Navigation failed. Please try again.'
-          : 'An unexpected error occurred. Please try again.')
+        showMessage(
+          'error',
+          error.message === 'Navigation failed'
+            ? 'Navigation failed. Please try again.'
+            : 'An unexpected error occurred. Please try again.',
+        )
         break
     }
   } finally {
@@ -102,7 +105,10 @@ const handlePasswordReset = async () => {
   try {
     isLoading.value = true
     await sendPasswordResetEmail(auth, email.value)
-    showMessage('success', `A password reset link has been sent to ${email.value}. Please check your inbox.`)
+    showMessage(
+      'success',
+      `A password reset link has been sent to ${email.value}. Please check your inbox.`,
+    )
   } catch (error) {
     console.error('Password Reset Error:', error.code)
 
@@ -134,7 +140,7 @@ const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, provider)
     console.log('Successfully signed in with Google:', result.user.uid)
 
-    await router.push({ name: 'dashboard' }).catch(err => {
+    await router.push({ name: 'dashboard' }).catch((err) => {
       console.error('Navigation error:', err)
       throw new Error('Navigation failed')
     })
@@ -155,9 +161,12 @@ const signInWithGoogle = async () => {
         // User opened multiple popups, ignore this error
         break
       default:
-        showMessage('error', error.message === 'Navigation failed'
-          ? 'Navigation failed. Please try again.'
-          : 'Failed to sign in with Google.')
+        showMessage(
+          'error',
+          error.message === 'Navigation failed'
+            ? 'Navigation failed. Please try again.'
+            : 'Failed to sign in with Google.',
+        )
         break
     }
   } finally {

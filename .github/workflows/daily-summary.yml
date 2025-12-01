@@ -5,7 +5,7 @@ name: Weather Monitoring System - Complete Automation
 #
 # 1. REAL-TIME ALERTS (Every 15 minutes)
 #    - Checks sensor readings against danger thresholds
-#    - Sends EMAIL, PUSH NOTIFICATIONS, and SMS when thresholds are exceeded
+#    - Sends EMAIL, PUSH NOTIFICATIONS, and SMS (via Semaphore) when thresholds are exceeded
 #    - Script: check-all-alerts.js
 #    - Purpose: IMMEDIATE ACTION on critical conditions
 #
@@ -15,7 +15,7 @@ name: Weather Monitoring System - Complete Automation
 #    - Script: generate-summary.js
 #    - Purpose: UNDERSTANDING weather trends over time
 #
-# These are DIFFERENT systems serving DIFFERENT purposes!
+# SMS Provider: Semaphore (Philippine-based, perfect for PH numbers!)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 on:
@@ -116,9 +116,7 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
-          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
-          TWILIO_PHONE_NUMBER: ${{ secrets.TWILIO_PHONE_NUMBER }}
+          SEMAPHORE_API_KEY: ${{ secrets.SEMAPHORE_API_KEY }}
         continue-on-error: true
 
       - name: 📱 Send Push Notifications
@@ -248,7 +246,7 @@ jobs:
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "✉️  Emails sent ONLY if thresholds were exceeded"
           echo "📱 Push notifications sent ONLY if thresholds were exceeded"
-          echo "📱 SMS sent ONLY if enabled and thresholds exceeded"
+          echo "📱 SMS sent ONLY if enabled (via Semaphore - PH provider)"
           echo "📊 Check Firestore: alerts_history collection"
           echo "🔄 Next check: In 15 minutes"
           echo "════════════════════════════════════════════════════════"
@@ -397,7 +395,7 @@ jobs:
             echo "  • Summary analysis: Active (every 6 hours)"
             echo "  • Email notifications: Configured"
             echo "  • Push notifications: Configured"
-            echo "  • SMS notifications: Configured (if enabled)"
+            echo "  • SMS notifications: Semaphore (PH provider)"
             echo ""
             echo "Next scheduled runs:"
             echo "  • Real-time alerts: In 15 minutes"
@@ -419,7 +417,7 @@ jobs:
             echo "Troubleshooting checklist:"
             echo "  1. ✓ Firebase service account key is valid"
             echo "  2. ✓ Gmail credentials are correct"
-            echo "  3. ✓ Twilio credentials are correct"
+            echo "  3. ✓ Semaphore API key is correct"
             echo "  4. ✓ Sensor is sending data regularly"
             echo "  5. ✓ Network connectivity is stable"
           fi

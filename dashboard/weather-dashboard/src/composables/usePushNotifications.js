@@ -12,7 +12,8 @@ export function usePushNotifications() {
 
   // Check if push notifications are supported
   const checkSupport = () => {
-    isSupported.value = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
+    isSupported.value =
+      'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
     return isSupported.value
   }
 
@@ -75,7 +76,7 @@ export function usePushNotifications() {
             createdAt: new Date(),
             updatedAt: new Date(),
             userAgent: navigator.userAgent,
-            platform: navigator.platform
+            platform: navigator.platform,
           })
           console.log('✅ FCM token registered in Firestore')
         } else {
@@ -108,7 +109,7 @@ export function usePushNotifications() {
       const q = query(tokensRef, where('token', '==', currentToken.value))
       const querySnapshot = await getDocs(q)
 
-      const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref))
+      const deletePromises = querySnapshot.docs.map((doc) => deleteDoc(doc.ref))
       await Promise.all(deletePromises)
 
       currentToken.value = null
@@ -136,7 +137,7 @@ export function usePushNotifications() {
             badge: '/favicon.png',
             vibrate: [200, 100, 200],
             tag: 'weather-alert',
-            requireInteraction: true
+            requireInteraction: true,
           })
 
           // Handle notification click
@@ -171,6 +172,6 @@ export function usePushNotifications() {
     currentToken,
     requestPermission,
     unregisterToken,
-    checkSupport
+    checkSupport,
   }
 }

@@ -106,7 +106,9 @@ onMounted(() => {
       historicalData.value.temp = records.map((r) => r.temperature ?? 0)
       historicalData.value.humidity = records.map((r) => r.humidity ?? 0)
       historicalData.value.rainfall_rate = records.map((r) => r.rainRateEstimated_mm_hr_bucket ?? 0)
-      historicalData.value.total_rainfall = records.map((r) => r.rainfall_total_estimated_mm_bucket ?? 0)
+      historicalData.value.total_rainfall = records.map(
+        (r) => r.rainfall_total_estimated_mm_bucket ?? 0,
+      )
     }
   })
 })

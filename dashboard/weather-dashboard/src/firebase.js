@@ -69,7 +69,7 @@ export const requestPermission = async () => {
               updatedAt: new Date(),
               userAgent: navigator.userAgent,
               platform: navigator.platform,
-              userId: auth.currentUser?.uid || 'anonymous'
+              userId: auth.currentUser?.uid || 'anonymous',
             })
             console.log('✅ FCM token saved to Firestore')
           } else {
@@ -115,7 +115,7 @@ export const onMessageListener = () => {
           vibrate: [200, 100, 200],
           tag: 'weather-alert',
           requireInteraction: true,
-          data: payload.data
+          data: payload.data,
         })
       }
 
@@ -142,7 +142,7 @@ export const setupForegroundListener = () => {
         badge: '/favicon.png',
         vibrate: [200, 100, 200],
         tag: 'weather-alert',
-        requireInteraction: true
+        requireInteraction: true,
       })
 
       // Handle notification click

@@ -7,13 +7,16 @@
           Data Reports
         </h1>
         <p class="text-[var(--color-text-light)] mt-2">
-          Generate comprehensive weather data reports with flexible time ranges and grouping options.
+          Generate comprehensive weather data reports with flexible time ranges and grouping
+          options.
         </p>
       </div>
 
       <!-- Quick Time Range Shortcuts -->
       <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-6">
-        <h3 class="text-sm font-semibold text-[var(--color-text-main)] mb-3 uppercase tracking-wide">
+        <h3
+          class="text-sm font-semibold text-[var(--color-text-main)] mb-3 uppercase tracking-wide"
+        >
           Quick Time Range
         </h3>
         <div class="flex flex-wrap gap-2">
@@ -25,7 +28,7 @@
               'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
               activePreset === preset.value
                 ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50',
             ]"
           >
             <Icon :icon="preset.icon" class="inline h-4 w-4 mr-1" />
@@ -130,13 +133,16 @@
         </div>
 
         <!-- Data Summary -->
-        <div v-if="aggregatedData.length" class="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
+        <div
+          v-if="aggregatedData.length"
+          class="mt-4 pt-4 border-t border-gray-200 dark:border-white/10"
+        >
           <div class="flex items-center justify-between text-sm">
             <p class="text-[var(--color-text-light)]">
               <Icon icon="ph:info-bold" class="inline h-4 w-4 mr-1" />
-              Showing <strong>{{ aggregatedData.length }}</strong> {{ groupBy }} period(s)
-              • <strong>{{ rawReportData.length }}</strong> total readings
-              • <strong>{{ dataTimeRange }}</strong>
+              Showing <strong>{{ aggregatedData.length }}</strong> {{ groupBy }} period(s) •
+              <strong>{{ rawReportData.length }}</strong> total readings •
+              <strong>{{ dataTimeRange }}</strong>
             </p>
           </div>
         </div>
@@ -145,15 +151,16 @@
       <!-- Data Table -->
       <div class="bg-[var(--color-surface)] rounded-2xl shadow-md overflow-hidden">
         <div v-if="isLoading" class="p-12 text-center">
-          <Icon icon="ph:circle-notch-bold" class="h-12 w-12 text-[var(--color-primary)] mx-auto mb-4 animate-spin" />
+          <Icon
+            icon="ph:circle-notch-bold"
+            class="h-12 w-12 text-[var(--color-primary)] mx-auto mb-4 animate-spin"
+          />
           <p class="text-[var(--color-text-light)]">Loading data...</p>
         </div>
 
         <div v-else-if="!aggregatedData.length" class="p-12 text-center">
           <Icon icon="ph:database-bold" class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p class="text-lg font-medium text-[var(--color-text-main)] mb-2">
-            No data available
-          </p>
+          <p class="text-lg font-medium text-[var(--color-text-main)] mb-2">No data available</p>
           <p class="text-sm text-[var(--color-text-light)]">
             Try selecting a different date range or check if your sensors are sending data.
           </p>
@@ -163,22 +170,34 @@
           <table class="min-w-full divide-y divide-gray-200 dark:divide-white/10">
             <thead class="bg-[var(--color-background)]">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Period
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Avg. Temp (°C)
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Avg. Humidity (%)
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Avg. Rainfall Rate (mm/hr)
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Total Rainfall (mm)
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider">
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Readings
                 </th>
               </tr>
@@ -189,7 +208,9 @@
                 :key="record.period"
                 class="hover:bg-[var(--color-background)] transition-colors"
               >
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-main)]">
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-main)]"
+                >
                   {{ record.period }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
@@ -245,14 +266,14 @@ const timePresets = [
   { value: 'last7d', label: 'Last 7 Days', icon: 'ph:calendar-blank-bold', days: 7 },
   { value: 'last30d', label: 'Last 30 Days', icon: 'ph:calendar-blank-bold', days: 30 },
   { value: 'thisMonth', label: 'This Month', icon: 'ph:calendar-bold', type: 'month' },
-  { value: 'custom', label: 'Custom Range', icon: 'ph:funnel-bold' }
+  { value: 'custom', label: 'Custom Range', icon: 'ph:funnel-bold' },
 ]
 
 // Apply time preset
 const applyTimePreset = (presetValue) => {
   activePreset.value = presetValue
   const now = new Date()
-  const preset = timePresets.find(p => p.value === presetValue)
+  const preset = timePresets.find((p) => p.value === presetValue)
 
   if (!preset) return
 
@@ -311,7 +332,7 @@ const fetchData = () => {
     dbRef(rtdb, 'sensor_logs'),
     orderByChild('timestamp'),
     startAt(startTimestamp),
-    endAt(endTimestamp)
+    endAt(endTimestamp),
   )
 
   unsubscribe = onValue(
@@ -324,7 +345,7 @@ const fetchData = () => {
     (error) => {
       console.error('Error fetching report data:', error)
       isLoading.value = false
-    }
+    },
   )
 }
 
@@ -333,16 +354,17 @@ watch([startDateTime, endDateTime], fetchData, { immediate: true })
 // Data time range display
 const dataTimeRange = computed(() => {
   if (!rawReportData.value.length) return 'No data'
-  const timestamps = rawReportData.value.map(r => r.timestamp)
+  const timestamps = rawReportData.value.map((r) => r.timestamp)
   const earliest = new Date(Math.min(...timestamps))
   const latest = new Date(Math.max(...timestamps))
 
-  const formatTime = (date) => date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const formatTime = (date) =>
+    date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   return `${formatTime(earliest)} to ${formatTime(latest)}`
 })
@@ -371,8 +393,8 @@ const aggregatedData = computed(() => {
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
-          })
+            hour12: true,
+          }),
         }
 
       case 'daily':
@@ -381,8 +403,8 @@ const aggregatedData = computed(() => {
           label: date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
-            day: 'numeric'
-          })
+            day: 'numeric',
+          }),
         }
 
       case 'weekly': {
@@ -398,24 +420,24 @@ const aggregatedData = computed(() => {
           key: startOfWeek.toISOString().split('T')[0],
           label: `${startOfWeek.toLocaleDateString('en-US', {
             month: 'short',
-            day: 'numeric'
+            day: 'numeric',
           })} - ${endOfWeek.toLocaleDateString('en-US', {
             month: 'short',
-            day: 'numeric'
-          })}`
+            day: 'numeric',
+          })}`,
         }
       }
 
       case 'monthly':
         return {
           key: `${year}-${String(month + 1).padStart(2, '0')}-01`,
-          label: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          label: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
         }
 
       case 'yearly':
         return {
           key: `${year}-01-01`,
-          label: `Year ${year}`
+          label: `Year ${year}`,
         }
 
       default:
@@ -440,7 +462,7 @@ const aggregatedData = computed(() => {
         rainfallRateSum: 0,
         rainfallRateCount: 0,
         rainfallTotals: [],
-        recordCount: 0
+        recordCount: 0,
       }
     }
 
@@ -456,13 +478,19 @@ const aggregatedData = computed(() => {
     }
 
     // Rainfall rate: rainRateEstimated_mm_hr_bucket
-    if (record.rainRateEstimated_mm_hr_bucket != null && !isNaN(record.rainRateEstimated_mm_hr_bucket)) {
+    if (
+      record.rainRateEstimated_mm_hr_bucket != null &&
+      !isNaN(record.rainRateEstimated_mm_hr_bucket)
+    ) {
       groups[key].rainfallRateSum += Number(record.rainRateEstimated_mm_hr_bucket)
       groups[key].rainfallRateCount++
     }
 
     // Total rainfall: rainfall_total_estimated_mm_bucket
-    if (record.rainfall_total_estimated_mm_bucket != null && !isNaN(record.rainfall_total_estimated_mm_bucket)) {
+    if (
+      record.rainfall_total_estimated_mm_bucket != null &&
+      !isNaN(record.rainfall_total_estimated_mm_bucket)
+    ) {
       groups[key].rainfallTotals.push(Number(record.rainfall_total_estimated_mm_bucket))
     }
 
@@ -483,11 +511,15 @@ const aggregatedData = computed(() => {
       return {
         period: group.label,
         temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
-        humidity: group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-        rainfallRate: group.rainfallRateCount > 0 ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2) : 'N/A',
+        humidity:
+          group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
+        rainfallRate:
+          group.rainfallRateCount > 0
+            ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
+            : 'N/A',
         totalRainfall: totalRainfall.toFixed(2),
         count: group.recordCount,
-        sortKey: key
+        sortKey: key,
       }
     })
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
@@ -500,14 +532,16 @@ const exportToCSV = () => {
 
   try {
     const csv = Papa.unparse(
-      aggregatedData.value.map(({ period, temperature, humidity, rainfallRate, totalRainfall, count }) => ({
-        Period: period,
-        'Avg Temperature (°C)': temperature,
-        'Avg Humidity (%)': humidity,
-        'Avg Rainfall Rate (mm/hr)': rainfallRate,
-        'Total Rainfall (mm)': totalRainfall,
-        'Number of Readings': count
-      }))
+      aggregatedData.value.map(
+        ({ period, temperature, humidity, rainfallRate, totalRainfall, count }) => ({
+          Period: period,
+          'Avg Temperature (°C)': temperature,
+          'Avg Humidity (%)': humidity,
+          'Avg Rainfall Rate (mm/hr)': rainfallRate,
+          'Total Rainfall (mm)': totalRainfall,
+          'Number of Readings': count,
+        }),
+      ),
     )
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -546,14 +580,21 @@ const exportToPDF = () => {
     doc.text(`Total Readings: ${rawReportData.value.length}`, 14, 52)
 
     // Table with correct columns
-    const tableColumn = ['Period', 'Avg. Temp (°C)', 'Avg. Humidity (%)', 'Avg. Rainfall Rate (mm/hr)', 'Total Rainfall (mm)', 'Readings']
+    const tableColumn = [
+      'Period',
+      'Avg. Temp (°C)',
+      'Avg. Humidity (%)',
+      'Avg. Rainfall Rate (mm/hr)',
+      'Total Rainfall (mm)',
+      'Readings',
+    ]
     const tableRows = aggregatedData.value.map((row) => [
       row.period,
       row.temperature,
       row.humidity,
       row.rainfallRate,
       row.totalRainfall,
-      row.count
+      row.count,
     ])
 
     autoTable(doc, {
@@ -561,7 +602,7 @@ const exportToPDF = () => {
       body: tableRows,
       startY: 58,
       styles: { fontSize: 7 },
-      headStyles: { fillColor: [59, 130, 246] }
+      headStyles: { fillColor: [59, 130, 246] },
     })
 
     const timestamp = new Date().toISOString().split('T')[0]

@@ -128,10 +128,10 @@ const deviceAddress = ref('Weather Station Location')
 const temperature = computed(() => latestData.value?.temperature?.toFixed(1) ?? 'N/A')
 const humidity = computed(() => latestData.value?.humidity?.toFixed(0) ?? 'N/A')
 const rainfallRate = computed(
-  () => latestData.value?.rainRateEstimated_mm_hr_bucket?.toFixed(2) ?? 'N/A'
+  () => latestData.value?.rainRateEstimated_mm_hr_bucket?.toFixed(2) ?? 'N/A',
 )
 const totalRainfall = computed(
-  () => latestData.value?.rainfall_total_estimated_mm_bucket?.toFixed(2) ?? 'N/A'
+  () => latestData.value?.rainfall_total_estimated_mm_bucket?.toFixed(2) ?? 'N/A',
 )
 const lastUpdated = computed(() => latestData.value?.timestamp)
 

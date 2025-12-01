@@ -29,7 +29,7 @@ const handleSignOut = async () => {
         <!-- Logo and Title -->
         <div class="flex items-center">
           <div class="flex-shrink-0 text-blue-500">
-            <Icon icon="ph:cloud-sun-bold" class="h-8 w-8 " />
+            <Icon icon="ph:cloud-sun-bold" class="h-8 w-8" />
           </div>
           <div class="ml-4">
             <h1 class="text-xl font-bold text-gray-800">Weather Monitoring System</h1>

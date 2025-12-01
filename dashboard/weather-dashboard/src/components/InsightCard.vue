@@ -7,7 +7,9 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-lg font-bold text-[var(--color-text-main)] tracking-tight">24-Hour Weather Summary</h3>
+        <h3 class="text-lg font-bold text-[var(--color-text-main)] tracking-tight">
+          24-Hour Weather Summary
+        </h3>
         <p class="text-[var(--color-text-light)] mt-2">Analyzing recent conditions & trends</p>
       </div>
       <div class="flex items-center space-x-2">
@@ -45,12 +47,8 @@
 
     <!-- Success State -->
     <div v-else-if="summaryData" class="space-y-4">
-
       <!-- Current Condition Summary Card -->
-      <div
-        class="p-4 rounded-lg border transition-colors"
-        :class="conditionStyles.bgClass"
-      >
+      <div class="p-4 rounded-lg border transition-colors" :class="conditionStyles.bgClass">
         <div class="flex items-start space-x-3">
           <Icon
             :icon="conditionStyles.icon"
@@ -93,7 +91,9 @@
       <!-- 24-Hour Summary Metrics -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <h5 class="text-xs font-semibold text-gray-600 dark:text-text-light uppercase tracking-wide">
+          <h5
+            class="text-xs font-semibold text-gray-600 dark:text-text-light uppercase tracking-wide"
+          >
             Statistical Summary
           </h5>
           <span class="text-xs text-gray-400">{{ dataPointsCount }} readings</span>
@@ -121,25 +121,29 @@
           <Icon icon="ph:info-bold" class="h-5 w-5 text-purple-600 dark:text-purple-400 mt-0.5" />
           <div class="flex-1">
             <p class="text-sm text-purple-900 dark:text-purple-100 font-medium">Advisory</p>
-            <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">{{ summaryData.recommendation }}</p>
+            <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+              {{ summaryData.recommendation }}
+            </p>
           </div>
         </div>
       </div>
 
       <!-- Note about real-time alerts -->
-      <div class="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-xs text-gray-500 dark:text-gray-400">
+      <div
+        class="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-xs text-gray-500 dark:text-gray-400"
+      >
         <Icon icon="ph:bell-bold" class="h-4 w-4 mt-0.5" />
         <p>
-          <strong>Note:</strong> Real-time critical alerts are monitored separately and sent via email.
-          This summary provides historical analysis only.
+          <strong>Note:</strong> Real-time critical alerts are monitored separately and sent via
+          email. This summary provides historical analysis only.
         </p>
       </div>
 
       <!-- Footer -->
-      <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-        <p class="text-xs text-gray-400">
-          Updated {{ formattedTimestamp }}
-        </p>
+      <div
+        class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700"
+      >
+        <p class="text-xs text-gray-400">Updated {{ formattedTimestamp }}</p>
         <div class="flex items-center space-x-1 text-xs text-gray-400">
           <Icon icon="ph:database-bold" class="h-3 w-3" />
           <span>24h Analysis</span>
@@ -175,11 +179,11 @@ const insightLabel = computed(() => {
   const type = summaryData.value?.type?.toLowerCase()
 
   const labels = {
-    'severe': 'Severe',
-    'concerning': 'Concerning',
-    'notable': 'Notable',
-    'normal': 'Normal',
-    'favorable': 'Ideal'
+    severe: 'Severe',
+    concerning: 'Concerning',
+    notable: 'Notable',
+    normal: 'Normal',
+    favorable: 'Ideal',
   }
 
   return labels[type] || 'Analysis'
@@ -190,11 +194,11 @@ const conditionTitle = computed(() => {
   const type = summaryData.value?.type?.toLowerCase()
 
   const titles = {
-    'severe': 'Severe Conditions Observed',
-    'concerning': 'Concerning Weather Pattern',
-    'notable': 'Notable Conditions',
-    'normal': 'Normal Weather Conditions',
-    'favorable': 'Favorable Weather'
+    severe: 'Severe Conditions Observed',
+    concerning: 'Concerning Weather Pattern',
+    notable: 'Notable Conditions',
+    normal: 'Normal Weather Conditions',
+    favorable: 'Favorable Weather',
   }
 
   return titles[type] || 'Weather Summary'
@@ -210,41 +214,41 @@ const conditionStyles = computed(() => {
   const type = summaryData.value?.type?.toLowerCase()
 
   const styles = {
-    'severe': {
+    severe: {
       bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
       textClass: 'text-red-900 dark:text-red-100',
       iconClass: 'text-red-600 dark:text-red-400',
       badgeClass: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200',
-      icon: 'ph:warning-octagon-bold'
+      icon: 'ph:warning-octagon-bold',
     },
-    'concerning': {
+    concerning: {
       bgClass: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
       textClass: 'text-orange-900 dark:text-orange-100',
       iconClass: 'text-orange-600 dark:text-orange-400',
       badgeClass: 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200',
-      icon: 'ph:warning-bold'
+      icon: 'ph:warning-bold',
     },
-    'notable': {
+    notable: {
       bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
       textClass: 'text-blue-900 dark:text-blue-100',
       iconClass: 'text-blue-600 dark:text-blue-400',
       badgeClass: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200',
-      icon: 'ph:eye-bold'
+      icon: 'ph:eye-bold',
     },
-    'normal': {
+    normal: {
       bgClass: 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
       textClass: 'text-gray-900 dark:text-gray-100',
       iconClass: 'text-gray-600 dark:text-gray-400',
       badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200',
-      icon: 'ph:check-circle-bold'
+      icon: 'ph:check-circle-bold',
     },
-    'favorable': {
+    favorable: {
       bgClass: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
       textClass: 'text-green-900 dark:text-green-100',
       iconClass: 'text-green-600 dark:text-green-400',
       badgeClass: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200',
-      icon: 'ph:sun-bold'
-    }
+      icon: 'ph:sun-bold',
+    },
   }
 
   return styles[type] || styles['notable']
@@ -258,9 +262,9 @@ const getMetricIcon = (key) => {
     'Total Rainfall (24h Est.)': 'ph:cloud-rain-bold',
     'Temp Range': 'ph:arrows-out-simple-bold',
     'Wind Speed': 'ph:wind-bold',
-    'Pressure': 'ph:gauge-bold',
+    Pressure: 'ph:gauge-bold',
     'Max Temp': 'ph:thermometer-hot-bold',
-    'Min Temp': 'ph:thermometer-cold-bold'
+    'Min Temp': 'ph:thermometer-cold-bold',
   }
 
   return iconMap[key] || 'ph:chart-line-bold'
@@ -282,7 +286,7 @@ const formattedTimestamp = computed(() => {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 })
 </script>

@@ -4,13 +4,14 @@
       <!-- Header -->
       <div class="mb-10">
         <h1 class="text-4xl font-bold text-text-main tracking-tight">Profile Settings</h1>
-        <p class="text-text-light mt-2">
-          Manage your account information and preferences.
-        </p>
+        <p class="text-text-light mt-2">Manage your account information and preferences.</p>
       </div>
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="text-center p-12 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm">
+      <div
+        v-if="isLoading"
+        class="text-center p-12 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm"
+      >
         <div class="flex flex-col items-center space-y-3">
           <svg
             class="animate-spin h-8 w-8 text-blue-500"
@@ -39,8 +40,12 @@
       <!-- Profile Content -->
       <div v-else class="space-y-6">
         <!-- Profile Information Card -->
-        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-text-main mb-6">Profile Information</h2>
+        <div
+          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        >
+          <h2 class="text-xl font-bold text-gray-900 dark:text-text-main mb-6">
+            Profile Information
+          </h2>
 
           <!-- Avatar Section -->
           <div class="flex items-center pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
@@ -77,13 +82,14 @@
                 disabled
                 class="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm cursor-not-allowed text-gray-500 dark:text-gray-400 px-4 py-2.5"
               />
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Email cannot be changed
-              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
             </div>
 
             <div>
-              <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+              <label
+                for="displayName"
+                class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2"
+              >
                 Display Name
               </label>
               <input
@@ -96,7 +102,10 @@
             </div>
 
             <div>
-              <label for="location" class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
+              <label
+                for="location"
+                class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2"
+              >
                 Location
               </label>
               <input
@@ -114,16 +123,27 @@
         </div>
 
         <!-- Notification Preferences -->
-        <div class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-text-main mb-6">Notification Settings</h2>
+        <div
+          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        >
+          <h2 class="text-xl font-bold text-gray-900 dark:text-text-main mb-6">
+            Notification Settings
+          </h2>
 
           <div class="space-y-4">
             <!-- Email Notifications -->
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div
+              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+            >
               <div class="flex-1">
                 <div class="flex items-center space-x-2">
-                  <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                  <span class="text-sm font-medium text-gray-900 dark:text-text-main">Email Notifications</span>
+                  <Icon
+                    icon="ph:envelope-simple-bold"
+                    class="h-5 w-5 text-gray-600 dark:text-gray-400"
+                  />
+                  <span class="text-sm font-medium text-gray-900 dark:text-text-main"
+                    >Email Notifications</span
+                  >
                 </div>
                 <p class="text-xs text-gray-600 dark:text-text-light mt-1 ml-7">
                   Receive alert emails when thresholds are exceeded
@@ -147,20 +167,29 @@
         </div>
 
         <!-- System Information -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-sm p-6 border border-blue-200 dark:border-blue-800">
+        <div
+          class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-sm p-6 border border-blue-200 dark:border-blue-800"
+        >
           <div class="flex items-start space-x-3">
-            <Icon icon="ph:info-bold" class="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <Icon
+              icon="ph:info-bold"
+              class="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+            />
             <div class="flex-1">
               <h3 class="font-bold text-blue-900 dark:text-blue-100 mb-2">About Alert System</h3>
               <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
                 <p>
-                  <strong>📧 Email Alerts:</strong> Automated via GitHub Actions every 15 minutes. Emails are sent when sensor readings exceed scientifically validated thresholds (IRRI & PAGASA).
+                  <strong>📧 Email Alerts:</strong> Automated via GitHub Actions every 15 minutes.
+                  Emails are sent when sensor readings exceed scientifically validated thresholds
+                  (IRRI & PAGASA).
                 </p>
                 <p>
-                  <strong>📱 Push Notifications:</strong> Instant browser notifications delivered to your device, even when the app is closed. Enable above for real-time alerts.
+                  <strong>📱 Push Notifications:</strong> Instant browser notifications delivered to
+                  your device, even when the app is closed. Enable above for real-time alerts.
                 </p>
                 <p class="text-xs text-blue-600 dark:text-blue-300 mt-2">
-                  All thresholds are based on peer-reviewed research from IRRI (International Rice Research Institute) and PAGASA (Philippine weather authority).
+                  All thresholds are based on peer-reviewed research from IRRI (International Rice
+                  Research Institute) and PAGASA (Philippine weather authority).
                 </p>
               </div>
             </div>
@@ -173,7 +202,11 @@
             <p
               v-if="saveStatus"
               class="text-sm font-medium"
-              :class="saveStatus.includes('Error') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'"
+              :class="
+                saveStatus.includes('Error')
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-green-600 dark:text-green-400'
+              "
             >
               <Icon
                 :icon="saveStatus.includes('Error') ? 'ph:x-circle-bold' : 'ph:check-circle-bold'"
@@ -187,16 +220,8 @@
             :disabled="isSaving || !hasChanges"
             class="flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            <Icon
-              v-if="isSaving"
-              icon="ph:circle-notch-bold"
-              class="animate-spin h-5 w-5 mr-2"
-            />
-            <Icon
-              v-else
-              icon="ph:floppy-disk-bold"
-              class="h-5 w-5 mr-2"
-            />
+            <Icon v-if="isSaving" icon="ph:circle-notch-bold" class="animate-spin h-5 w-5 mr-2" />
+            <Icon v-else icon="ph:floppy-disk-bold" class="h-5 w-5 mr-2" />
             <span v-if="isSaving">Saving...</span>
             <span v-else>{{ hasChanges ? 'Save Changes' : 'No Changes' }}</span>
           </button>
@@ -313,9 +338,9 @@ const saveProfile = async () => {
         emailNotifications,
         photoURL,
         email: user.value.email,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
-      { merge: true }
+      { merge: true },
     )
 
     saveStatus.value = 'Profile saved successfully!'

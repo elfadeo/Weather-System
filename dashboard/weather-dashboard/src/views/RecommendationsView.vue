@@ -107,15 +107,13 @@
           <Icon icon="ph:lightbulb-bold" class="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 class="text-lg font-semibold text-text-main mb-2">No Recommendations Yet</h3>
           <p class="text-text-light mb-6">
-            Click "Generate Recommendations" to get AI-powered insights based on current weather conditions.
+            Click "Generate Recommendations" to get AI-powered insights based on current weather
+            conditions.
           </p>
         </div>
 
         <!-- Recommendations List -->
-        <div
-          v-else
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
             v-for="(rec, index) in recommendations"
             :key="index"
@@ -155,7 +153,7 @@ import { useWeatherData } from '@/composables/useWeatherData.js'
 
 // --- CONFIGURATION ---
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
 
 const props = defineProps({
   deviceAddress: { type: String, default: 'Philippines' },
@@ -198,8 +196,8 @@ const fetchHistoricalData = async () => {
 
       // Get first and last rainfall totals to calculate 24h accumulation
       const rainfallTotals = logs
-        .map(log => log.rainfall_total_estimated_mm_bucket)
-        .filter(val => val != null)
+        .map((log) => log.rainfall_total_estimated_mm_bucket)
+        .filter((val) => val != null)
 
       if (rainfallTotals.length > 0) {
         const sortedTotals = rainfallTotals.sort((a, b) => a - b)
@@ -226,7 +224,7 @@ const fetchHistoricalData = async () => {
     historicalSummary.value = {
       totalRainfall24h,
       avgTemp24h: avgTemp,
-      avgHumidity24h: avgHumidity
+      avgHumidity24h: avgHumidity,
     }
 
     return true
@@ -240,19 +238,23 @@ const fetchHistoricalData = async () => {
 // --- Gemini API Call ---
 const generateAIAssistantResponse = async (prompt) => {
   if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY' || !GEMINI_API_KEY) {
-    throw new Error('Gemini API key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.')
+    throw new Error(
+      'Gemini API key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.',
+    )
   }
 
   const payload = {
-    contents: [{
-      parts: [{ text: prompt }]
-    }],
+    contents: [
+      {
+        parts: [{ text: prompt }],
+      },
+    ],
     generationConfig: {
       temperature: 0.7,
       topK: 40,
       topP: 0.95,
       maxOutputTokens: 1024,
-    }
+    },
   }
 
   const response = await fetch(GEMINI_API_URL, {
@@ -373,7 +375,6 @@ Return ONLY a valid JSON array (no markdown, no extra text):
     }
 
     recommendations.value = parsed.slice(0, 3) // Ensure exactly 3 recommendations
-
   } catch (err) {
     console.error('Error generating recommendations:', err)
     generationError.value = `Failed to generate recommendations: ${err.message}`
@@ -386,7 +387,11 @@ Return ONLY a valid JSON array (no markdown, no extra text):
 const getIconDetails = (category) => {
   const categoryLower = category.toLowerCase()
 
-  if (categoryLower.includes('typhoon') || categoryLower.includes('storm') || categoryLower.includes('flood')) {
+  if (
+    categoryLower.includes('typhoon') ||
+    categoryLower.includes('storm') ||
+    categoryLower.includes('flood')
+  ) {
     return {
       bg: 'bg-blue-100 dark:bg-blue-900/40',
       text: 'text-blue-600 dark:text-blue-300',
@@ -394,7 +399,11 @@ const getIconDetails = (category) => {
     }
   }
 
-  if (categoryLower.includes('crop') || categoryLower.includes('farming') || categoryLower.includes('irrigation')) {
+  if (
+    categoryLower.includes('crop') ||
+    categoryLower.includes('farming') ||
+    categoryLower.includes('irrigation')
+  ) {
     return {
       bg: 'bg-green-100 dark:bg-green-900/40',
       text: 'text-green-600 dark:text-green-300',
