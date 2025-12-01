@@ -2,6 +2,7 @@
 // PURPOSE: Monitor real-time sensor readings and send EMAIL + SMS alerts when thresholds are exceeded
 // THRESHOLDS: Based on IRRI and PAGASA existing studies (see documentation)
 // SMS: Uses Semaphore API (Philippine-based service - perfect for PH numbers!)
+// ENHANCEMENTS: Smart cooldown + Sensor offline detection
 
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
@@ -49,6 +50,20 @@ if (semaphoreApiKey) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COOLDOWN CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const COOLDOWN_CONFIG = {
+  // Don't resend same severity alert for this duration
+  critical: 60,   // 60 minutes for CRITICAL alerts
+  warning: 120,   // 2 hours for WARNING alerts
+  advisory: 180   // 3 hours for ADVISORY alerts
+};
+
+// Sensor health check
+const SENSOR_OFFLINE_THRESHOLD = 30; // minutes - alert if no data for 30 min
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // THRESHOLD DEFINITIONS (Based on Existing Studies)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -90,6 +105,261 @@ const DISEASE_PATTERNS = {
 const ALERT_RECIPIENTS = [
   gmailEmail
 ];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SMART COOLDOWN SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function shouldSendAlert(alertMetric, alertSeverity, currentValue) {
+  try {
+    // Get last alert of this type
+    const lastAlertQuery = await firestore
+      .collection('alerts_history')
+      .where('status', '==', 'alert')
+      .orderBy('timestamp', 'desc')
+      .limit(50) // Check last 50 alerts
+      .get();
+
+    if (lastAlertQuery.empty) {
+      console.log(`   ✅ No previous alerts - sending ${alertMetric} alert`);
+      return { shouldSend: true, reason: 'first_alert' };
+    }
+
+    // Find the most recent alert for this specific metric
+    let lastMatchingAlert = null;
+    for (const doc of lastAlertQuery.docs) {
+      const data = doc.data();
+      if (data.alerts && data.alerts.some(a => a.metric === alertMetric)) {
+        lastMatchingAlert = data;
+        break;
+      }
+    }
+
+    if (!lastMatchingAlert) {
+      console.log(`   ✅ No previous ${alertMetric} alerts - sending alert`);
+      return { shouldSend: true, reason: 'first_metric_alert' };
+    }
+
+    // Calculate time since last alert
+    const lastTimestamp = lastMatchingAlert.timestamp.toMillis();
+    const minutesSince = (Date.now() - lastTimestamp) / 60000;
+    const cooldownPeriod = COOLDOWN_CONFIG[alertSeverity] || COOLDOWN_CONFIG.warning;
+
+    // Check if cooldown period has passed
+    if (minutesSince < cooldownPeriod) {
+      // Check if conditions worsened significantly
+      const lastAlert = lastMatchingAlert.alerts.find(a => a.metric === alertMetric);
+      const hasWorsened = checkIfConditionsWorsened(alertMetric, lastAlert, currentValue);
+      
+      if (hasWorsened) {
+        console.log(`   ⚠️  ${alertMetric}: Conditions WORSENED - overriding cooldown`);
+        console.log(`      Previous: ${lastAlert.value} → Current: ${currentValue}`);
+        return { shouldSend: true, reason: 'conditions_worsened' };
+      }
+
+      console.log(`   ⏱️  ${alertMetric}: Cooldown active (${minutesSince.toFixed(0)}/${cooldownPeriod} min)`);
+      console.log(`      Last alert: ${new Date(lastTimestamp).toLocaleString('en-US', { timeZone: 'Asia/Manila' })}`);
+      return { shouldSend: false, reason: 'cooldown_active', minutesRemaining: Math.ceil(cooldownPeriod - minutesSince) };
+    }
+
+    console.log(`   ✅ ${alertMetric}: Cooldown expired - sending new alert`);
+    return { shouldSend: true, reason: 'cooldown_expired' };
+
+  } catch (error) {
+    console.error(`   ⚠️  Error checking cooldown for ${alertMetric}:`, error.message);
+    // On error, allow the alert (fail-safe)
+    return { shouldSend: true, reason: 'error_failsafe' };
+  }
+}
+
+// Check if conditions significantly worsened
+function checkIfConditionsWorsened(metric, lastAlert, currentValue) {
+  if (!lastAlert || !lastAlert.value) return false;
+
+  // Extract numeric value from strings like "36°C" or "95%"
+  const extractNumber = (str) => parseFloat(str.toString().replace(/[^0-9.]/g, ''));
+  
+  const lastValue = extractNumber(lastAlert.value);
+  const currentNumeric = extractNumber(currentValue);
+
+  // Define "significant worsening" thresholds
+  const worseningThresholds = {
+    'Temperature': 2,        // 2°C increase
+    'Rainfall Rate': 10,     // 10mm/hr increase
+    'Humidity': 5,           // 5% increase
+    'Disease Risk': 0        // Any change in disease risk
+  };
+
+  const threshold = worseningThresholds[metric] || 0;
+  
+  if (metric === 'Temperature' && currentNumeric > lastValue + threshold) {
+    return true; // Temperature increased significantly
+  } else if (metric === 'Rainfall Rate' && currentNumeric > lastValue + threshold) {
+    return true; // Rainfall increased significantly
+  } else if (metric === 'Humidity' && currentNumeric > lastValue + threshold) {
+    return true; // Humidity increased significantly
+  } else if (metric === 'Disease Risk') {
+    return true; // Always alert on disease risk changes
+  }
+
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SENSOR OFFLINE DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function checkSensorHealth(timestamp) {
+  try {
+    const dataAge = (Date.now() - timestamp) / 60000; // minutes
+    
+    console.log(`\n🔍 SENSOR HEALTH CHECK:`);
+    console.log(`   Last data received: ${dataAge.toFixed(1)} minutes ago`);
+    console.log(`   Offline threshold: ${SENSOR_OFFLINE_THRESHOLD} minutes`);
+
+    if (dataAge > SENSOR_OFFLINE_THRESHOLD) {
+      console.log(`   ⚠️  SENSOR OFFLINE DETECTED!`);
+      
+      // Check if we already sent an offline alert recently
+      const recentOfflineAlert = await firestore
+        .collection('alerts_history')
+        .where('status', '==', 'sensor_offline')
+        .orderBy('timestamp', 'desc')
+        .limit(1)
+        .get();
+
+      let shouldAlert = true;
+      if (!recentOfflineAlert.empty) {
+        const lastOfflineAlert = recentOfflineAlert.docs[0].data();
+        const minutesSinceOfflineAlert = (Date.now() - lastOfflineAlert.timestamp.toMillis()) / 60000;
+        
+        // Only send offline alert once every 2 hours
+        if (minutesSinceOfflineAlert < 120) {
+          console.log(`   ℹ️  Offline alert already sent ${minutesSinceOfflineAlert.toFixed(0)} min ago`);
+          shouldAlert = false;
+        }
+      }
+
+      if (shouldAlert) {
+        await sendSensorOfflineAlert(dataAge, timestamp);
+      }
+      
+      return false; // Sensor is offline
+    }
+
+    console.log(`   ✅ Sensor is ONLINE and healthy`);
+    return true; // Sensor is online
+
+  } catch (error) {
+    console.error(`   ⚠️  Error checking sensor health:`, error.message);
+    return true; // Assume online on error (fail-safe)
+  }
+}
+
+async function sendSensorOfflineAlert(minutesOffline, lastTimestamp) {
+  try {
+    console.log(`\n📧 SENDING SENSOR OFFLINE ALERT...`);
+    
+    const lastReadingTime = new Date(lastTimestamp).toLocaleString('en-US', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
+    const emailSubject = '🔴 SYSTEM ALERT: Weather Sensor Offline';
+    const emailBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background: #f3f4f6; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07); }
+    .header { background: linear-gradient(120deg, #dc2626, #991b1b); color: #ffffff; padding: 26px; text-align: center; }
+    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+    .content { padding: 26px 28px; }
+    .alert-box { padding: 20px; border-radius: 14px; margin: 18px 0; background: #fef2f2; border-left: 6px solid #dc2626; }
+    .info-row { margin: 10px 0; font-size: 15px; }
+    .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔴 Sensor Offline Alert</h1>
+    </div>
+    <div class="content">
+      <div class="alert-box">
+        <h2 style="margin-top:0; color:#991b1b;">⚠️ Weather Sensor Not Responding</h2>
+        <div class="info-row"><strong>Status:</strong> OFFLINE</div>
+        <div class="info-row"><strong>Last Reading:</strong> ${lastReadingTime} (Philippine Time)</div>
+        <div class="info-row"><strong>Time Offline:</strong> ${minutesOffline.toFixed(0)} minutes (${(minutesOffline/60).toFixed(1)} hours)</div>
+      </div>
+      
+      <h3 style="color:#991b1b;">📋 Troubleshooting Steps:</h3>
+      <ol style="line-height: 1.8;">
+        <li><strong>Check Power:</strong> Ensure the ESP32/sensor has power</li>
+        <li><strong>Check WiFi:</strong> Verify internet connectivity</li>
+        <li><strong>Check Wiring:</strong> Inspect sensor connections</li>
+        <li><strong>Restart Device:</strong> Try power cycling the sensor</li>
+        <li><strong>Check Firebase:</strong> Verify database is accessible</li>
+      </ol>
+
+      <div style="margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 10px; border-left: 4px solid #2563eb;">
+        <strong>⚠️ Important:</strong> No weather alerts can be sent while the sensor is offline. Please restore connectivity as soon as possible.
+      </div>
+    </div>
+    <div class="footer">
+      <div style="font-weight: 700; color: #065f46;">🌾 AgriSmart Weather Monitoring System</div>
+      <p>Automated System Alert</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    // Send email
+    await transporter.sendMail({
+      from: `Weather Monitoring System <${gmailEmail}>`,
+      to: ALERT_RECIPIENTS.join(', '),
+      subject: emailSubject,
+      html: emailBody
+    });
+
+    console.log(`   ✅ Sensor offline email sent to: ${ALERT_RECIPIENTS.join(', ')}`);
+
+    // Get SMS settings
+    const smsSettings = await getSmsSettings();
+    
+    // Send SMS if enabled
+    if (smsSettings.enabled && smsSettings.phone && semaphoreApiKey) {
+      const smsMessage = `SENSOR OFFLINE ALERT\n\nWeather sensor has not reported data for ${minutesOffline.toFixed(0)} minutes.\n\nLast reading: ${lastReadingTime}\n\nPlease check sensor power and connectivity immediately.`;
+      
+      await sendSimpleSms(smsSettings.phone, smsMessage);
+    }
+
+    // Log to Firestore
+    await firestore.collection('alerts_history').add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'sensor_offline',
+      message: `Sensor offline for ${minutesOffline.toFixed(0)} minutes`,
+      lastDataTimestamp: new Date(lastTimestamp),
+      minutesOffline: minutesOffline,
+      emailSent: true,
+      recipients: ALERT_RECIPIENTS
+    });
+
+    console.log(`   ✅ Sensor offline alert logged to Firestore\n`);
+
+  } catch (error) {
+    console.error(`   ❌ Error sending sensor offline alert:`, error.message);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SEMAPHORE SMS NOTIFICATION FUNCTION
@@ -141,68 +411,78 @@ async function sendAlertSms(recipientPhone, alerts, temperature, humidity, rainf
       smsBody = smsBody.substring(0, 447) + '...';
     }
 
-    // Prepare Semaphore API request
-    const postData = new URLSearchParams({
-      apikey: semaphoreApiKey,
-      number: cleanPhone,
-      message: smsBody,
-      sendername: 'WEATHER' // Optional: Your sender name (max 11 chars)
-    }).toString();
-
-    const options = {
-      hostname: 'api.semaphore.co',
-      port: 443,
-      path: '/api/v4/messages',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    };
-
-    // Send SMS via Semaphore API
-    const response = await new Promise((resolve, reject) => {
-      const req = https.request(options, (res) => {
-        let data = '';
-        
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-        
-        res.on('end', () => {
-          try {
-            const jsonData = JSON.parse(data);
-            resolve(jsonData);
-          } catch (e) {
-            resolve({ success: false, error: 'Invalid JSON response', raw: data });
-          }
-        });
-      });
-      
-      req.on('error', (error) => {
-        reject(error);
-      });
-      
-      req.write(postData);
-      req.end();
-    });
-
-    // Check response
-    if (response.message_id || response[0]?.message_id) {
-      const messageId = response.message_id || response[0]?.message_id;
-      console.log(`✅ SMS SENT SUCCESSFULLY`);
-      console.log(`   To: ${cleanPhone}`);
-      console.log(`   Message ID: ${messageId}`);
-      console.log(`   Length: ${smsBody.length} chars\n`);
-      return true;
-    } else {
-      console.error(`❌ SMS FAILED:`, response.message || response.error || 'Unknown error');
-      console.error(`   Raw response:`, JSON.stringify(response));
-      return false;
-    }
+    return await sendSmsViaApi(cleanPhone, smsBody);
 
   } catch (error) {
     console.error(`❌ SMS FAILED:`, error.message);
+    return false;
+  }
+}
+
+// Simple SMS function for system alerts
+async function sendSimpleSms(recipientPhone, message) {
+  if (!semaphoreApiKey || !recipientPhone) return false;
+
+  try {
+    let cleanPhone = recipientPhone.trim().replace(/\s+/g, '');
+    if (cleanPhone.startsWith('+63')) {
+      cleanPhone = '0' + cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('63')) {
+      cleanPhone = '0' + cleanPhone.substring(2);
+    }
+
+    return await sendSmsViaApi(cleanPhone, message);
+  } catch (error) {
+    console.error(`❌ SMS FAILED:`, error.message);
+    return false;
+  }
+}
+
+// Core SMS sending function
+async function sendSmsViaApi(cleanPhone, message) {
+  const postData = new URLSearchParams({
+    apikey: semaphoreApiKey,
+    number: cleanPhone,
+    message: message,
+    sendername: 'WEATHER'
+  }).toString();
+
+  const options = {
+    hostname: 'api.semaphore.co',
+    port: 443,
+    path: '/api/v4/messages',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+
+  const response = await new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          resolve({ success: false, error: 'Invalid JSON response', raw: data });
+        }
+      });
+    });
+    req.on('error', (error) => reject(error));
+    req.write(postData);
+    req.end();
+  });
+
+  if (response.message_id || response[0]?.message_id) {
+    const messageId = response.message_id || response[0]?.message_id;
+    console.log(`✅ SMS SENT SUCCESSFULLY`);
+    console.log(`   To: ${cleanPhone}`);
+    console.log(`   Message ID: ${messageId}`);
+    return true;
+  } else {
+    console.error(`❌ SMS FAILED:`, response.message || response.error || 'Unknown error');
     return false;
   }
 }
@@ -222,7 +502,6 @@ async function getSmsSettings() {
     
     const data = settingsDoc.data();
     
-    // Debug logging
     console.log('📄 SMS Settings from Firestore:');
     console.log(`   sms_notifications_enabled: ${data.sms_notifications_enabled}`);
     console.log(`   recipient_phone_number: ${data.recipient_phone_number}`);
@@ -243,11 +522,11 @@ async function getSmsSettings() {
 
 async function checkAlerts() {
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('🚨 REAL-TIME ALERT MONITORING SYSTEM');
+  console.log('🚨 REAL-TIME ALERT MONITORING SYSTEM (Enhanced)');
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`[${new Date().toISOString()}] Checking sensor readings...`);
-  console.log('Thresholds based on: IRRI Research + PAGASA Standards');
-  console.log('Note: Notifications sent ONLY if thresholds are exceeded\n');
+  console.log('✨ NEW: Smart cooldown + Sensor offline detection');
+  console.log('Thresholds based on: IRRI Research + PAGASA Standards\n');
 
   try {
     // Try to get latest data first
@@ -264,7 +543,6 @@ async function checkAlerts() {
     } else {
       console.log('⚠️  No data in sensor_data/latest, checking sensor_logs...');
       
-      // Fallback to sensor_logs
       const logsSnapshot = await db.ref('sensor_logs')
         .orderByChild('timestamp')
         .limitToLast(1)
@@ -272,7 +550,9 @@ async function checkAlerts() {
 
       if (!logsSnapshot.exists()) {
         console.log('❌ No sensor data found in either location.');
-        console.log('✅ No alerts to send.\n');
+        
+        // Send sensor offline alert
+        await sendSensorOfflineAlert(999, Date.now() - (999 * 60 * 1000)); // Indicate long offline
         
         await firestore.collection('alerts_history').add({
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
@@ -304,6 +584,14 @@ async function checkAlerts() {
     // Validate essential readings
     if (temperature === undefined || humidity === undefined) {
       console.log('❌ Missing essential sensor readings (temperature or humidity)');
+      return;
+    }
+
+    // **SENSOR HEALTH CHECK**
+    const sensorOnline = await checkSensorHealth(timestamp);
+    if (!sensorOnline) {
+      console.log('⚠️  Sensor is offline - skipping threshold checks');
+      console.log('═══════════════════════════════════════════════════════════');
       return;
     }
 
@@ -452,9 +740,40 @@ async function checkAlerts() {
       });
     }
 
-    // NO ALERTS - EXIT EARLY
-    if (triggeredAlerts.length === 0) {
-      console.log('✅ ALL READINGS WITHIN SAFE RANGES');
+    // **APPLY SMART COOLDOWN FILTER**
+    console.log('\n🔍 SMART COOLDOWN CHECK:');
+    const alertsToSend = [];
+    const suppressedAlerts = [];
+
+    for (const alert of triggeredAlerts) {
+      const cooldownCheck = await shouldSendAlert(alert.metric, alert.severity, alert.value);
+      
+      if (cooldownCheck.shouldSend) {
+        alertsToSend.push({
+          ...alert,
+          cooldownReason: cooldownCheck.reason
+        });
+      } else {
+        suppressedAlerts.push({
+          ...alert,
+          suppressReason: cooldownCheck.reason,
+          minutesRemaining: cooldownCheck.minutesRemaining
+        });
+      }
+    }
+
+    // Show suppressed alerts
+    if (suppressedAlerts.length > 0) {
+      console.log(`\n⏸️  ${suppressedAlerts.length} ALERT(S) SUPPRESSED (Cooldown Active):`);
+      suppressedAlerts.forEach((alert, index) => {
+        console.log(`   ${index + 1}. ${alert.metric}: ${alert.value}`);
+        console.log(`      → Suppressed: ${alert.suppressReason} (${alert.minutesRemaining} min remaining)\n`);
+      });
+    }
+
+    // NO ALERTS TO SEND - EXIT EARLY
+    if (alertsToSend.length === 0 && triggeredAlerts.length === 0) {
+      console.log('\n✅ ALL READINGS WITHIN SAFE RANGES');
       console.log(`   Temperature: ${temperature}°C (Optimal: ${THRESHOLDS.temperature.optimal_min}-${THRESHOLDS.temperature.optimal_max}°C)`);
       console.log(`   Humidity: ${humidity}% (Safe: <${THRESHOLDS.humidity.moderate}%)`);
       console.log(`   Rainfall Rate (Est.): ${rainfall}mm/hr (Safe: <${THRESHOLDS.rainfall.yellow}mm/hr)`);
@@ -473,21 +792,40 @@ async function checkAlerts() {
       return;
     }
 
-    // ALERTS TRIGGERED - SEND NOTIFICATIONS
-    console.log(`⚠️  ${triggeredAlerts.length} ALERT(S) TRIGGERED - Preparing notifications...\n`);
+    if (alertsToSend.length === 0 && suppressedAlerts.length > 0) {
+      console.log('\n✅ All alerts suppressed by cooldown - No notifications sent');
+      console.log(`   ${suppressedAlerts.length} alert(s) still active but in cooldown period\n`);
+      
+      await firestore.collection('alerts_history').add({
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'suppressed',
+        message: 'Alerts suppressed by cooldown',
+        suppressedCount: suppressedAlerts.length,
+        readings: { temperature, humidity, rainfall },
+        readingTime: readingTime,
+        source: readingSource
+      });
+      
+      console.log('═══════════════════════════════════════════════════════════');
+      return;
+    }
+
+    // SEND NOTIFICATIONS FOR APPROVED ALERTS
+    console.log(`\n⚠️  ${alertsToSend.length} ALERT(S) APPROVED - Sending notifications...\n`);
     
-    triggeredAlerts.forEach((alert, index) => {
-      console.log(`${alert.icon} Alert ${index + 1}/${triggeredAlerts.length}:`);
+    alertsToSend.forEach((alert, index) => {
+      console.log(`${alert.icon} Alert ${index + 1}/${alertsToSend.length}:`);
       console.log(`   Type: ${alert.type}`);
       console.log(`   Metric: ${alert.metric}`);
       console.log(`   Current: ${alert.value} (Threshold: ${alert.threshold})`);
       console.log(`   Message: ${alert.message}`);
       console.log(`   Action: ${alert.action}`);
-      console.log(`   Source: ${alert.source}\n`);
+      console.log(`   Source: ${alert.source}`);
+      console.log(`   Cooldown Status: ${alert.cooldownReason}\n`);
     });
 
-    const hasCritical = triggeredAlerts.some(a => a.severity === 'critical');
-    const hasWarning = triggeredAlerts.some(a => a.severity === 'warning');
+    const hasCritical = alertsToSend.some(a => a.severity === 'critical');
+    const hasWarning = alertsToSend.some(a => a.severity === 'warning');
     
     const emailSubject = hasCritical
       ? '🚨 CRITICAL WEATHER ALERT - Immediate Action Required'
@@ -495,7 +833,7 @@ async function checkAlerts() {
       ? '⚠️ Weather Alert - Attention Needed'
       : '📋 Weather Advisory - For Your Information';
 
-    // Build complete email HTML
+    // Build email HTML (same as before)
     const emailBody = `
 <!DOCTYPE html>
 <html>
@@ -503,242 +841,61 @@ async function checkAlerts() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: 'Inter', Arial, sans-serif;
-      line-height: 1.6;
-      color: #374151;
-      margin: 0;
-      padding: 0;
-      background: #f3f4f6;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 30px auto;
-      background: #ffffff;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
-      border: 1px solid #e5e7eb;
-    }
-
-    /* Gradient header */
-    .header {
-      background: linear-gradient(120deg, 
-        ${hasCritical ? '#ef4444, #b91c1c' :
-        hasWarning ? '#fbbf24, #d97706' :
-        '#3b82f6, #1e40af'});
-      color: #ffffff;
-      padding: 26px;
-      text-align: center;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .header p {
-      margin: 6px 0 0 0;
-      font-size: 13px;
-      opacity: 0.92;
-    }
-
-    .content {
-      padding: 26px 28px;
-    }
-
-    /* Readings box */
-    .readings {
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 14px;
-      border: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      text-align: center;
-      flex-wrap: wrap;
-      margin-bottom: 25px;
-    }
-
-    .reading-item {
-      flex: 1;
-      min-width: 120px;
-      background: #ffffff;
-      padding: 12px;
-      border-radius: 10px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.04);
-      margin: 6px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    /* Alert cards */
-    .alert-box {
-      padding: 20px;
-      border-radius: 14px;
-      margin: 18px 0;
-      border-left: 6px solid;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      background: #ffffff;
-      transition: 0.2s ease;
-    }
-
-    .alert-box:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    }
-
-    .alert-box.critical {
-      border-left-color: #b91c1c;
-      background: #fef2f2;
-    }
-
-    .alert-box.warning {
-      border-left-color: #d97706;
-      background: #fffbeb;
-    }
-
-    .alert-box.advisory {
-      border-left-color: #1e40af;
-      background: #eff6ff;
-    }
-
-    .alert-title {
-      font-size: 19px;
-      font-weight: 700;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #111827;
-    }
-
-    .alert-detail {
-      font-size: 14px;
-      margin: 6px 0;
-      color: #1f2937;
-    }
-
-    .alert-action {
-      margin-top: 12px;
-      padding: 10px 12px;
-      background: rgba(0,0,0,0.04);
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .alert-source {
-      font-size: 12px;
-      color: #6b7280;
-      font-style: italic;
-      margin-top: 8px;
-      display: block;
-    }
-
-    /* Auto note */
-    .note {
-      margin-top: 26px;
-      padding: 18px;
-      background: #f0f9ff;
-      border-left: 5px solid #2563eb;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    /* Footer */
-    .footer {
-      background: linear-gradient(to top, #f9fafb, #ffffff);
-      padding: 20px;
-      text-align: center;
-      font-size: 12px;
-      color: #6b7280;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .footer .brand {
-      font-size: 13px;
-      font-weight: 700;
-      color: #065f46;
-      margin-bottom: 4px;
-    }
-
-    .footer .tagline {
-      font-size: 11px;
-      background: #e0f2fe;
-      padding: 6px 15px;
-      border-radius: 20px;
-      display: inline-block;
-      font-weight: 600;
-      color: #0c4a6e;
-      margin-top: 6px;
-    }
+    body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background: #f3f4f6; }
+    .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07); border: 1px solid #e5e7eb; }
+    .header { background: linear-gradient(120deg, ${hasCritical ? '#ef4444, #b91c1c' : hasWarning ? '#fbbf24, #d97706' : '#3b82f6, #1e40af'}); color: #ffffff; padding: 26px; text-align: center; }
+    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+    .header p { margin: 6px 0 0 0; font-size: 13px; opacity: 0.92; }
+    .content { padding: 26px 28px; }
+    .readings { background: #f9fafb; padding: 20px; border-radius: 14px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; text-align: center; flex-wrap: wrap; margin-bottom: 25px; }
+    .reading-item { flex: 1; min-width: 120px; background: #ffffff; padding: 12px; border-radius: 10px; box-shadow: 0 3px 6px rgba(0,0,0,0.04); margin: 6px; font-size: 15px; font-weight: 600; color: #1f2937; }
+    .alert-box { padding: 20px; border-radius: 14px; margin: 18px 0; border-left: 6px solid; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: #ffffff; }
+    .alert-box.critical { border-left-color: #b91c1c; background: #fef2f2; }
+    .alert-box.warning { border-left-color: #d97706; background: #fffbeb; }
+    .alert-box.advisory { border-left-color: #1e40af; background: #eff6ff; }
+    .alert-title { font-size: 19px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; color: #111827; }
+    .alert-detail { font-size: 14px; margin: 6px 0; color: #1f2937; }
+    .alert-action { margin-top: 12px; padding: 10px 12px; background: rgba(0,0,0,0.04); border-radius: 8px; font-size: 14px; font-weight: 600; }
+    .alert-source { font-size: 12px; color: #6b7280; font-style: italic; margin-top: 8px; display: block; }
+    .note { margin-top: 26px; padding: 18px; background: #f0f9ff; border-left: 5px solid #2563eb; border-radius: 10px; font-size: 14px; font-weight: 500; }
+    .footer { background: linear-gradient(to top, #f9fafb, #ffffff); padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+    .footer .brand { font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 4px; }
   </style>
 </head>
-
 <body>
   <div class="container">
-    
-    <div class="header ${hasCritical ? 'critical' : hasWarning ? 'warning' : 'normal'}">
+    <div class="header">
       <h1>${hasCritical ? '🚨' : hasWarning ? '⚠️' : '📋'} Weather Alert</h1>
       <p>${readingTime}</p>
     </div>
-
     <div class="content">
-      
       <div class="readings">
         <div class="reading-item">🌡️ ${temperature}°C</div>
         <div class="reading-item">💧 ${humidity}%</div>
         <div class="reading-item">🌧️ ${rainfall}mm/hr</div>
       </div>
-
       <hr style="border: none; height: 1px; background: #e5e7eb; margin: 20px 0;">
-
-      <h3 style="font-size:17px;font-weight:700;color:#111827;">
-        ${triggeredAlerts.length} Alert(s) Triggered:
-      </h3>
-
-      ${triggeredAlerts.map(alert => `
+      <h3 style="font-size:17px;font-weight:700;color:#111827;">${alertsToSend.length} Alert(s) Triggered:</h3>
+      ${alertsToSend.map(alert => `
         <div class="alert-box ${alert.severity}">
           <div class="alert-title">${alert.icon} ${alert.type}: ${alert.metric}</div>
           <div class="alert-detail"><strong>Current:</strong> ${alert.value}</div>
           <div class="alert-detail"><strong>Threshold:</strong> ${alert.threshold}</div>
           <div class="alert-detail">${alert.message}</div>
-
-          <div class="alert-action">
-            📌 <strong>Recommended Action:</strong> ${alert.action}
-          </div>
-
+          <div class="alert-action">📌 <strong>Recommended Action:</strong> ${alert.action}</div>
           <span class="alert-source">Source: ${alert.source}</span>
         </div>
       `).join('')}
-
-      ${triggeredAlerts.length === 0 ? `
-        <div class="alert-box advisory">
-          <div class="alert-title">✅ System Normal</div>
-          <div class="alert-detail">No thresholds breached at this time.</div>
-        </div>
-      ` : ''}
-
       <div class="note">
-        <strong>📌 Note:</strong> This is an automated alert from your Weather Monitoring System. 
-        Please check your dashboard for real-time updates and historical trends.
+        <strong>📌 Note:</strong> This is an automated alert with smart cooldown. 
+        ${suppressedAlerts.length > 0 ? `${suppressedAlerts.length} additional alert(s) are in cooldown period.` : ''} 
+        Check your dashboard for real-time updates.
       </div>
-
     </div>
-
     <div class="footer">
       <div class="brand">🌾 AgriSmart Weather Monitoring System</div>
-      <div class="tagline">Smart alerts for Filipino rice farmers</div>
-      <p style="margin-top:8px;">Powered by IoT • Inspired by IRRI & PAGASA Standards</p>
+      <p>Smart alerts for Filipino rice farmers • Enhanced with cooldown</p>
     </div>
-
   </div>
 </body>
 </html>
@@ -753,26 +910,18 @@ async function checkAlerts() {
 
     // SEND EMAIL
     await transporter.sendMail(mailOptions);
-    
     console.log('✅ EMAIL SENT SUCCESSFULLY');
     console.log(`   Recipients: ${ALERT_RECIPIENTS.join(', ')}`);
     console.log(`   Subject: ${emailSubject}`);
-    console.log(`   Alerts: ${triggeredAlerts.length}\n`);
+    console.log(`   Alerts: ${alertsToSend.length}\n`);
 
     // GET SMS SETTINGS AND SEND SMS
     const smsSettings = await getSmsSettings();
-    
     let smsSent = false;
     
     if (smsSettings.enabled && smsSettings.phone) {
       console.log('📱 SMS notifications enabled - sending via Semaphore...');
-      smsSent = await sendAlertSms(
-        smsSettings.phone, 
-        triggeredAlerts, 
-        temperature, 
-        humidity, 
-        rainfall
-      );
+      smsSent = await sendAlertSms(smsSettings.phone, alertsToSend, temperature, humidity, rainfall);
     } else if (!smsSettings.enabled) {
       console.log('ℹ️  SMS notifications disabled in dashboard settings\n');
     } else if (!smsSettings.phone) {
@@ -783,15 +932,22 @@ async function checkAlerts() {
     await firestore.collection('alerts_history').add({
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       status: 'alert',
-      alertCount: triggeredAlerts.length,
-      alerts: triggeredAlerts.map(a => ({
+      alertCount: alertsToSend.length,
+      suppressedCount: suppressedAlerts.length,
+      alerts: alertsToSend.map(a => ({
         type: a.type,
         metric: a.metric,
         value: a.value,
         threshold: a.threshold,
         message: a.message,
         action: a.action,
-        source: a.source
+        source: a.source,
+        cooldownReason: a.cooldownReason
+      })),
+      suppressedAlerts: suppressedAlerts.map(a => ({
+        metric: a.metric,
+        value: a.value,
+        suppressReason: a.suppressReason
       })),
       readings: { temperature, humidity, rainfall },
       readingTime: readingTime,
@@ -815,7 +971,7 @@ async function checkAlerts() {
 
 // Run the alert check
 checkAlerts().then(() => {
-  console.log('[COMPLETE] Alert monitoring finished.\n');
+  console.log('[COMPLETE] Enhanced alert monitoring finished.\n');
   process.exit(0);
 }).catch((error) => {
   console.error('[FAILED] Alert monitoring encountered an error:', error);
