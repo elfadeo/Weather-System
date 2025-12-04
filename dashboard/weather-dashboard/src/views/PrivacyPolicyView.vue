@@ -31,9 +31,7 @@
 
       <!-- Header -->
       <header class="mb-8">
-        <h1 id="privacy-heading" class="text-3xl sm:text-4xl font-bold mb-2">
-          Privacy Policy
-        </h1>
+        <h1 id="privacy-heading" class="text-3xl sm:text-4xl font-bold mb-2">Privacy Policy</h1>
         <p class="text-text-light text-sm">Effective Date: {{ lastUpdatedFormatted }}</p>
       </header>
 
@@ -69,7 +67,10 @@
             </p>
             <p class="text-text-light">
               <strong>Email:</strong>
-              <a href="mailto:ponce.rn952@s.msumain.edu.ph" class="text-primary hover:underline ml-2">
+              <a
+                href="mailto:ponce.rn952@s.msumain.edu.ph"
+                class="text-primary hover:underline ml-2"
+              >
                 ponce.rn952@s.msumain.edu.ph
               </a>
             </p>
@@ -79,9 +80,7 @@
             <p class="text-text-light">
               <strong>Institution:</strong> Mindanao State University - Main Campus
             </p>
-            <p class="text-text-light">
-              <strong>Location:</strong> Marawi City, Philippines
-            </p>
+            <p class="text-text-light"><strong>Location:</strong> Marawi City, Philippines</p>
             <p
               class="text-sm text-text-light mt-4 pt-4 border-t border-gray-300 dark:border-gray-600"
             >
@@ -123,8 +122,8 @@ const lastUpdatedFormatted = computed(() =>
   lastUpdatedDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
-  })
+    day: 'numeric',
+  }),
 )
 
 const sections = [
@@ -153,8 +152,8 @@ const sections = [
       'D. Cookies and Tracking Technologies:',
       '• Session cookies for authentication',
       '• Analytics cookies to understand user behavior (if enabled)',
-      '• Local storage for dashboard preferences'
-    ]
+      '• Local storage for dashboard preferences',
+    ],
   },
   {
     id: 2,
@@ -170,8 +169,8 @@ const sections = [
       '• Communication: To send service updates, maintenance notices, and respond to inquiries',
       '• Legal Compliance: To comply with legal obligations and enforce our Terms of Service',
       '• Security: To detect and prevent fraud, abuse, and unauthorized access',
-      '• Research: To conduct agricultural research and improve rice farming practices (anonymized data only)'
-    ]
+      '• Research: To conduct agricultural research and improve rice farming practices (anonymized data only)',
+    ],
   },
   {
     id: 3,
@@ -182,8 +181,8 @@ const sections = [
       '• Consent: You have explicitly consented to the processing of your personal data (e.g., enabling SMS notifications)',
       '• Contract: Processing is necessary for the performance of our service agreement with you',
       '• Legitimate Interests: We have a legitimate interest in providing weather monitoring services, improving agricultural outcomes, and ensuring platform security',
-      '• Legal Obligation: We may process data to comply with legal requirements or court orders'
-    ]
+      '• Legal Obligation: We may process data to comply with legal requirements or court orders',
+    ],
   },
   {
     id: 4,
@@ -201,8 +200,8 @@ const sections = [
       '• To protect our rights, property, or safety, or that of our users',
       'C. Business Transfers:',
       '• In the event of a merger, acquisition, or sale of assets, your data may be transferred to the acquiring entity (you will be notified in advance)',
-      'We ensure all third-party service providers comply with data protection standards and sign Data Processing Agreements to safeguard your information.'
-    ]
+      'We ensure all third-party service providers comply with data protection standards and sign Data Processing Agreements to safeguard your information.',
+    ],
   },
   {
     id: 5,
@@ -216,8 +215,8 @@ const sections = [
       '• Firewalls and Monitoring: Network security measures and intrusion detection systems',
       '• Regular Audits: Periodic security assessments and vulnerability testing',
       '• Data Backups: Regular backups stored securely to prevent data loss',
-      'However, no method of transmission over the internet is 100% secure. While we strive to protect your information, we cannot guarantee absolute security. You are responsible for maintaining the confidentiality of your account credentials.'
-    ]
+      'However, no method of transmission over the internet is 100% secure. While we strive to protect your information, we cannot guarantee absolute security. You are responsible for maintaining the confidentiality of your account credentials.',
+    ],
   },
   {
     id: 6,
@@ -229,8 +228,8 @@ const sections = [
       '• Weather Sensor Data: Retained for 5 years to support long-term agricultural research and historical analysis',
       '• Communication Logs: Email and SMS logs retained for 2 years for audit and support purposes',
       '• Usage Data: Anonymized analytics data may be retained indefinitely for research',
-      'You may request deletion of your data at any time by contacting our Data Protection Officer. We will delete your information within 30 days, except where retention is required by law.'
-    ]
+      'You may request deletion of your data at any time by contacting our Data Protection Officer. We will delete your information within 30 days, except where retention is required by law.',
+    ],
   },
   {
     id: 7,
@@ -245,8 +244,8 @@ const sections = [
       '• Right to Object: You can object to the processing of your data for direct marketing or other purposes',
       '• Right to Data Portability: You can request your data in a machine-readable format to transfer to another service',
       '• Right to Withdraw Consent: You can withdraw your consent for data processing at any time (may affect service functionality)',
-      'To exercise these rights, contact us at ponce.rn952@s.msumain.edu.ph. We will respond within 15 working days as required by the National Privacy Commission.'
-    ]
+      'To exercise these rights, contact us at ponce.rn952@s.msumain.edu.ph. We will respond within 15 working days as required by the National Privacy Commission.',
+    ],
   },
   {
     id: 8,
@@ -257,24 +256,24 @@ const sections = [
       '• Essential Cookies: Required for authentication and core functionality (cannot be disabled)',
       '• Analytics Cookies: Used to understand user behavior and improve the platform (can be disabled)',
       '• Preference Cookies: Store your dashboard settings and theme preferences',
-      'You can control cookie settings through your browser. However, disabling essential cookies may impair service functionality. We do not use third-party advertising cookies.'
-    ]
+      'You can control cookie settings through your browser. However, disabling essential cookies may impair service functionality. We do not use third-party advertising cookies.',
+    ],
   },
   {
     id: 9,
     number: 9,
     title: 'Third-Party Links',
     content: [
-      'Our Service may contain links to third-party websites (e.g., IRRI resources, PAGASA weather updates). We are not responsible for the privacy practices of these external sites. We encourage you to review their privacy policies before providing any personal information.'
-    ]
+      'Our Service may contain links to third-party websites (e.g., IRRI resources, PAGASA weather updates). We are not responsible for the privacy practices of these external sites. We encourage you to review their privacy policies before providing any personal information.',
+    ],
   },
   {
     id: 10,
     number: 10,
     title: "Children's Privacy",
     content: [
-      'Our Service is not intended for individuals under the age of 18. We do not knowingly collect personal information from children. If you are a parent or guardian and believe your child has provided us with personal data, please contact us immediately, and we will delete the information within 30 days.'
-    ]
+      'Our Service is not intended for individuals under the age of 18. We do not knowingly collect personal information from children. If you are a parent or guardian and believe your child has provided us with personal data, please contact us immediately, and we will delete the information within 30 days.',
+    ],
   },
   {
     id: 11,
@@ -285,8 +284,8 @@ const sections = [
       '• Using service providers with adequate data protection measures',
       '• Signing Standard Contractual Clauses or Data Processing Agreements',
       '• Ensuring recipients are subject to equivalent data protection laws',
-      'Firebase (Google Cloud) complies with international standards including GDPR and ISO 27001.'
-    ]
+      'Firebase (Google Cloud) complies with international standards including GDPR and ISO 27001.',
+    ],
   },
   {
     id: 12,
@@ -298,8 +297,8 @@ const sections = [
       '• Inform the National Privacy Commission (NPC) as required by law',
       '• Describe the nature of the breach, the data affected, and actions taken to mitigate harm',
       '• Provide recommendations on steps you can take to protect yourself',
-      'We maintain an incident response plan and conduct regular security drills to minimize breach risks.'
-    ]
+      'We maintain an incident response plan and conduct regular security drills to minimize breach risks.',
+    ],
   },
   {
     id: 13,
@@ -310,8 +309,8 @@ const sections = [
       '• Update the "Effective Date" at the top of this page',
       '• Notify you via email or dashboard notification',
       '• Request your consent if required by law',
-      'Your continued use of the Service after changes become effective constitutes acceptance of the updated Privacy Policy. We encourage you to review this page periodically.'
-    ]
+      'Your continued use of the Service after changes become effective constitutes acceptance of the updated Privacy Policy. We encourage you to review this page periodically.',
+    ],
   },
   {
     id: 14,
@@ -320,13 +319,13 @@ const sections = [
     content: [
       'AgriSmart Weather Monitoring System is committed to full compliance with the Data Privacy Act of 2012 (RA 10173) and regulations issued by the National Privacy Commission (NPC). We:',
       '• Register with the NPC as a Personal Information Controller (if required)',
-      '• Implement the NPC\'s privacy and security framework',
+      "• Implement the NPC's privacy and security framework",
       '• Conduct regular Data Privacy Impact Assessments (DPIAs)',
       '• Train our staff on data protection principles',
       '• Maintain records of processing activities',
-      'For more information about your rights under Philippine law, visit the National Privacy Commission website: www.privacy.gov.ph'
-    ]
-  }
+      'For more information about your rights under Philippine law, visit the National Privacy Commission website: www.privacy.gov.ph',
+    ],
+  },
 ]
 </script>
 
