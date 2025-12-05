@@ -19,7 +19,7 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: '#3B82F6', // Tailwind blue-500
+    default: 'var(--color-primary)',
   },
 })
 
@@ -77,7 +77,7 @@ const chartOptions = computed(() => ({
     hover: { size: 4 },
   },
   grid: {
-    borderColor: isDark.value ? '#374151' : '#E5E7EB', // Tailwind gray-700 / gray-200
+    borderColor: isDark.value ? 'var(--color-surface-mute)' : 'var(--color-surface-soft)',
   },
 }))
 </script>

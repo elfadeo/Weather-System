@@ -15,23 +15,23 @@
       <div class="flex items-center space-x-2">
         <Icon
           icon="ph:arrow-clockwise-bold"
-          class="h-5 w-5 text-gray-600 dark:text-text-light cursor-pointer hover:text-primary transition-colors"
+          class="h-5 w-5 text-text-light cursor-pointer hover:text-primary transition-colors"
           :class="{ 'animate-spin': isSummaryLoading }"
           @click="refreshInsights"
           title="Refresh insights"
           aria-label="Refresh insights"
         />
-        <Icon icon="ph:chart-bar-bold" class="h-6 w-6 text-blue-500" />
+        <Icon icon="ph:chart-bar-bold" class="h-6 w-6 text-primary" />
       </div>
     </div>
 
     <!-- Loading State -->
-    <div v-if="isSummaryLoading" class="text-gray-600 dark:text-text-light">
+    <div v-if="isSummaryLoading" class="text-text-light">
       <div class="animate-pulse space-y-3">
-        <div class="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+        <div class="h-24 bg-surface-soft dark:bg-surface-mute rounded-lg"></div>
         <div v-for="i in 3" :key="i" class="flex justify-between items-center">
-          <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div class="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div class="h-4 w-24 bg-surface-soft dark:bg-surface-mute rounded"></div>
+          <div class="h-4 w-16 bg-surface-soft dark:bg-surface-mute rounded"></div>
         </div>
       </div>
     </div>
@@ -92,23 +92,23 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <h5
-            class="text-xs font-semibold text-gray-600 dark:text-text-light uppercase tracking-wide"
+            class="text-xs font-semibold text-text-light uppercase tracking-wide"
           >
             Statistical Summary
           </h5>
-          <span class="text-xs text-gray-400">{{ dataPointsCount }} readings</span>
+          <span class="text-xs text-text-light">{{ dataPointsCount }} readings</span>
         </div>
 
         <div
           v-for="(value, key) in summaryData.details"
           :key="key"
-          class="flex justify-between items-center text-sm py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
+          class="flex justify-between items-center text-sm py-2.5 border-b border-surface-soft dark:border-surface-mute last:border-0"
         >
-          <span class="text-gray-600 dark:text-text-light flex items-center space-x-2">
+          <span class="text-text-light flex items-center space-x-2">
             <Icon :icon="getMetricIcon(key)" class="h-4 w-4" />
             <span>{{ key }}</span>
           </span>
-          <span class="font-semibold text-gray-900 dark:text-text-main">{{ value || 'N/A' }}</span>
+          <span class="font-semibold text-text-main">{{ value || 'N/A' }}</span>
         </div>
       </div>
 
@@ -130,7 +130,7 @@
 
       <!-- Note about real-time alerts -->
       <div
-        class="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded text-xs text-gray-500 dark:text-gray-400"
+        class="flex items-start space-x-2 p-2 bg-surface-soft dark:bg-surface-mute/50 rounded text-xs text-text-light"
       >
         <Icon icon="ph:bell-bold" class="h-4 w-4 mt-0.5" />
         <p>
@@ -141,10 +141,10 @@
 
       <!-- Footer -->
       <div
-        class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700"
+        class="flex items-center justify-between pt-2 border-t border-surface-soft dark:border-surface-mute"
       >
-        <p class="text-xs text-gray-400">Updated {{ formattedTimestamp }}</p>
-        <div class="flex items-center space-x-1 text-xs text-gray-400">
+        <p class="text-xs text-text-light">Updated {{ formattedTimestamp }}</p>
+        <div class="flex items-center space-x-1 text-xs text-text-light">
           <Icon icon="ph:database-bold" class="h-3 w-3" />
           <span>24h Analysis</span>
         </div>
@@ -152,10 +152,10 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center text-gray-600 dark:text-text-light py-8">
-      <Icon icon="ph:chart-line-up-bold" class="h-12 w-12 text-gray-400 mx-auto mb-3" />
+    <div v-else class="text-center text-text-light py-8">
+      <Icon icon="ph:chart-line-up-bold" class="h-12 w-12 text-text-light mx-auto mb-3" />
       <p class="text-sm font-semibold mb-1">Collecting data...</p>
-      <p class="text-xs text-gray-400">Summary will appear soon</p>
+      <p class="text-xs text-text-light">Summary will appear soon</p>
     </div>
   </div>
 </template>
@@ -215,38 +215,38 @@ const conditionStyles = computed(() => {
 
   const styles = {
     severe: {
-      bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-      textClass: 'text-red-900 dark:text-red-100',
-      iconClass: 'text-red-600 dark:text-red-400',
-      badgeClass: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200',
+      bgClass: 'bg-red-50 border-red-200',
+      textClass: 'text-red-900',
+      iconClass: 'text-red-600',
+      badgeClass: 'bg-red-100 text-red-700',
       icon: 'ph:warning-octagon-bold',
     },
     concerning: {
-      bgClass: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
-      textClass: 'text-orange-900 dark:text-orange-100',
-      iconClass: 'text-orange-600 dark:text-orange-400',
-      badgeClass: 'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200',
+      bgClass: 'bg-orange-50 border-orange-200',
+      textClass: 'text-orange-900',
+      iconClass: 'text-orange-600',
+      badgeClass: 'bg-orange-100 text-orange-700',
       icon: 'ph:warning-bold',
     },
     notable: {
-      bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
-      textClass: 'text-blue-900 dark:text-blue-100',
-      iconClass: 'text-blue-600 dark:text-blue-400',
-      badgeClass: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200',
+      bgClass: 'bg-blue-50 border-blue-200',
+      textClass: 'text-blue-900',
+      iconClass: 'text-blue-600',
+      badgeClass: 'bg-blue-100 text-blue-700',
       icon: 'ph:eye-bold',
     },
     normal: {
-      bgClass: 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
-      textClass: 'text-gray-900 dark:text-gray-100',
-      iconClass: 'text-gray-600 dark:text-gray-400',
-      badgeClass: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200',
+      bgClass: 'bg-gray-50 border-gray-200',
+      textClass: 'text-gray-900',
+      iconClass: 'text-gray-600',
+      badgeClass: 'bg-gray-100 text-gray-700',
       icon: 'ph:check-circle-bold',
     },
     favorable: {
-      bgClass: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-      textClass: 'text-green-900 dark:text-green-100',
-      iconClass: 'text-green-600 dark:text-green-400',
-      badgeClass: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200',
+      bgClass: 'bg-green-50 border-green-200',
+      textClass: 'text-green-900',
+      iconClass: 'text-green-600',
+      badgeClass: 'bg-green-100 text-green-700',
       icon: 'ph:sun-bold',
     },
   }

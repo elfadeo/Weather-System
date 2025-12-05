@@ -83,21 +83,21 @@ watch(mapRef, (newMapRefValue) => {
 </script>
 
 <template>
-  <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
+  <div class="bg-surface/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-lg font-medium text-gray-700">Station Location</h3>
-      <span class="text-sm text-gray-600 font-medium">{{ deviceAddress }}</span>
+      <h3 class="text-lg font-medium text-text-main">Station Location</h3>
+      <span class="text-sm text-text-light font-medium">{{ deviceAddress }}</span>
     </div>
 
     <!-- Map -->
     <div class="relative h-[400px] rounded-xl overflow-hidden">
       <div
         v-if="!mapCenter"
-        class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10"
+        class="absolute inset-0 flex items-center justify-center bg-surface/50 backdrop-blur-sm z-10"
       >
         <div class="text-center">
-          <div class="animate-pulse text-gray-600">Waiting for location data...</div>
+          <div class="animate-pulse text-text-light">Waiting for location data...</div>
         </div>
       </div>
 
@@ -121,19 +121,19 @@ watch(mapRef, (newMapRefValue) => {
         <l-marker :lat-lng="markerLatLng">
           <l-popup :options="mapConfig.popupOptions">
             <div class="p-3">
-              <h4 class="font-medium text-gray-800 mb-2">Weather Station</h4>
+              <h4 class="font-medium text-text-main mb-2">Weather Station</h4>
               <div class="space-y-2">
                 <p class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600">Temperature</span>
-                  <span class="font-medium text-red-500">{{ temperature }}°C</span>
+                  <span class="text-text-light">Temperature</span>
+                  <span class="font-medium text-red-500 dark:text-red-400">{{ temperature }}°C</span>
                 </p>
                 <p class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600">Humidity</span>
-                  <span class="font-medium text-blue-500">{{ humidity }}%</span>
+                  <span class="text-text-light">Humidity</span>
+                  <span class="font-medium text-primary">{{ humidity }}%</span>
                 </p>
                 <p class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600">Rainfall Rate (Est.)</span>
-                  <span class="font-medium text-indigo-500">{{ rainfall }} mm/hr</span>
+                  <span class="text-text-light">Rainfall Rate (Est.)</span>
+                  <span class="font-medium text-indigo-500 dark:text-indigo-400">{{ rainfall }} mm/hr</span>
                 </p>
               </div>
             </div>
@@ -158,13 +158,14 @@ watch(mapRef, (newMapRefValue) => {
 }
 .custom-popup .leaflet-popup-tip,
 .custom-popup .leaflet-popup-content-wrapper {
-  background: white;
-  color: #2c3e50;
+  background: var(--color-surface);
+  color: var(--color-text-main);
 }
 .custom-popup .leaflet-popup-close-button {
-  color: #2c3e50;
+  color: var(--color-text-main);
 }
 .custom-popup .leaflet-popup-close-button:hover {
-  color: #000;
+  color: var(--color-text-light);
 }
 </style>
+

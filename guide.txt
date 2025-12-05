@@ -1,104 +1,16 @@
-The most convenient and safe option for your current devices right now is:
-
-✅ Use Bucketed Rainfall Estimates + Keep Raw Logs for Later Calibration (Hybrid Option)
-
-Since you only have:
-
-ESP32
-
-DHT22
-
-Generic analog rainfall sensor
-
-You should:
-
-Stop treating raw readings as millimeters
-
-Use a simple rainfall “bucket” that produces realistic totals
-
-Still save raw values to Firebase so you can improve accuracy later (without changing hardware)
-
-This works perfectly on your setup because it:
-
-Doesn’t require extra parts
-
-Avoids impossible values (like 84,609 mm)
-
-Gives believable rainfall totals for your system demo
-
-Keeps your data useful for future calibration
-
-🌧 Recommended Bucket Table (sensible for rice capstone)
-
-You’ll estimate rainfall intensity per 30-minute equivalent using rainPercent:
-
-Rain Level (rainPercent)	Assumed Rainfall Intensity
-0 – 20%	0 mm/30 mins (No rain)
-21 – 40%	2 mm/30 mins (Light rain)
-41 – 60%	5 mm/30 mins (Moderate rain)
-61 – 80%	8 mm/30 mins (Strong rain)
-81 – 100%	12 mm/30 mins (Heavy rain)
-
-These are not exact, but they are realistic, academically acceptable estimates if documented clearly.
-
-🛠 Firmware patch (replace your current rainfall processing in loop())
-// --- READ RAIN SENSOR ---
-int rainRaw = analogRead(RAIN_SENSOR_PIN);
-int adjustedRainRaw = 4095 - rainRaw; // optional inverted raw
-int rainPercent = map(rainRaw, 4095, 0, 0, 100);
-
-// --- CONVERT TO REALISTIC BUCKETED RAINFALL (mm/hr estimate) ---
-float mm_per_hr_bucket = 0.0;
-if (rainPercent <= 20) mm_per_hr_bucket = 0.0;
-else if (rainPercent <= 40) mm_per_hr_bucket = 4.0;   // ≈2 mm in 30 mins
-else if (rainPercent <= 60) mm_per_hr_bucket = 10.0;  // ≈5 mm in 30 mins
-else if (rainPercent <= 80) mm_per_hr_bucket = 16.0;  // ≈8 mm in 30 mins
-else mm_per_hr_bucket = 24.0;                         // ≈12 mm in 30 mins
-
-// --- ACCUMULATE TOTAL RAINFALL BASED ON ELAPSED TIME ---
-unsigned long now = millis();
-float dt_hours = (now - rainLastMillis) / 3600000.0;
-total_mm += mm_per_hr_bucket * dt_hours;
-rainLastMillis = now;
-
-📡 Update your Firebase JSON to save useful raw fields too
-FirebaseJson jsonData;
-jsonData.set("temperature", temperature);
-jsonData.set("humidity", humidity);
-jsonData.set("rainLevelPercent", rainPercent);
-jsonData.set("rainRaw", rainRaw);
-jsonData.set("rainAdjustedRaw", adjustedRainRaw);
-jsonData.set("rainRateEstimated_mm_hr_bucket", mm_per_hr_bucket);
-jsonData.set("rainfall_total_estimated_mm_bucket", total_mm);
-jsonData.set("timestamp/.sv", "timestamp");
-jsonData.set("location/lat", DEVICE_LATITUDE);
-jsonData.set("location/lng", DEVICE_LONGITUDE);
-
-What your system will produce now
-
-Instead of this:
-
-84609.0 mm ❌ (impossible)
-
-
-You’ll now get something like:
-
-120.5 mm ✅
-245.3 mm ✅
-330.8 mm ✅
-
-
-(all believable totals depending on rain intensity and duration)
-
-For your thesis/panel presentation, you can write this:
-
-“The system currently estimates rainfall using bucketed intensity ranges derived from the sensor’s inverted ADC wetness value (0–4095), converted to plausible mm/hr intervals for accumulation. Raw sensor values are also logged to Firebase for potential calibration against a standard rain gauge in future iterations.”
-
-That sounds legit, clear, and academic ✅.
-
-Final recommendation:
-
-✔ Use bucketed estimates for totals now
-✔ Keep logging raw values for later improvement
-✔ No extra hardware needed
-✔ No unrealistic rainfall numbers 
+dist/assets/leaflet-src.esm-C6uo2YWw.js    149.41 kB │ gzip:  43.23 kB
+dist/assets/index.es-C9zr2DfY.js           159.21 kB │ gzip:  53.37 kB
+dist/assets/html2canvas.esm-B0tyYwQk.js    202.36 kB │ gzip:  48.04 kB
+dist/assets/index-BaU8iXfP.js            2,328.41 kB │ gzip: 661.45 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 10.98s
+Build Completed in /vercel/output [27s]
+Deploying outputs...
+Deployment completed
+Creating build cache...
+Created build cache: 19.141s
+Uploading build cache [116.55 MB]
+Build cache uploaded: 1.757s

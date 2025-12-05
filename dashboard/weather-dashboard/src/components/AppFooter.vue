@@ -1,7 +1,7 @@
 <template>
   <footer
     role="contentinfo"
-    class="bg-surface text-text-light py-6 px-6 border-t border-gray-200 dark:border-white/10"
+    class="bg-surface text-text-light py-6 px-6 border-t border-t-gray-200 dark:border-t-gray-700"
   >
     <div
       class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm"
@@ -21,7 +21,7 @@
           Privacy Policy
         </router-link>
 
-        <span class="text-gray-400 dark:text-gray-600" aria-hidden="true">|</span>
+        <span class="text-text-light" aria-hidden="true">|</span>
 
         <router-link
           to="/terms-of-service"
