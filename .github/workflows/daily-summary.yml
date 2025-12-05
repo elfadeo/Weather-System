@@ -102,7 +102,7 @@ jobs:
         run: |
           echo "Starting alert check..."
           node check-all-alerts.js 2>&1 | tee alert-output.log
-          exit_code=${PIPESTATUS[0]}
+          exit_code=$(printf "%s" "${PIPESTATUS[0]}")
           if [ $exit_code -ne 0 ]; then
             echo ""
             echo "════════════════════════════════════════════════════════"
@@ -322,7 +322,7 @@ jobs:
         run: |
           echo "Starting summary generation..."
           node generate-summary.js 2>&1 | tee summary-output.log
-          exit_code=${PIPESTATUS[0]}
+          exit_code=$(printf "%s" "${PIPESTATUS[0]}")
           if [ $exit_code -ne 0 ]; then
             echo ""
             echo "════════════════════════════════════════════════════════"
