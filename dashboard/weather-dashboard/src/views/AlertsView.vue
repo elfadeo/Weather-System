@@ -64,7 +64,7 @@
               class="border-l-4 border-green-500 pl-4 bg-green-50 p-4 rounded-r-lg"
             >
               <h3
-                class="text-sm font-bold text-green-900 dark:text-green-100 mb-3 flex items-center"
+                class="text-sm font-bold text-green-900 mb-3 flex items-center"
               >
                 <Icon icon="ph:plant-bold" class="h-5 w-5 mr-2" />
                 Rice Agriculture (IRRI)
@@ -201,7 +201,7 @@
           <div
             class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm border border-surface-soft"
           >
-            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="p-6 border-b border-gray-200">
               <div class="flex items-center justify-between">
                 <div>
                   <h2 class="text-xl font-bold text-text-main">Alert History</h2>
@@ -382,7 +382,7 @@
             <!-- Load More Button -->
             <div
               v-if="alertHistory.length >= 50"
-              class="p-4 border-t border-gray-200 dark:border-gray-700 text-center"
+              class="p-4 border-t border-gray-200 text-center"
             >
               <button
                 class="text-sm text-blue-600 hover:underline font-medium"

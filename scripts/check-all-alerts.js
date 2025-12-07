@@ -1037,12 +1037,11 @@ async function checkAlerts() {
       readings: { temperature, humidity, rainfall },
       readingTime: readingTime,
       emailSent: true,
-      smsSent: smsSent,
+      smsSentCount: smsSentCount,  // ✅ Use smsSentCount instead
+      smsFailedCount: smsFailedCount,  // ✅ Add failed count
       smsProvider: 'semaphore',
       recipients: ALERT_RECIPIENTS,
-      smsRecipients: smsSettings.enabled ? smsSettings.phoneNumbers.map(p => p.number) : [],
-      smsSentCount: smsSentCount,
-      smsFailedCount: smsFailedCount,
+      smsRecipients: smsSettings.enabled ? smsSettings.phoneNumbers.map(p => p.number) : [],  // ✅ Array of numbers
       source: readingSource
     });
 
