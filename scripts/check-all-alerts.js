@@ -438,8 +438,16 @@ async function sendSimpleSms(recipientPhone, message) {
   }
 }
 
-// Core SMS sending function
+// Core SMS sending function with enhanced debugging
 async function sendSmsViaApi(cleanPhone, message) {
+  console.log('\n🔍 SMS DEBUG INFO:');
+  console.log(`   API Endpoint: https://api.semaphore.co/api/v4/messages`);
+  console.log(`   Recipient: ${cleanPhone}`);
+  console.log(`   Message Length: ${message.length} characters`);
+  console.log(`   API Key Present: ${semaphoreApiKey ? 'YES' : 'NO'}`);
+  console.log(`   API Key Length: ${semaphoreApiKey ? semaphoreApiKey.length : 0} characters`);
+  console.log(`   API Key First 8 chars: ${semaphoreApiKey ? semaphoreApiKey.substring(0, 8) : 'MISSING'}...`);
+
   const postData = new URLSearchParams({
     apikey: semaphoreApiKey,
     number: cleanPhone,
@@ -458,31 +466,50 @@ async function sendSmsViaApi(cleanPhone, message) {
     }
   };
 
-  const response = await new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          resolve({ success: false, error: 'Invalid JSON response', raw: data });
-        }
+  try {
+    const response = await new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let data = '';
+        
+        console.log(`\n📡 HTTP Response:`);
+        console.log(`   Status Code: ${res.statusCode}`);
+        console.log(`   Status Message: ${res.statusMessage}`);
+        
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          console.log(`   Raw Response: ${data}\n`);
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            resolve({ success: false, error: 'Invalid JSON response', raw: data });
+          }
+        });
       });
+      req.on('error', (error) => reject(error));
+      req.write(postData);
+      req.end();
     });
-    req.on('error', (error) => reject(error));
-    req.write(postData);
-    req.end();
-  });
 
-  if (response.message_id || response[0]?.message_id) {
-    const messageId = response.message_id || response[0]?.message_id;
-    console.log(`✅ SMS SENT SUCCESSFULLY`);
-    console.log(`   To: ${cleanPhone}`);
-    console.log(`   Message ID: ${messageId}`);
-    return true;
-  } else {
-    console.error(`❌ SMS FAILED:`, response.message || response.error || 'Unknown error');
+    console.log('📊 Full Response:', JSON.stringify(response, null, 2));
+
+    if (response.message_id || response[0]?.message_id) {
+      const messageId = response.message_id || response[0]?.message_id;
+      console.log(`\n✅ SMS SENT SUCCESSFULLY`);
+      console.log(`   To: ${cleanPhone}`);
+      console.log(`   Message ID: ${messageId}`);
+      return true;
+    } else {
+      console.error(`\n❌ SMS FAILED - Detailed Error:`);
+      console.error(`   Error: ${response.error || 'Unknown'}`);
+      console.error(`   Code: ${response.code || 'N/A'}`);
+      console.error(`   Message: ${response.message || 'N/A'}`);
+      console.error(`   Full Response: ${JSON.stringify(response)}`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`\n❌ SMS REQUEST EXCEPTION:`);
+    console.error(`   Error: ${error.message}`);
+    console.error(`   Code: ${error.code || 'N/A'}`);
     return false;
   }
 }
