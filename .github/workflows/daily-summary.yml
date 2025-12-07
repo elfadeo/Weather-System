@@ -268,17 +268,15 @@ jobs:
           exit 1
 
   # ════════════════════════════════════════════════════════════════════════════
-  # JOB 2: HISTORICAL SUMMARY (Runs every 6 hours at :00 minutes)
+  # JOB 2: HISTORICAL SUMMARY (Runs on ALL schedules, but script checks time)
   # ════════════════════════════════════════════════════════════════════════════
   generate-insights:
     name: 📊 Historical Summary Generation
     runs-on: ubuntu-latest
 
-    # FIXED: Only run at specific times (when minute is 00) OR manual trigger
-    # This runs at: 00:00, 06:00, 12:00, 18:00, etc. (every 6 hours)
+    # Run on schedule OR manual trigger (script will check if it should actually run)
     if: |
-      (github.event_name == 'schedule' && 
-       (github.run_number % 24 == 1 || github.run_number % 24 == 25)) ||
+      github.event_name == 'schedule' ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_insights != 'true')
 
     steps:
@@ -327,25 +325,47 @@ jobs:
         id: generate-insights
         run: |
           echo "════════════════════════════════════════════════════════"
-          echo "📊 GENERATING HISTORICAL SUMMARY"
+          echo "📊 CHECKING IF SUMMARY SHOULD RUN"
           echo "════════════════════════════════════════════════════════"
           echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "Run: #${{ github.run_number }}"
           echo ""
 
-          node generate-summary.js 2>&1 | tee summary-output.log
-          exit_code=${PIPESTATUS[0]}
+          # Get current hour (UTC)
+          CURRENT_HOUR=$(date -u '+%H')
+          CURRENT_MINUTE=$(date -u '+%M')
 
+          echo "Current time: ${CURRENT_HOUR}:${CURRENT_MINUTE} UTC"
           echo ""
-          if [ $exit_code -ne 0 ]; then
-            echo "════════════════════════════════════════════════════════"
-            echo "❌ Script failed with exit code: $exit_code"
-            echo "════════════════════════════════════════════════════════"
-            cat summary-output.log
-            exit $exit_code
+
+          # Only run at :00, :15, :30, :45 minutes of hours divisible by 6
+          # This means: 00:00, 00:15, 00:30, 00:45, 06:00, 06:15, etc.
+          if [ $((10#$CURRENT_HOUR % 6)) -eq 0 ]; then
+            echo "✅ Hour is divisible by 6 - running summary generation"
+            echo ""
+            
+            node generate-summary.js 2>&1 | tee summary-output.log
+            exit_code=${PIPESTATUS[0]}
+            
+            echo ""
+            if [ $exit_code -ne 0 ]; then
+              echo "════════════════════════════════════════════════════════"
+              echo "❌ Script failed with exit code: $exit_code"
+              echo "════════════════════════════════════════════════════════"
+              cat summary-output.log
+              exit $exit_code
+            else
+              echo "════════════════════════════════════════════════════════"
+              echo "✅ Summary generated successfully"
+              echo "════════════════════════════════════════════════════════"
+            fi
           else
+            echo "⏭️  Skipping - not a 6-hour interval (hour: $CURRENT_HOUR)"
+            echo "   Summary runs at: 00:xx, 06:xx, 12:xx, 18:xx UTC"
+            echo "   Next summary: $(( (10#$CURRENT_HOUR / 6 + 1) * 6 )):00 UTC"
+            echo ""
             echo "════════════════════════════════════════════════════════"
-            echo "✅ Summary generated successfully"
+            echo "✅ Check completed (summary skipped by design)"
             echo "════════════════════════════════════════════════════════"
           fi
         working-directory: ${{ env.SCRIPTS_PATH }}
