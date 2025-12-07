@@ -372,17 +372,16 @@ async function sendAlertSms(recipientPhone, alerts, temperature, humidity, rainf
   }
 
   try {
-    // Clean phone number (remove spaces, ensure it starts with 09 or +639)
+    // Clean phone number
     let cleanPhone = recipientPhone.trim().replace(/\s+/g, '');
     
-    // Convert to proper format for Semaphore
     if (cleanPhone.startsWith('+63')) {
-      cleanPhone = '0' + cleanPhone.substring(3); // +639171234567 -> 09171234567
+      cleanPhone = '0' + cleanPhone.substring(3);
     } else if (cleanPhone.startsWith('63')) {
-      cleanPhone = '0' + cleanPhone.substring(2); // 639171234567 -> 09171234567
+      cleanPhone = '0' + cleanPhone.substring(2);
     }
     
-    // Format SMS message (keep concise)
+    // Format SMS message
     let smsBody = 'WEATHER ALERT\n\n';
     
     // Add current readings
@@ -394,10 +393,32 @@ async function sendAlertSms(recipientPhone, alerts, temperature, humidity, rainf
     const topAlerts = alerts.slice(0, 2);
     smsBody += `Alerts (${alerts.length}):\n`;
     topAlerts.forEach((alert, index) => {
+      // Determine alert level from threshold
+      let alertLevel = '';
+      if (alert.threshold.includes('YELLOW')) {
+        alertLevel = 'YELLOW ALERT';
+      } else if (alert.threshold.includes('ORANGE')) {
+        alertLevel = 'ORANGE ALERT';
+      } else if (alert.threshold.includes('RED')) {
+        alertLevel = 'RED ALERT';
+      }
+      
       smsBody += `${index + 1}. ${alert.metric}: ${alert.value}\n`;
-      // Truncate message to fit SMS limits
-      const shortMsg = alert.message.substring(0, 60);
-      smsBody += `   ${shortMsg}...\n`;
+      
+      if (alertLevel) {
+        smsBody += `   ${alertLevel}\n`;
+      }
+      
+      // Add short description (remove PAGASA mentions)
+      let shortMsg = alert.message
+        .replace(/PAGASA YELLOW ALERT:/g, '')
+        .replace(/PAGASA ORANGE ALERT:/g, '')
+        .replace(/PAGASA RED ALERT:/g, '')
+        .replace(/PAGASA/g, '')
+        .trim()
+        .split('.')[0]; // Get first sentence only
+      
+      smsBody += `   ${shortMsg}\n`;
     });
     
     if (alerts.length > 2) {
@@ -406,7 +427,7 @@ async function sendAlertSms(recipientPhone, alerts, temperature, humidity, rainf
     
     smsBody += `\nCheck dashboard for details.`;
     
-    // Ensure message is within 160 chars for single SMS or 480 for multi-part
+    // Ensure within SMS limits
     if (smsBody.length > 450) {
       smsBody = smsBody.substring(0, 447) + '...';
     }
