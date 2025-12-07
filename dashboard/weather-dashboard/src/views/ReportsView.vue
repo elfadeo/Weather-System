@@ -27,8 +27,8 @@
             :class="[
               'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
               activePreset === preset.value
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50',
+                ? 'bg-primary text-on-primary shadow-md'
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-200',
             ]"
           >
             <Icon :icon="preset.icon" class="inline h-4 w-4 mr-1" />
@@ -103,7 +103,7 @@
             <button
               @click="exportToCSV"
               :disabled="!aggregatedData.length || isExporting"
-              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="isExporting === 'csv'" class="flex items-center">
                 <Icon icon="ph:circle-notch-bold" class="h-5 w-5 mr-2 animate-spin" />
@@ -118,7 +118,7 @@
             <button
               @click="exportToPDF"
               :disabled="!aggregatedData.length || isExporting"
-              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-red-600 text-white rounded-lg shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-red-600 text-white rounded-lg shadow-sm hover:bg-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="isExporting === 'pdf'" class="flex items-center">
                 <Icon icon="ph:circle-notch-bold" class="h-5 w-5 mr-2 animate-spin" />
@@ -188,12 +188,12 @@
                 <th
                   class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
                 >
-                  Avg. Rainfall Rate (mm/hr)
+                  Avg. Rain Rate (mm/hr)
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
                 >
-                  Total Rainfall (mm)
+                  Period Rainfall (mm)
                 </th>
                 <th
                   class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
@@ -214,16 +214,37 @@
                   {{ record.period }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
-                  {{ record.temperature }}
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2 py-1 rounded',
+                      getTempColor(record.temperature),
+                    ]"
+                  >
+                    {{ record.temperature }}
+                  </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
-                  {{ record.humidity }}
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2 py-1 rounded',
+                      getHumidityColor(record.humidity),
+                    ]"
+                  >
+                    {{ record.humidity }}
+                  </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
                   {{ record.rainfallRate }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
-                  {{ record.totalRainfall }}
+                  <span
+                    :class="[
+                      'inline-flex items-center px-2 py-1 rounded font-medium',
+                      getRainfallColor(record.periodRainfall),
+                    ]"
+                  >
+                    {{ record.periodRainfall }}
+                  </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-light)]">
                   {{ record.count }}
@@ -277,10 +298,7 @@ const applyTimePreset = (presetValue) => {
 
   if (!preset) return
 
-  // Set end time to now
   endDateTime.value = formatDateTimeLocal(now)
-
-  // Calculate start time based on preset
   const start = new Date(now)
 
   if (preset.hours) {
@@ -290,7 +308,7 @@ const applyTimePreset = (presetValue) => {
     start.setDate(now.getDate() - preset.days)
     groupBy.value = preset.days <= 7 ? 'daily' : 'weekly'
   } else if (preset.type === 'month') {
-    start.setDate(1) // First day of current month
+    start.setDate(1)
     start.setHours(0, 0, 0, 0)
     groupBy.value = 'daily'
   }
@@ -308,12 +326,10 @@ const formatDateTimeLocal = (date) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-// Initialize with default time range
 onMounted(() => {
   applyTimePreset('last24h')
 })
 
-// Cleanup
 onUnmounted(() => {
   if (unsubscribe) unsubscribe()
 })
@@ -369,7 +385,13 @@ const dataTimeRange = computed(() => {
   return `${formatTime(earliest)} to ${formatTime(latest)}`
 })
 
-// Aggregate data with correct ESP32 field names
+// Helper to get field value with fallback to old field names
+const getFieldValue = (record, primaryField, fallbackField) => {
+  const value = record[primaryField] ?? record[fallbackField]
+  return value != null && !isNaN(value) ? Number(value) : null
+}
+
+// Aggregate data - ENHANCED to support both old and new field names
 const aggregatedData = computed(() => {
   if (!rawReportData.value.length) return []
 
@@ -461,37 +483,47 @@ const aggregatedData = computed(() => {
         humidityCount: 0,
         rainfallRateSum: 0,
         rainfallRateCount: 0,
-        rainfallTotals: [],
+        hourlyRainfalls: [],
+        dailyRainfalls: [],
         recordCount: 0,
       }
     }
 
-    // Use correct ESP32 field names
-    if (record.temperature != null && !isNaN(record.temperature)) {
-      groups[key].tempSum += Number(record.temperature)
+    // Temperature
+    const temp = getFieldValue(record, 'temperature')
+    if (temp !== null) {
+      groups[key].tempSum += temp
       groups[key].tempCount++
     }
 
-    if (record.humidity != null && !isNaN(record.humidity)) {
-      groups[key].humiditySum += Number(record.humidity)
+    // Humidity
+    const humidity = getFieldValue(record, 'humidity')
+    if (humidity !== null) {
+      groups[key].humiditySum += humidity
       groups[key].humidityCount++
     }
 
-    // Rainfall rate: rainRateEstimated_mm_hr_bucket
-    if (
-      record.rainRateEstimated_mm_hr_bucket != null &&
-      !isNaN(record.rainRateEstimated_mm_hr_bucket)
-    ) {
-      groups[key].rainfallRateSum += Number(record.rainRateEstimated_mm_hr_bucket)
+    // Rainfall Rate - supports both new and old field names
+    const rainfallRate = getFieldValue(record, 'rainRateEstimated_mm_hr_bucket', 'rainRate_mm_hr')
+    if (rainfallRate !== null) {
+      groups[key].rainfallRateSum += rainfallRate
       groups[key].rainfallRateCount++
     }
 
-    // Total rainfall: rainfall_total_estimated_mm_bucket
-    if (
-      record.rainfall_total_estimated_mm_bucket != null &&
-      !isNaN(record.rainfall_total_estimated_mm_bucket)
-    ) {
-      groups[key].rainfallTotals.push(Number(record.rainfall_total_estimated_mm_bucket))
+    // Hourly rainfall - NEW FIELD
+    const hourlyRain = getFieldValue(record, 'rainfall_hourly_mm')
+    if (hourlyRain !== null) {
+      groups[key].hourlyRainfalls.push(hourlyRain)
+    }
+
+    // Daily rainfall - supports both new and old field names
+    const dailyRain = getFieldValue(
+      record,
+      'rainfall_daily_mm',
+      'rainfall_total_estimated_mm_bucket',
+    )
+    if (dailyRain !== null) {
+      groups[key].dailyRainfalls.push(dailyRain)
     }
 
     groups[key].recordCount++
@@ -501,11 +533,15 @@ const aggregatedData = computed(() => {
     .map((key) => {
       const group = groups[key]
 
-      // Calculate total rainfall for period (difference between max and min)
-      let totalRainfall = 0
-      if (group.rainfallTotals.length > 0) {
-        const sortedTotals = group.rainfallTotals.sort((a, b) => a - b)
-        totalRainfall = sortedTotals[sortedTotals.length - 1] - sortedTotals[0]
+      // Calculate period rainfall based on grouping
+      let periodRainfall = 0
+      if (groupBy.value === 'hourly' && group.hourlyRainfalls.length > 0) {
+        // For hourly: use max hourly value
+        periodRainfall = Math.max(...group.hourlyRainfalls)
+      } else if (group.dailyRainfalls.length > 0) {
+        // For daily/weekly/monthly: calculate difference
+        const sorted = group.dailyRainfalls.sort((a, b) => a - b)
+        periodRainfall = sorted[sorted.length - 1] - sorted[0]
       }
 
       return {
@@ -517,7 +553,7 @@ const aggregatedData = computed(() => {
           group.rainfallRateCount > 0
             ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
             : 'N/A',
-        totalRainfall: totalRainfall.toFixed(2),
+        periodRainfall: periodRainfall.toFixed(2),
         count: group.recordCount,
         sortKey: key,
       }
@@ -525,7 +561,37 @@ const aggregatedData = computed(() => {
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 })
 
-// Export CSV with correct field names
+// Color helpers for visual feedback
+const getTempColor = (temp) => {
+  if (temp === 'N/A') return 'bg-gray-100 text-gray-600'
+  const t = parseFloat(temp)
+  if (t >= 35) return 'bg-red-100 text-red-700'
+  if (t >= 30) return 'bg-orange-100 text-orange-700'
+  if (t >= 25) return 'bg-yellow-100 text-yellow-700'
+  if (t >= 20) return 'bg-green-100 text-green-700'
+  return 'bg-blue-100 text-blue-700'
+}
+
+const getHumidityColor = (humidity) => {
+  if (humidity === 'N/A') return 'bg-gray-100 text-gray-600'
+  const h = parseFloat(humidity)
+  if (h >= 80) return 'bg-blue-100 text-blue-700'
+  if (h >= 60) return 'bg-cyan-100 text-cyan-700'
+  if (h >= 40) return 'bg-green-100 text-green-700'
+  return 'bg-yellow-100 text-yellow-700'
+}
+
+const getRainfallColor = (rainfall) => {
+  if (rainfall === 'N/A') return 'bg-gray-100 text-gray-600'
+  const r = parseFloat(rainfall)
+  if (r === 0) return 'bg-gray-100 text-gray-600'
+  if (r < 2.5) return 'bg-blue-50 text-blue-600'
+  if (r < 10) return 'bg-blue-100 text-blue-700'
+  if (r < 50) return 'bg-blue-200 text-blue-800'
+  return 'bg-blue-300 text-blue-900'
+}
+
+// Export CSV
 const exportToCSV = () => {
   if (!aggregatedData.value.length) return
   isExporting.value = 'csv'
@@ -533,12 +599,12 @@ const exportToCSV = () => {
   try {
     const csv = Papa.unparse(
       aggregatedData.value.map(
-        ({ period, temperature, humidity, rainfallRate, totalRainfall, count }) => ({
+        ({ period, temperature, humidity, rainfallRate, periodRainfall, count }) => ({
           Period: period,
           'Avg Temperature (°C)': temperature,
           'Avg Humidity (%)': humidity,
           'Avg Rainfall Rate (mm/hr)': rainfallRate,
-          'Total Rainfall (mm)': totalRainfall,
+          'Period Rainfall (mm)': periodRainfall,
           'Number of Readings': count,
         }),
       ),
@@ -559,7 +625,7 @@ const exportToCSV = () => {
   }
 }
 
-// Export PDF with correct field names
+// Export PDF
 const exportToPDF = () => {
   if (!aggregatedData.value.length) return
   isExporting.value = 'pdf'
@@ -567,11 +633,9 @@ const exportToPDF = () => {
   try {
     const doc = new jsPDF()
 
-    // Title
     doc.setFontSize(18)
     doc.text('Weather Data Report', 14, 20)
 
-    // Metadata
     doc.setFontSize(10)
     doc.text(`Grouping: ${groupBy.value.charAt(0).toUpperCase() + groupBy.value.slice(1)}`, 14, 28)
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 34)
@@ -579,13 +643,12 @@ const exportToPDF = () => {
     doc.text(`Total Periods: ${aggregatedData.value.length}`, 14, 46)
     doc.text(`Total Readings: ${rawReportData.value.length}`, 14, 52)
 
-    // Table with correct columns
     const tableColumn = [
       'Period',
       'Avg. Temp (°C)',
       'Avg. Humidity (%)',
-      'Avg. Rainfall Rate (mm/hr)',
-      'Total Rainfall (mm)',
+      'Avg. Rain Rate (mm/hr)',
+      'Period Rainfall (mm)',
       'Readings',
     ]
     const tableRows = aggregatedData.value.map((row) => [
@@ -593,7 +656,7 @@ const exportToPDF = () => {
       row.temperature,
       row.humidity,
       row.rainfallRate,
-      row.totalRainfall,
+      row.periodRainfall,
       row.count,
     ])
 

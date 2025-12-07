@@ -13,19 +13,19 @@
 
       <!-- Control Panel -->
       <div
-        class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-hover"
+        class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 mb-6 border border-surface-soft"
       >
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Data Time Range</h3>
-            <p class="text-sm text-gray-600 dark:text-text-light mt-1">
+            <h3 class="text-lg font-semibold text-text-main">Data Time Range</h3>
+            <p class="text-sm text-text-light mt-1">
               Select the time period to visualize
             </p>
           </div>
           <select
             v-model="selectedTimeRange"
             :disabled="isLoading"
-            class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg py-2.5 px-4 text-sm text-gray-900 dark:text-text-main focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            class="bg-surface border border-surface-soft rounded-lg py-2.5 px-4 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="last7">Last 7 Readings</option>
             <option value="weekly">Weekly Average</option>
@@ -39,14 +39,14 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Temperature Chart -->
         <div
-          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-surface-soft"
         >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-red-500"></div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Temperature</h3>
+              <h3 class="text-lg font-semibold text-text-main">Temperature</h3>
             </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">°Celsius</span>
+            <span class="text-xs text-text-light">°Celsius</span>
           </div>
           <div class="h-[300px]">
             <SingleMetricChart
@@ -63,14 +63,14 @@
 
         <!-- Humidity Chart -->
         <div
-          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-surface-soft"
         >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">Humidity</h3>
+              <h3 class="text-lg font-semibold text-text-main">Humidity</h3>
             </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">Percentage</span>
+            <span class="text-xs text-text-light">Percentage</span>
           </div>
           <div class="h-[300px]">
             <SingleMetricChart
@@ -87,16 +87,16 @@
 
         <!-- Rainfall Rate Chart -->
         <div
-          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-surface-soft"
         >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">
+              <h3 class="text-lg font-semibold text-text-main">
                 Rainfall Rate (Est.)
               </h3>
             </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">mm/hr</span>
+            <span class="text-xs text-text-light">mm/hr</span>
           </div>
           <div class="h-[300px]">
             <SingleMetricChart
@@ -113,16 +113,16 @@
 
         <!-- Total Rainfall Chart -->
         <div
-          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-surface-soft"
         >
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-teal-500"></div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main">
+              <h3 class="text-lg font-semibold text-text-main">
                 Total Rainfall (Est.)
               </h3>
             </div>
-            <span class="text-xs text-gray-500 dark:text-gray-400">mm</span>
+            <span class="text-xs text-text-light">mm</span>
           </div>
           <div class="h-[300px]">
             <SingleMetricChart
@@ -141,36 +141,36 @@
       <!-- Data Summary -->
       <div
         v-if="!isLoading && chartData.labels.length > 0"
-        class="mt-6 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
+        class="mt-6 bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-surface-soft"
       >
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-text-main mb-4">Period Summary</h3>
+        <h3 class="text-lg font-semibold text-text-main mb-4">Period Summary</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <p class="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Temperature</p>
-            <p class="text-2xl font-bold text-red-700 dark:text-red-300">
+          <div class="p-4 bg-red-50 rounded-lg">
+            <p class="text-xs text-red-600 font-medium mb-1">Temperature</p>
+            <p class="text-2xl font-bold text-red-700">
               {{ averageTemp.toFixed(1) }}°C
             </p>
-            <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+            <p class="text-xs text-red-600 mt-1">
               {{ minTemp.toFixed(1) }}°C - {{ maxTemp.toFixed(1) }}°C
             </p>
           </div>
-          <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Humidity</p>
-            <p class="text-2xl font-bold text-blue-700 dark:text-blue-300">
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <p class="text-xs text-blue-600 font-medium mb-1">Humidity</p>
+            <p class="text-2xl font-bold text-blue-700">
               {{ averageHumidity.toFixed(1) }}%
             </p>
-            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+            <p class="text-xs text-blue-600 mt-1">
               {{ minHumidity.toFixed(1) }}% - {{ maxHumidity.toFixed(1) }}%
             </p>
           </div>
-          <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-            <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">
+          <div class="p-4 bg-indigo-50 rounded-lg">
+            <p class="text-xs text-indigo-600 font-medium mb-1">
               Total Rainfall (Est.)
             </p>
-            <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
+            <p class="text-2xl font-bold text-indigo-700">
               {{ totalRainfall.toFixed(1) }}mm
             </p>
-            <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">over period</p>
+            <p class="text-xs text-indigo-600 mt-1">over period</p>
           </div>
         </div>
       </div>
@@ -199,7 +199,7 @@ const EmptyState = {
   template: `
     <div class="flex items-center justify-center h-full">
       <div class="text-center">
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ message }}</p>
+        <p class="text-sm text-text-light">{{ message }}</p>
       </div>
     </div>
   `,

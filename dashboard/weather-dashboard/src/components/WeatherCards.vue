@@ -29,7 +29,7 @@
       <div
         v-for="card in weatherData"
         :key="card.id"
-        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 transition-all duration-500 ease-in-out hover:shadow-xl hover:-translate-y-1 flex flex-col"
+        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 flex flex-col"
       >
         <!-- Card Header -->
         <div class="flex items-center justify-between mb-4">

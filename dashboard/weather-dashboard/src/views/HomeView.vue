@@ -41,8 +41,8 @@
               <span
                 :class="
                   isOnline
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                    : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
                 "
                 class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200"
               >
@@ -149,9 +149,9 @@ const weatherData = computed(() => [
     value: temperature.value,
     unit: '°C',
     icon: 'ph:thermometer-cold-bold',
-    color: 'text-red-600 dark:text-red-400',
+    color: 'text-red-600',
     bgColor:
-      'bg-red-200 dark:bg-red-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+      'bg-red-200',
   },
   {
     id: 'humidity',
@@ -159,9 +159,9 @@ const weatherData = computed(() => [
     value: humidity.value,
     unit: '%',
     icon: 'ph:drop-bold',
-    color: 'text-blue-600 dark:text-blue-400',
+    color: 'text-blue-600',
     bgColor:
-      'bg-blue-200 dark:bg-blue-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+      'bg-blue-200',
   },
   {
     id: 'rainfall_rate',
@@ -169,9 +169,9 @@ const weatherData = computed(() => [
     value: rainfallRate.value,
     unit: 'mm/hr',
     icon: 'ph:cloud-rain-bold',
-    color: 'text-indigo-600 dark:text-indigo-400',
+    color: 'text-indigo-600',
     bgColor:
-      'bg-indigo-200 dark:bg-indigo-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+      'bg-indigo-200',
   },
   {
     id: 'total_rainfall',
@@ -179,9 +179,9 @@ const weatherData = computed(() => [
     value: totalRainfall.value,
     unit: 'mm',
     icon: 'ph:chart-line-up-bold',
-    color: 'text-teal-600 dark:text-teal-400',
+    color: 'text-teal-600',
     bgColor:
-      'bg-teal-200 dark:bg-teal-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+      'bg-teal-200',
   },
 ])
 
