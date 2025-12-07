@@ -451,8 +451,7 @@ async function sendSmsViaApi(cleanPhone, message) {
   const postData = new URLSearchParams({
     apikey: semaphoreApiKey,
     number: cleanPhone,
-    message: message,
-    sendername: 'WEATHER'
+    message: message
   }).toString();
 
   const options = {
