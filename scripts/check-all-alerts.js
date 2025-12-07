@@ -336,11 +336,17 @@ async function sendSensorOfflineAlert(minutesOffline, lastTimestamp) {
     // Get SMS settings
     const smsSettings = await getSmsSettings();
     
-    // Send SMS if enabled
-    if (smsSettings.enabled && smsSettings.phone && semaphoreApiKey) {
+    // Send SMS to all recipients if enabled
+    if (smsSettings.enabled && smsSettings.phoneNumbers.length > 0 && semaphoreApiKey) {
       const smsMessage = `SENSOR OFFLINE ALERT\n\nWeather sensor has not reported data for ${minutesOffline.toFixed(0)} minutes.\n\nLast reading: ${lastReadingTime}\n\nPlease check sensor power and connectivity immediately.`;
       
-      await sendSimpleSms(smsSettings.phone, smsMessage);
+      console.log(`   📱 Sending SMS to ${smsSettings.phoneNumbers.length} recipient(s)...`);
+      
+      for (const phoneObj of smsSettings.phoneNumbers) {
+        const label = phoneObj.label ? ` (${phoneObj.label})` : '';
+        console.log(`      → ${phoneObj.number}${label}`);
+        await sendSimpleSms(phoneObj.number, smsMessage);
+      }
     }
 
     // Log to Firestore
@@ -544,22 +550,37 @@ async function getSmsSettings() {
     
     if (!settingsDoc.exists) {
       console.log('⚠️  Settings document not found');
-      return { enabled: false, phone: null };
+      return { enabled: false, phoneNumbers: [] };
     }
     
     const data = settingsDoc.data();
     
     console.log('📄 SMS Settings from Firestore:');
     console.log(`   sms_notifications_enabled: ${data.sms_notifications_enabled}`);
-    console.log(`   recipient_phone_number: ${data.recipient_phone_number}`);
+    
+    // Support both new (array) and old (single) format
+    let phoneNumbers = [];
+    
+    if (data.recipient_phone_numbers && Array.isArray(data.recipient_phone_numbers)) {
+      // NEW FORMAT: Array of phone objects
+      phoneNumbers = data.recipient_phone_numbers;
+      console.log(`   recipient_phone_numbers: ${phoneNumbers.length} number(s)`);
+      phoneNumbers.forEach((phone, index) => {
+        console.log(`      ${index + 1}. ${phone.number} ${phone.label ? `(${phone.label})` : ''}`);
+      });
+    } else if (data.recipient_phone_number) {
+      // OLD FORMAT: Single phone number (backward compatibility)
+      phoneNumbers = [{ number: data.recipient_phone_number, label: 'Primary' }];
+      console.log(`   recipient_phone_number: ${data.recipient_phone_number} (legacy format)`);
+    }
     
     return {
       enabled: data.sms_notifications_enabled || false,
-      phone: data.recipient_phone_number || null
+      phoneNumbers: phoneNumbers // Array of {number, label}
     };
   } catch (error) {
     console.error('⚠️  Error fetching SMS settings:', error.message);
-    return { enabled: false, phone: null };
+    return { enabled: false, phoneNumbers: [] };
   }
 }
 
@@ -962,17 +983,34 @@ async function checkAlerts() {
     console.log(`   Subject: ${emailSubject}`);
     console.log(`   Alerts: ${alertsToSend.length}\n`);
 
-    // GET SMS SETTINGS AND SEND SMS
+    // GET SMS SETTINGS AND SEND SMS TO ALL RECIPIENTS
     const smsSettings = await getSmsSettings();
-    let smsSent = false;
+    let smsSentCount = 0;
+    let smsFailedCount = 0;
     
-    if (smsSettings.enabled && smsSettings.phone) {
-      console.log('📱 SMS notifications enabled - sending via Semaphore...');
-      smsSent = await sendAlertSms(smsSettings.phone, alertsToSend, temperature, humidity, rainfall);
+    if (smsSettings.enabled && smsSettings.phoneNumbers.length > 0) {
+      console.log(`📱 SMS notifications enabled - sending to ${smsSettings.phoneNumbers.length} recipient(s) via Semaphore...`);
+      
+      for (const phoneObj of smsSettings.phoneNumbers) {
+        const label = phoneObj.label ? ` (${phoneObj.label})` : '';
+        console.log(`   → Sending to ${phoneObj.number}${label}...`);
+        
+        const success = await sendAlertSms(phoneObj.number, alertsToSend, temperature, humidity, rainfall);
+        
+        if (success) {
+          smsSentCount++;
+          console.log(`      ✅ Sent successfully`);
+        } else {
+          smsFailedCount++;
+          console.log(`      ❌ Failed to send`);
+        }
+      }
+      
+      console.log(`\n📊 SMS Summary: ${smsSentCount} sent, ${smsFailedCount} failed\n`);
     } else if (!smsSettings.enabled) {
       console.log('ℹ️  SMS notifications disabled in dashboard settings\n');
-    } else if (!smsSettings.phone) {
-      console.log('⚠️  SMS enabled but no recipient phone number configured\n');
+    } else if (smsSettings.phoneNumbers.length === 0) {
+      console.log('⚠️  SMS enabled but no recipient phone numbers configured\n');
     }
 
     // LOG TO FIRESTORE
@@ -1002,7 +1040,9 @@ async function checkAlerts() {
       smsSent: smsSent,
       smsProvider: 'semaphore',
       recipients: ALERT_RECIPIENTS,
-      smsRecipient: smsSettings.enabled ? smsSettings.phone : null,
+      smsRecipients: smsSettings.enabled ? smsSettings.phoneNumbers.map(p => p.number) : [],
+      smsSentCount: smsSentCount,
+      smsFailedCount: smsFailedCount,
       source: readingSource
     });
 

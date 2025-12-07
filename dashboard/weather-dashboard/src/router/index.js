@@ -7,14 +7,15 @@ import MainLayout from '@/layout/MainLayout.vue'
 
 // Views
 import LoginView from '@/views/LoginView.vue'
+import SignupView from '@/views/SignupView.vue' // <-- Import signup page
 import HomeView from '@/views/HomeView.vue'
 import ChartsView from '@/views/ChartsView.vue'
 import ReportsView from '@/views/ReportsView.vue'
 import AlertsView from '@/views/AlertsView.vue'
 import RecommendationsView from '@/views/RecommendationsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
-import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue' // <-- Import new page
-import TermsOfServiceView from '@/views/TermsOfServiceView.vue' // <-- Import new page
+import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue'
+import TermsOfServiceView from '@/views/TermsOfServiceView.vue'
 
 /**
  * A helper function to wait for Firebase auth to initialize.
@@ -39,6 +40,11 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
+    },
+    {
+      path: '/signup', // <-- New signup route
+      name: 'signup',
+      component: SignupView,
     },
     {
       path: '/',
@@ -75,7 +81,6 @@ const router = createRouter({
           name: 'profile',
           component: ProfileView,
         },
-        // --- NEW ROUTES ADDED HERE ---
         {
           path: 'privacy-policy',
           name: 'privacy-policy',
@@ -98,7 +103,8 @@ router.beforeEach(async (to, from, next) => {
 
   if (requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
-  } else if (isAuthenticated && to.name === 'login') {
+  } else if (isAuthenticated && (to.name === 'login' || to.name === 'signup')) {
+    // Redirect authenticated users away from login AND signup pages
     next({ name: 'dashboard' })
   } else {
     next()

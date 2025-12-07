@@ -3,8 +3,7 @@ import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 import { auth } from '@/firebase.js'
 import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth'
@@ -12,6 +11,7 @@ import { useRouter } from 'vue-router'
 
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
 const isLoading = ref(false)
@@ -41,40 +41,53 @@ const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-// --- Email/Password Sign In ---
-const signIn = async () => {
+// --- Password validation ---
+const isValidPassword = (password) => {
+  return password.length >= 6
+}
+
+// --- Email/Password Sign Up ---
+const signUp = async () => {
   if (!isValidEmail(email.value)) {
     showMessage('error', 'Please enter a valid email address.')
+    return
+  }
+
+  if (!isValidPassword(password.value)) {
+    showMessage('error', 'Password must be at least 6 characters long.')
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    showMessage('error', 'Passwords do not match.')
     return
   }
 
   try {
     isLoading.value = true
     clearMessages()
-    const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
-    console.log('Successfully signed in:', userCredential.user.uid)
+    const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value)
+    console.log('Successfully signed up:', userCredential.user.uid)
 
     await router.push({ name: 'dashboard' }).catch((err) => {
       console.error('Navigation error:', err)
       throw new Error('Navigation failed')
     })
   } catch (error) {
-    console.error('Login Error:', error.code)
+    console.error('Sign Up Error:', error.code)
 
     switch (error.code) {
+      case 'auth/email-already-in-use':
+        showMessage('error', 'This email is already registered. Please sign in instead.')
+        break
       case 'auth/invalid-email':
         showMessage('error', 'Please enter a valid email address.')
         break
-      case 'auth/user-disabled':
-        showMessage('error', 'This account has been disabled.')
+      case 'auth/weak-password':
+        showMessage('error', 'Password is too weak. Please use a stronger password.')
         break
-      case 'auth/invalid-credential':
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-        showMessage('error', 'Invalid email or password. Please try again.')
-        break
-      case 'auth/too-many-requests':
-        showMessage('error', 'Too many failed attempts. Please try again later.')
+      case 'auth/operation-not-allowed':
+        showMessage('error', 'Email/password accounts are not enabled.')
         break
       default:
         showMessage(
@@ -83,47 +96,6 @@ const signIn = async () => {
             ? 'Navigation failed. Please try again.'
             : 'An unexpected error occurred. Please try again.',
         )
-        break
-    }
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// --- Password Reset ---
-const handlePasswordReset = async () => {
-  if (!email.value) {
-    showMessage('error', 'Please enter your email address to reset your password.')
-    return
-  }
-
-  if (!isValidEmail(email.value)) {
-    showMessage('error', 'Please enter a valid email address.')
-    return
-  }
-
-  try {
-    isLoading.value = true
-    await sendPasswordResetEmail(auth, email.value)
-    showMessage(
-      'success',
-      `A password reset link has been sent to ${email.value}. Please check your inbox.`,
-    )
-  } catch (error) {
-    console.error('Password Reset Error:', error.code)
-
-    switch (error.code) {
-      case 'auth/invalid-email':
-        showMessage('error', 'Please enter a valid email address.')
-        break
-      case 'auth/user-not-found':
-        showMessage('error', 'No account found with this email.')
-        break
-      case 'auth/too-many-requests':
-        showMessage('error', 'Too many requests. Please try again later.')
-        break
-      default:
-        showMessage('error', 'An error occurred. Please try again.')
         break
     }
   } finally {
@@ -188,8 +160,8 @@ const signInWithGoogle = async () => {
           icon="ph:cloud-sun-bold"
           class="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
         />
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
-        <p class="text-gray-600 dark:text-gray-300 mt-2">Sign in to access your dashboard</p>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h2>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">Sign up to get started</p>
       </div>
 
       <!-- Social Sign-in -->
@@ -197,7 +169,7 @@ const signInWithGoogle = async () => {
         @click="signInWithGoogle"
         type="button"
         :disabled="isLoading"
-        aria-label="Sign in with Google"
+        aria-label="Sign up with Google"
         class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
       >
         <Icon v-if="!isLoading" icon="flat-color-icons:google" class="h-5 w-5" />
@@ -207,7 +179,7 @@ const signInWithGoogle = async () => {
           class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
         />
         <span class="ml-3 text-sm font-medium">
-          {{ isLoading ? 'Please wait...' : 'Sign in with Google' }}
+          {{ isLoading ? 'Please wait...' : 'Sign up with Google' }}
         </span>
       </button>
 
@@ -218,13 +190,13 @@ const signInWithGoogle = async () => {
         </div>
         <div class="relative flex justify-center text-sm">
           <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-            Or sign in with email
+            Or sign up with email
           </span>
         </div>
       </div>
 
       <!-- Email/Password Form -->
-      <form @submit.prevent="signIn" class="space-y-6">
+      <form @submit.prevent="signUp" class="space-y-6">
         <!-- Email -->
         <div>
           <label
@@ -246,28 +218,39 @@ const signInWithGoogle = async () => {
 
         <!-- Password -->
         <div>
-          <div class="flex items-center justify-between">
-            <label
-              for="password"
-              class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
-            >
-              Password
-            </label>
-            <button
-              @click.prevent="handlePasswordReset"
-              type="button"
-              :disabled="isLoading"
-              aria-label="Reset password"
-              class="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors duration-300 disabled:opacity-50"
-            >
-              Forgot Password?
-            </button>
-          </div>
+          <label
+            for="password"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+          >
+            Password
+          </label>
           <input
             v-model="password"
             type="password"
             id="password"
             aria-label="Password"
+            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
+            placeholder="••••••••"
+            required
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Must be at least 6 characters
+          </p>
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label
+            for="confirmPassword"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+          >
+            Confirm Password
+          </label>
+          <input
+            v-model="confirmPassword"
+            type="password"
+            id="confirmPassword"
+            aria-label="Confirm Password"
             class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="••••••••"
             required
@@ -288,11 +271,11 @@ const signInWithGoogle = async () => {
           </div>
         </Transition>
 
-        <!-- Sign In Button -->
+        <!-- Sign Up Button -->
         <button
           type="submit"
           :disabled="isLoading"
-          aria-label="Sign in"
+          aria-label="Create account"
           class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-full text-base font-medium border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Icon
@@ -300,19 +283,19 @@ const signInWithGoogle = async () => {
             icon="eos-icons:loading"
             class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
           />
-          {{ isLoading ? 'Signing In...' : 'Sign In' }}
+          {{ isLoading ? 'Creating Account...' : 'Create Account' }}
         </button>
       </form>
 
-      <!-- Link to Sign Up -->
+      <!-- Link to Sign In -->
       <div class="text-center">
         <p class="text-sm text-gray-600 dark:text-gray-400">
-          Don't have an account?
+          Already have an account?
           <router-link
-            to="/signup"
+            to="/login"
             class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors duration-300"
           >
-            Sign Up
+            Sign In
           </router-link>
         </p>
       </div>

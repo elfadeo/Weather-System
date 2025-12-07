@@ -43,7 +43,7 @@ defineProps({
 
 const mapConfig = {
   zoom: 15,
-  defaultCenter: [7.99795, 124.25324],
+  defaultCenter: [8.07841, 124.21014],
   tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
