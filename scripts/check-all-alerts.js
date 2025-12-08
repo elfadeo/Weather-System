@@ -323,15 +323,18 @@ async function sendSensorOfflineAlert(minutesOffline, lastTimestamp) {
 </html>
     `;
 
+    // Get email recipients
+    const emailRecipients = await getEmailRecipients();
+
     // Send email
     await transporter.sendMail({
       from: `Weather Monitoring System <${gmailEmail}>`,
-      to: ALERT_RECIPIENTS.join(', '),
+      to: emailRecipients.join(', '),
       subject: emailSubject,
       html: emailBody
     });
 
-    console.log(`   ✅ Sensor offline email sent to: ${ALERT_RECIPIENTS.join(', ')}`);
+    console.log(`   ✅ Sensor offline email sent to: ${emailRecipients.join(', ')}`);
 
     // Get SMS settings
     const smsSettings = await getSmsSettings();
@@ -357,7 +360,7 @@ async function sendSensorOfflineAlert(minutesOffline, lastTimestamp) {
       lastDataTimestamp: new Date(lastTimestamp),
       minutesOffline: minutesOffline,
       emailSent: true,
-      recipients: ALERT_RECIPIENTS
+      recipients: emailRecipients
     });
 
     console.log(`   ✅ Sensor offline alert logged to Firestore\n`);
@@ -581,6 +584,35 @@ async function getSmsSettings() {
   } catch (error) {
     console.error('⚠️  Error fetching SMS settings:', error.message);
     return { enabled: false, phoneNumbers: [] };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET EMAIL RECIPIENTS FROM FIRESTORE
+// ═══════════════════════════════════════════════════════════════════════════════
+async function getEmailRecipients() {
+  try {
+    const usersSnapshot = await firestore.collection('users')
+      .where('emailNotifications', '==', true)
+      .get();
+    
+    if (usersSnapshot.empty) {
+      console.log('📧 No users with email notifications enabled - using default');
+      return [gmailEmail];
+    }
+    
+    const emails = usersSnapshot.docs.map(doc => doc.data().email).filter(Boolean);
+    
+    console.log('📧 Email Recipients from Firestore:');
+    console.log(`   Total recipients: ${emails.length}`);  // ✅ Fixed
+    emails.forEach((email, index) => {
+      console.log(`   ${index + 1}. ${email}`);  // ✅ Fixed
+    });
+    
+    return emails.length > 0 ? emails : [gmailEmail];
+  } catch (error) {
+    console.error('⚠️  Error fetching email recipients:', error.message);
+    return [gmailEmail];
   }
 }
 
@@ -969,9 +1001,12 @@ async function checkAlerts() {
 </html>
     `;
 
+    // Get email recipients dynamically from users who enabled notifications
+    const emailRecipients = await getEmailRecipients();
+
     const mailOptions = {
       from: `Weather Monitoring System <${gmailEmail}>`,
-      to: ALERT_RECIPIENTS.join(', '),
+      to: emailRecipients.join(', '),
       subject: emailSubject,
       html: emailBody
     };
@@ -979,7 +1014,7 @@ async function checkAlerts() {
     // SEND EMAIL
     await transporter.sendMail(mailOptions);
     console.log('✅ EMAIL SENT SUCCESSFULLY');
-    console.log(`   Recipients: ${ALERT_RECIPIENTS.join(', ')}`);
+    console.log(`   Recipients: ${emailRecipients.join(', ')}`);
     console.log(`   Subject: ${emailSubject}`);
     console.log(`   Alerts: ${alertsToSend.length}\n`);
 
@@ -1040,7 +1075,7 @@ async function checkAlerts() {
       smsSentCount: smsSentCount,  // ✅ Use smsSentCount instead
       smsFailedCount: smsFailedCount,  // ✅ Add failed count
       smsProvider: 'semaphore',
-      recipients: ALERT_RECIPIENTS,
+      recipients: emailRecipients,
       smsRecipients: smsSettings.enabled ? smsSettings.phoneNumbers.map(p => p.number) : [],  // ✅ Array of numbers
       source: readingSource
     });
