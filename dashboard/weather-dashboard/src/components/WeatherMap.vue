@@ -125,7 +125,9 @@ watch(mapRef, (newMapRefValue) => {
               <div class="space-y-2">
                 <p class="flex items-center justify-between text-sm">
                   <span class="text-text-light">Temperature</span>
-                  <span class="font-medium text-red-500 dark:text-red-400">{{ temperature }}°C</span>
+                  <span class="font-medium text-red-500 dark:text-red-400"
+                    >{{ temperature }}°C</span
+                  >
                 </p>
                 <p class="flex items-center justify-between text-sm">
                   <span class="text-text-light">Humidity</span>
@@ -133,7 +135,9 @@ watch(mapRef, (newMapRefValue) => {
                 </p>
                 <p class="flex items-center justify-between text-sm">
                   <span class="text-text-light">Rainfall Rate (Est.)</span>
-                  <span class="font-medium text-indigo-500 dark:text-indigo-400">{{ rainfall }} mm/hr</span>
+                  <span class="font-medium text-indigo-500 dark:text-indigo-400"
+                    >{{ rainfall }} mm/hr</span
+                  >
                 </p>
               </div>
             </div>
@@ -168,4 +172,3 @@ watch(mapRef, (newMapRefValue) => {
   color: var(--color-text-light);
 }
 </style>
-

@@ -7,9 +7,7 @@
         <!-- ❗ Missing closing tag was here -->
         <div class="flex items-center space-x-2 mb-1">
           <Icon icon="ph:bell-ringing-bold" class="h-5 w-5 text-text-light" />
-          <span class="text-sm font-medium text-text-main"
-            >Push Notifications</span
-          >
+          <span class="text-sm font-medium text-text-main">Push Notifications</span>
           <span
             v-if="isPermissionGranted"
             class="px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full"
@@ -33,15 +31,9 @@
     <!-- ✅ Close .flex items-start -->
 
     <!-- Browser Support Check -->
-    <div
-      v-if="!isSupported"
-      class="mt-3 p-3 bg-yellow-50 border-yellow-200 rounded-lg"
-    >
+    <div v-if="!isSupported" class="mt-3 p-3 bg-yellow-50 border-yellow-200 rounded-lg">
       <div class="flex items-start space-x-2">
-        <Icon
-          icon="ph:warning-bold"
-          class="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0"
-        />
+        <Icon icon="ph:warning-bold" class="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
         <div>
           <p class="text-xs font-semibold text-yellow-900">Not Supported</p>
           <p class="text-xs text-yellow-700 mt-0.5">
@@ -54,15 +46,9 @@
     <!-- Permission Status -->
     <div v-else class="mt-3">
       <!-- Enabled State -->
-      <div
-        v-if="isPermissionGranted"
-        class="p-3 bg-green-50 border-green-200 rounded-lg"
-      >
+      <div v-if="isPermissionGranted" class="p-3 bg-green-50 border-green-200 rounded-lg">
         <div class="flex items-start space-x-2">
-          <Icon
-            icon="ph:check-circle-bold"
-            class="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0"
-          />
+          <Icon icon="ph:check-circle-bold" class="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
           <div class="flex-1">
             <p class="text-xs font-semibold text-green-900">Enabled</p>
             <p class="text-xs text-green-700 mt-0.5">
@@ -84,10 +70,7 @@
         class="p-3 bg-red-50 border-red-200 rounded-lg"
       >
         <div class="flex items-start space-x-2">
-          <Icon
-            icon="ph:x-circle-bold"
-            class="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0"
-          />
+          <Icon icon="ph:x-circle-bold" class="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
           <div>
             <p class="text-xs font-semibold text-red-900">Blocked</p>
             <p class="text-xs text-red-700 mt-0.5">
@@ -98,15 +81,9 @@
       </div>
 
       <!-- Default Enable Button -->
-      <div
-        v-else
-        class="p-3 bg-blue-50 border-blue-200 rounded-lg"
-      >
+      <div v-else class="p-3 bg-blue-50 border-blue-200 rounded-lg">
         <div class="flex items-start space-x-2">
-          <Icon
-            icon="ph:bell-bold"
-            class="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0"
-          />
+          <Icon icon="ph:bell-bold" class="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div class="flex-1">
             <p class="text-xs font-semibold text-blue-900">Not enabled</p>
             <p class="text-xs text-blue-700 mt-0.5">

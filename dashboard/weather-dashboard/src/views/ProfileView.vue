@@ -132,58 +132,63 @@
 
           <div class="space-y-4">
             <!-- Email Notifications -->
-<div
-  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
->
-  <div class="flex-1">
-    <div class="flex items-center space-x-2">
-      <Icon
-        icon="ph:envelope-simple-bold"
-        class="h-5 w-5 text-gray-600 dark:text-gray-400"
-      />
-      <span class="text-sm font-medium text-gray-900 dark:text-text-main"
-        >Email Notifications</span
-      >
-    </div>
-    <p class="text-xs text-gray-600 dark:text-text-light mt-1 ml-7">
-      Receive alert emails when thresholds are exceeded
-    </p>
-  </div>
-  <button
-    @click="profile.emailNotifications = !profile.emailNotifications"
-    :class="profile.emailNotifications ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'"
-    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-  >
-    <span
-      :class="profile.emailNotifications ? 'translate-x-6' : 'translate-x-1'"
-      class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
-    ></span>
-  </button>
-</div>
+            <div
+              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
+            >
+              <div class="flex-1">
+                <div class="flex items-center space-x-2">
+                  <Icon
+                    icon="ph:envelope-simple-bold"
+                    class="h-5 w-5 text-gray-600 dark:text-gray-400"
+                  />
+                  <span class="text-sm font-medium text-gray-900 dark:text-text-main"
+                    >Email Notifications</span
+                  >
+                </div>
+                <p class="text-xs text-gray-600 dark:text-text-light mt-1 ml-7">
+                  Receive alert emails when thresholds are exceeded
+                </p>
+              </div>
+              <button
+                @click="profile.emailNotifications = !profile.emailNotifications"
+                :class="profile.emailNotifications ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <span
+                  :class="profile.emailNotifications ? 'translate-x-6' : 'translate-x-1'"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                ></span>
+              </button>
+            </div>
 
-<!-- Email Recipients Management (NEW) -->
-<Transition name="fade-slide">
-  <div v-if="profile.emailNotifications" class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-    <div class="flex items-start gap-2">
-      <Icon
-        icon="ph:check-circle-bold"
-        class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
-      />
-      <div class="flex-1">
-        <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-          Email Alerts Enabled
-        </p>
-        <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
-          Your email will receive weather alerts: <strong>{{ user?.email }}</strong>
-        </p>
-        <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center gap-1">
-          <Icon icon="ph:info-bold" class="h-3 w-3" />
-          Your login email is automatically added to recipients when this is enabled
-        </p>
-      </div>
-    </div>
-  </div>
-</Transition>
+            <!-- Email Recipients Management (NEW) -->
+            <Transition name="fade-slide">
+              <div
+                v-if="profile.emailNotifications"
+                class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
+              >
+                <div class="flex items-start gap-2">
+                  <Icon
+                    icon="ph:check-circle-bold"
+                    class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+                  />
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      Email Alerts Enabled
+                    </p>
+                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      Your email will receive weather alerts: <strong>{{ user?.email }}</strong>
+                    </p>
+                    <p
+                      class="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center gap-1"
+                    >
+                      <Icon icon="ph:info-bold" class="h-3 w-3" />
+                      Your login email is automatically added to recipients when this is enabled
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Transition>
 
             <!-- Push Notifications -->
             <PushNotificationSettings />
@@ -305,10 +310,12 @@
                       />
                       <div class="text-xs text-blue-800 dark:text-blue-200 space-y-1">
                         <p>
-                          All numbers will receive SMS alerts via Semaphore API when weather thresholds are exceeded.
+                          All numbers will receive SMS alerts via Semaphore API when weather
+                          thresholds are exceeded.
                         </p>
                         <p class="font-medium">
-                          💡 Tip: Add multiple numbers for farm managers, assistants, or family members!
+                          💡 Tip: Add multiple numbers for farm managers, assistants, or family
+                          members!
                         </p>
                       </div>
                     </div>
@@ -342,7 +349,8 @@
                 </p>
                 <p>
                   <strong>💬 SMS Alerts:</strong> Text message notifications sent via Semaphore API
-                  (Philippine provider) when critical weather conditions are detected. All saved numbers will receive alerts simultaneously.
+                  (Philippine provider) when critical weather conditions are detected. All saved
+                  numbers will receive alerts simultaneously.
                 </p>
                 <p class="text-xs text-blue-600 dark:text-blue-300 mt-2">
                   All thresholds are based on peer-reviewed research from IRRI (International Rice
@@ -464,7 +472,7 @@ const addPhoneNumber = () => {
     smsSettings.value.phoneNumbers.push({
       number: '',
       label: '',
-      error: ''
+      error: '',
     })
   }
 }
@@ -487,7 +495,7 @@ const validatePhoneNumber = (index) => {
     // Check for duplicates
     const formatted = formatPhoneNumber(phone.number)
     const duplicates = smsSettings.value.phoneNumbers.filter(
-      (p, i) => i !== index && formatPhoneNumber(p.number) === formatted
+      (p, i) => i !== index && formatPhoneNumber(p.number) === formatted,
     )
     if (duplicates.length > 0) {
       phone.error = 'This number is already added'
@@ -546,27 +554,29 @@ const fetchSmsSettings = async () => {
         // New format: array of phone objects
         smsSettings.value = {
           enabled: data.sms_notifications_enabled || false,
-          phoneNumbers: data.recipient_phone_numbers.map(item => ({
+          phoneNumbers: data.recipient_phone_numbers.map((item) => ({
             number: item.number || '',
             label: item.label || '',
-            error: ''
-          }))
+            error: '',
+          })),
         }
       } else if (data.recipient_phone_number) {
         // Old format: single phone number - migrate to new format
         smsSettings.value = {
           enabled: data.sms_notifications_enabled || false,
-          phoneNumbers: [{
-            number: data.recipient_phone_number,
-            label: 'Primary',
-            error: ''
-          }]
+          phoneNumbers: [
+            {
+              number: data.recipient_phone_number,
+              label: 'Primary',
+              error: '',
+            },
+          ],
         }
       } else {
         // No numbers saved yet
         smsSettings.value = {
           enabled: false,
-          phoneNumbers: []
+          phoneNumbers: [],
         }
       }
     }
@@ -633,10 +643,10 @@ const saveProfile = async () => {
 
     // Save SMS settings with multiple numbers
     const formattedPhoneNumbers = smsSettings.value.phoneNumbers
-      .filter(phone => phone.number) // Only include non-empty numbers
-      .map(phone => ({
+      .filter((phone) => phone.number) // Only include non-empty numbers
+      .map((phone) => ({
         number: formatPhoneNumber(phone.number),
-        label: phone.label || ''
+        label: phone.label || '',
       }))
 
     const settingsRef = doc(db, 'settings', 'thresholds')
@@ -652,9 +662,9 @@ const saveProfile = async () => {
     )
 
     // Update local values with formatted versions
-    smsSettings.value.phoneNumbers = formattedPhoneNumbers.map(phone => ({
+    smsSettings.value.phoneNumbers = formattedPhoneNumbers.map((phone) => ({
       ...phone,
-      error: ''
+      error: '',
     }))
 
     saveStatus.value = `Profile saved successfully! ${formattedPhoneNumbers.length} phone number(s) will receive SMS alerts.`

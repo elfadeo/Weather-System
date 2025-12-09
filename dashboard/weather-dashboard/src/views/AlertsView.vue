@@ -16,14 +16,9 @@
         class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-blue-200"
       >
         <div class="flex items-start space-x-4">
-          <Icon
-            icon="ph:info-bold"
-            class="h-6 w-6 text-blue-600 flex-shrink-0 mt-1"
-          />
+          <Icon icon="ph:info-bold" class="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
           <div class="flex-1">
-            <h3 class="font-bold text-blue-900 mb-2">
-              How the Alert System Works
-            </h3>
+            <h3 class="font-bold text-blue-900 mb-2">How the Alert System Works</h3>
             <div class="text-sm text-blue-800 space-y-2">
               <p>
                 <strong>🚨 Real-Time Email Alerts:</strong> Automated monitoring runs every 15
@@ -48,9 +43,7 @@
           >
             <!-- Current Thresholds Header -->
             <div>
-              <h2
-                class="text-xl font-bold text-text-main mb-2 flex items-center"
-              >
+              <h2 class="text-xl font-bold text-text-main mb-2 flex items-center">
                 <Icon icon="ph:shield-check-bold" class="h-6 w-6 mr-2 text-blue-600" />
                 Active Thresholds
               </h2>
@@ -60,12 +53,8 @@
             </div>
 
             <!-- Rice Agriculture Thresholds (IRRI) -->
-            <div
-              class="border-l-4 border-green-500 pl-4 bg-green-50 p-4 rounded-r-lg"
-            >
-              <h3
-                class="text-sm font-bold text-green-900 mb-3 flex items-center"
-              >
+            <div class="border-l-4 border-green-500 pl-4 bg-green-50 p-4 rounded-r-lg">
+              <h3 class="text-sm font-bold text-green-900 mb-3 flex items-center">
                 <Icon icon="ph:plant-bold" class="h-5 w-5 mr-2" />
                 Rice Agriculture (IRRI)
               </h3>
@@ -73,42 +62,28 @@
               <!-- Heat Stress -->
               <div class="mb-3 pb-3 border-b border-green-200">
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs font-semibold text-green-900"
-                    >🔥 Heat Stress</span
-                  >
-                  <span
-                    class="text-xs font-mono bg-red-100 text-red-700 px-2 py-0.5 rounded"
-                  >
+                  <span class="text-xs font-semibold text-green-900">🔥 Heat Stress</span>
+                  <span class="text-xs font-mono bg-red-100 text-red-700 px-2 py-0.5 rounded">
                     &gt;35°C
                   </span>
                 </div>
-                <p class="text-xs text-green-700">
-                  Causes spikelet sterility during flowering
-                </p>
+                <p class="text-xs text-green-700">Causes spikelet sterility during flowering</p>
               </div>
 
               <!-- Optimal Range -->
               <div class="mb-3 pb-3 border-b border-green-200">
                 <div class="flex items-center justify-between mb-1">
-                  <span class="text-xs font-semibold text-green-900"
-                    >✅ Optimal Range</span
-                  >
-                  <span
-                    class="text-xs font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded"
-                  >
+                  <span class="text-xs font-semibold text-green-900">✅ Optimal Range</span>
+                  <span class="text-xs font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded">
                     25-33°C
                   </span>
                 </div>
-                <p class="text-xs text-green-700">
-                  Ideal temperature for rice growth
-                </p>
+                <p class="text-xs text-green-700">Ideal temperature for rice growth</p>
               </div>
 
               <!-- Disease Monitoring -->
               <div>
-                <p class="text-xs font-semibold text-green-900 mb-2">
-                  🦠 Disease Detection
-                </p>
+                <p class="text-xs font-semibold text-green-900 mb-2">🦠 Disease Detection</p>
                 <ul class="text-xs text-green-700 space-y-1">
                   <li>• Rice Blast: &gt;90% RH + 24-28°C</li>
                   <li>• Bacterial Blight: &gt;85% RH + 30-34°C</li>
@@ -117,59 +92,36 @@
             </div>
 
             <!-- PAGASA Rainfall System -->
-            <div
-              class="border-l-4 border-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg"
-            >
+            <div class="border-l-4 border-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg">
               <h3 class="text-sm font-bold text-blue-900 mb-3 flex items-center">
                 <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 mr-2" />
                 PAGASA Rainfall System
               </h3>
 
               <div class="space-y-2">
-                <div
-                  class="flex items-center justify-between p-2 bg-yellow-100 rounded"
-                >
-                  <span class="text-xs font-semibold text-yellow-900"
-                    >🟡 Yellow Alert</span
-                  >
+                <div class="flex items-center justify-between p-2 bg-yellow-100 rounded">
+                  <span class="text-xs font-semibold text-yellow-900">🟡 Yellow Alert</span>
                   <span class="text-xs font-mono">≥7.5 mm/hr</span>
                 </div>
-                <div
-                  class="flex items-center justify-between p-2 bg-orange-100 rounded"
-                >
-                  <span class="text-xs font-semibold text-orange-900"
-                    >🟠 Orange Alert</span
-                  >
+                <div class="flex items-center justify-between p-2 bg-orange-100 rounded">
+                  <span class="text-xs font-semibold text-orange-900">🟠 Orange Alert</span>
                   <span class="text-xs font-mono">≥15 mm/hr</span>
                 </div>
-                <div
-                  class="flex items-center justify-between p-2 bg-red-100 rounded"
-                >
-                  <span class="text-xs font-semibold text-red-900"
-                    >🔴 Red Alert</span
-                  >
+                <div class="flex items-center justify-between p-2 bg-red-100 rounded">
+                  <span class="text-xs font-semibold text-red-900">🔴 Red Alert</span>
                   <span class="text-xs font-mono">≥30 mm/hr</span>
                 </div>
               </div>
 
-              <p class="text-xs text-blue-700 mt-3">
-                Color-coded flood risk assessment system
-              </p>
+              <p class="text-xs text-blue-700 mt-3">Color-coded flood risk assessment system</p>
             </div>
 
             <!-- Email Status -->
             <div class="border-t border-surface-soft pt-4">
-              <div
-                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div class="flex items-center space-x-2">
-                  <Icon
-                    icon="ph:envelope-simple-bold"
-                    class="h-5 w-5 text-gray-600"
-                  />
-                  <span class="text-sm font-medium text-text-main"
-                    >Email Alerts</span
-                  >
+                  <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-gray-600" />
+                  <span class="text-sm font-medium text-text-main">Email Alerts</span>
                 </div>
                 <span
                   class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full"
@@ -183,9 +135,7 @@
             </div>
 
             <!-- Info Note -->
-            <div
-              class="bg-blue-50 border border-blue-200 rounded-lg p-3"
-            >
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p class="text-xs text-blue-800">
                 <Icon icon="ph:info-bold" class="inline h-3 w-3 mr-1" />
                 <strong>Note:</strong> These thresholds are based on peer-reviewed research and
@@ -223,10 +173,7 @@
               </div>
             </div>
 
-            <div
-              v-if="isLoadingHistory"
-              class="p-12 text-center text-text-light"
-            >
+            <div v-if="isLoadingHistory" class="p-12 text-center text-text-light">
               <Icon
                 icon="ph:circle-notch-bold"
                 class="h-10 w-10 animate-spin mx-auto mb-3 text-primary"
@@ -234,16 +181,11 @@
               <p class="font-medium">Loading alert history...</p>
             </div>
 
-            <div
-              v-else-if="!alertHistory.length"
-              class="p-12 text-center text-text-light"
-            >
+            <div v-else-if="!alertHistory.length" class="p-12 text-center text-text-light">
               <Icon icon="ph:shield-check-bold" class="h-16 w-16 text-green-400 mx-auto mb-4" />
               <p class="text-lg font-medium text-text-main">All Clear!</p>
               <p class="text-sm mt-2">No alerts have been triggered recently</p>
-              <p class="text-xs mt-1 text-text-light">
-                Monitoring continues every 15 minutes
-              </p>
+              <p class="text-xs mt-1 text-text-light">Monitoring continues every 15 minutes</p>
             </div>
 
             <ul v-else class="divide-y divide-surface-soft">
@@ -338,18 +280,12 @@
                             <p class="text-xs text-orange-700 mt-1">
                               {{ subAlert.message }}
                             </p>
-                            <div
-                              v-if="subAlert.action"
-                              class="mt-2 p-2 bg-blue-50 rounded"
-                            >
+                            <div v-if="subAlert.action" class="mt-2 p-2 bg-blue-50 rounded">
                               <p class="text-xs text-blue-800">
                                 <strong>Action:</strong> {{ subAlert.action }}
                               </p>
                             </div>
-                            <p
-                              v-if="subAlert.source"
-                              class="text-xs text-text-light mt-1"
-                            >
+                            <p v-if="subAlert.source" class="text-xs text-text-light mt-1">
                               📚 {{ subAlert.source }}
                             </p>
                           </div>
@@ -380,10 +316,7 @@
             </ul>
 
             <!-- Load More Button -->
-            <div
-              v-if="alertHistory.length >= 50"
-              class="p-4 border-t border-gray-200 text-center"
-            >
+            <div v-if="alertHistory.length >= 50" class="p-4 border-t border-gray-200 text-center">
               <button
                 class="text-sm text-blue-600 hover:underline font-medium"
                 @click="loadMoreAlerts"
@@ -402,25 +335,15 @@
               Scientific Foundation
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div
-                class="p-4 bg-surface rounded-lg border border-surface-soft"
-              >
-                <p class="font-bold text-text-main mb-1">
-                  🌡️ Heat Stress Threshold
-                </p>
+              <div class="p-4 bg-surface rounded-lg border border-surface-soft">
+                <p class="font-bold text-text-main mb-1">🌡️ Heat Stress Threshold</p>
                 <p class="text-xs text-text-light mb-2">
                   Temperature >35°C during flowering causes spikelet sterility
                 </p>
-                <p class="text-xs text-blue-600 font-medium">
-                  Source: IRRI Rice Knowledge Bank
-                </p>
+                <p class="text-xs text-blue-600 font-medium">Source: IRRI Rice Knowledge Bank</p>
               </div>
-              <div
-                class="p-4 bg-surface rounded-lg border border-surface-soft"
-              >
-                <p class="font-bold text-text-main mb-1">
-                  🌧️ Rainfall Warning System
-                </p>
+              <div class="p-4 bg-surface rounded-lg border border-surface-soft">
+                <p class="font-bold text-text-main mb-1">🌧️ Rainfall Warning System</p>
                 <p class="text-xs text-text-light mb-2">
                   Color-coded thresholds based on flood risk levels
                 </p>
@@ -428,31 +351,17 @@
                   Source: PAGASA Heavy Rainfall Warning System
                 </p>
               </div>
-              <div
-                class="p-4 bg-surface rounded-lg border border-surface-soft"
-              >
-                <p class="font-bold text-text-main mb-1">
-                  🍄 Rice Blast Conditions
-                </p>
+              <div class="p-4 bg-surface rounded-lg border border-surface-soft">
+                <p class="font-bold text-text-main mb-1">🍄 Rice Blast Conditions</p>
                 <p class="text-xs text-text-light mb-2">
                   High humidity (>90%) with cool temperatures (24-28°C)
                 </p>
-                <p class="text-xs text-blue-600 font-medium">
-                  Source: IRRI Rice Doctor
-                </p>
+                <p class="text-xs text-blue-600 font-medium">Source: IRRI Rice Doctor</p>
               </div>
-              <div
-                class="p-4 bg-surface rounded-lg border border-surface-soft"
-              >
-                <p class="font-bold text-text-main mb-1">
-                  🦠 Bacterial Blight Conditions
-                </p>
-                <p class="text-xs text-text-light mb-2">
-                  High humidity (>85%) with heat (30-34°C)
-                </p>
-                <p class="text-xs text-blue-600 font-medium">
-                  Source: IRRI Rice Doctor
-                </p>
+              <div class="p-4 bg-surface rounded-lg border border-surface-soft">
+                <p class="font-bold text-text-main mb-1">🦠 Bacterial Blight Conditions</p>
+                <p class="text-xs text-text-light mb-2">High humidity (>85%) with heat (30-34°C)</p>
+                <p class="text-xs text-blue-600 font-medium">Source: IRRI Rice Doctor</p>
               </div>
             </div>
           </div>
@@ -573,10 +482,7 @@ const getSeverityBadge = (severity) => {
     warning: 'bg-orange-100 text-orange-700',
     advisory: 'bg-blue-100 text-blue-700',
   }
-  return (
-    classes[severity?.toLowerCase()] ||
-    'bg-gray-100 text-gray-700'
-  )
+  return classes[severity?.toLowerCase()] || 'bg-gray-100 text-gray-700'
 }
 
 const getDefaultMessage = (alert) => {

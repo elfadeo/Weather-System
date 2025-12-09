@@ -91,9 +91,7 @@
       <!-- 24-Hour Summary Metrics -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <h5
-            class="text-xs font-semibold text-text-light uppercase tracking-wide"
-          >
+          <h5 class="text-xs font-semibold text-text-light uppercase tracking-wide">
             Statistical Summary
           </h5>
           <span class="text-xs text-text-light">{{ dataPointsCount }} readings</span>

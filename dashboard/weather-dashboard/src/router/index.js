@@ -7,7 +7,8 @@ import MainLayout from '@/layout/MainLayout.vue'
 
 // Views
 import LoginView from '@/views/LoginView.vue'
-import SignupView from '@/views/SignupView.vue' // <-- Import signup page
+import SignupView from '@/views/SignupView.vue'
+import UsernameLoginView from '@/views/UsernameLoginView.vue'
 import HomeView from '@/views/HomeView.vue'
 import ChartsView from '@/views/ChartsView.vue'
 import ReportsView from '@/views/ReportsView.vue'
@@ -42,9 +43,14 @@ const router = createRouter({
       component: LoginView,
     },
     {
-      path: '/signup', // <-- New signup route
+      path: '/signup',
       name: 'signup',
       component: SignupView,
+    },
+    {
+      path: '/phone-login',
+      name: 'phone-login',
+      component: UsernameLoginView, // ✅ Changed from PhoneLoginView to UsernameLoginView
     },
     {
       path: '/',
@@ -103,8 +109,11 @@ router.beforeEach(async (to, from, next) => {
 
   if (requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
-  } else if (isAuthenticated && (to.name === 'login' || to.name === 'signup')) {
-    // Redirect authenticated users away from login AND signup pages
+  } else if (
+    isAuthenticated &&
+    (to.name === 'login' || to.name === 'signup' || to.name === 'phone-login')
+  ) {
+    // Redirect authenticated users away from login, signup, AND phone-login pages
     next({ name: 'dashboard' })
   } else {
     next()

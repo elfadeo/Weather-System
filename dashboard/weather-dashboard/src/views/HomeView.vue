@@ -39,11 +39,7 @@
 
               <!-- Status Label -->
               <span
-                :class="
-                  isOnline
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
-                "
+                :class="isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
                 class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200"
               >
                 {{ isOnline ? 'Online' : 'Offline' }}
@@ -150,8 +146,7 @@ const weatherData = computed(() => [
     unit: '°C',
     icon: 'ph:thermometer-cold-bold',
     color: 'text-red-600',
-    bgColor:
-      'bg-red-200',
+    bgColor: 'bg-red-200',
   },
   {
     id: 'humidity',
@@ -160,8 +155,7 @@ const weatherData = computed(() => [
     unit: '%',
     icon: 'ph:drop-bold',
     color: 'text-blue-600',
-    bgColor:
-      'bg-blue-200',
+    bgColor: 'bg-blue-200',
   },
   {
     id: 'rainfall_rate',
@@ -170,8 +164,7 @@ const weatherData = computed(() => [
     unit: 'mm/hr',
     icon: 'ph:cloud-rain-bold',
     color: 'text-indigo-600',
-    bgColor:
-      'bg-indigo-200',
+    bgColor: 'bg-indigo-200',
   },
   {
     id: 'total_rainfall',
@@ -180,8 +173,7 @@ const weatherData = computed(() => [
     unit: 'mm',
     icon: 'ph:chart-line-up-bold',
     color: 'text-teal-600',
-    bgColor:
-      'bg-teal-200',
+    bgColor: 'bg-teal-200',
   },
 ])
 

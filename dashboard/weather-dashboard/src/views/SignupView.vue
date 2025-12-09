@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { useRouter } from 'vue-router'
 
@@ -36,9 +37,16 @@ const showMessage = (type, message, duration = 5000) => {
   messageTimeout = setTimeout(clearMessages, duration)
 }
 
-// --- Email validation ---
+// --- Email validation (ALL EMAIL PROVIDERS) ---
 const isValidEmail = (email) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  if (!email || typeof email !== 'string') return false
+
+  // Trim whitespace
+  const cleanEmail = email.trim()
+
+  // Basic email validation - accepts any valid email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(cleanEmail)
 }
 
 // --- Password validation ---
@@ -48,6 +56,15 @@ const isValidPassword = (password) => {
 
 // --- Email/Password Sign Up ---
 const signUp = async () => {
+  // Validate email format
+  if (!email.value) {
+    showMessage('error', 'Please enter your email address.')
+    return
+  }
+
+  // Trim whitespace
+  email.value = email.value.trim()
+
   if (!isValidEmail(email.value)) {
     showMessage('error', 'Please enter a valid email address.')
     return
@@ -66,19 +83,34 @@ const signUp = async () => {
   try {
     isLoading.value = true
     clearMessages()
+
+    // Create account
     const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value)
     console.log('Successfully signed up:', userCredential.user.uid)
 
-    await router.push({ name: 'dashboard' }).catch((err) => {
-      console.error('Navigation error:', err)
-      throw new Error('Navigation failed')
-    })
+    // Send verification email
+    await sendEmailVerification(userCredential.user)
+
+    // Sign out immediately after signup
+    await auth.signOut()
+
+    // Show success message
+    showMessage(
+      'success',
+      'Account created! Please check your email inbox and verify your account before signing in.',
+      10000,
+    )
+
+    // Redirect to login after 4 seconds
+    setTimeout(() => {
+      router.push({ name: 'login' })
+    }, 4000)
   } catch (error) {
     console.error('Sign Up Error:', error.code)
 
     switch (error.code) {
       case 'auth/email-already-in-use':
-        showMessage('error', 'This email is already registered. Please sign in instead.')
+        showMessage('error', 'This email address is already registered. Please sign in instead.')
         break
       case 'auth/invalid-email':
         showMessage('error', 'Please enter a valid email address.')
@@ -161,7 +193,7 @@ const signInWithGoogle = async () => {
           class="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
         />
         <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h2>
-        <p class="text-gray-600 dark:text-gray-300 mt-2">Sign up to get started</p>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">Sign up with your email account</p>
       </div>
 
       <!-- Social Sign-in -->
@@ -205,15 +237,24 @@ const signInWithGoogle = async () => {
           >
             Email Address
           </label>
-          <input
-            v-model="email"
-            type="email"
-            id="email"
-            aria-label="Email Address"
-            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
-            placeholder="you@example.com"
-            required
-          />
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              v-model="email"
+              type="email"
+              id="email"
+              aria-label="Email Address"
+              autocomplete="email"
+              class="block w-full pl-10 pr-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
+              placeholder="yourname@example.com"
+              required
+            />
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Any email address (Gmail, Yahoo, school email, etc.)
+          </p>
         </div>
 
         <!-- Password -->
@@ -229,13 +270,12 @@ const signInWithGoogle = async () => {
             type="password"
             id="password"
             aria-label="Password"
+            autocomplete="new-password"
             class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="••••••••"
             required
           />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Must be at least 6 characters
-          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Must be at least 6 characters</p>
         </div>
 
         <!-- Confirm Password -->
@@ -251,10 +291,30 @@ const signInWithGoogle = async () => {
             type="password"
             id="confirmPassword"
             aria-label="Confirm Password"
+            autocomplete="new-password"
             class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="••••••••"
             required
           />
+        </div>
+
+        <!-- Important Warning -->
+        <div
+          class="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800"
+        >
+          <div class="flex gap-2">
+            <Icon
+              icon="ph:warning-bold"
+              class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"
+            />
+            <div class="text-yellow-800 dark:text-yellow-200 text-xs space-y-1">
+              <p class="font-semibold">⚠️ IMPORTANT: Use Your REAL Email Address!</p>
+              <p>• Verification email will be sent to your inbox</p>
+              <p>• If your email doesn't exist, you CANNOT login</p>
+              <p>• Check inbox AND spam folder for verification link</p>
+              <p>• You must verify before you can sign in</p>
+            </div>
+          </div>
         </div>
 
         <!-- Messages -->

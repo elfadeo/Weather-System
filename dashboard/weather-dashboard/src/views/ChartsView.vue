@@ -18,9 +18,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 class="text-lg font-semibold text-text-main">Data Time Range</h3>
-            <p class="text-sm text-text-light mt-1">
-              Select the time period to visualize
-            </p>
+            <p class="text-sm text-text-light mt-1">Select the time period to visualize</p>
           </div>
           <select
             v-model="selectedTimeRange"
@@ -92,9 +90,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">
-                Rainfall Rate (Est.)
-              </h3>
+              <h3 class="text-lg font-semibold text-text-main">Rainfall Rate (Est.)</h3>
             </div>
             <span class="text-xs text-text-light">mm/hr</span>
           </div>
@@ -118,9 +114,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-teal-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">
-                Total Rainfall (Est.)
-              </h3>
+              <h3 class="text-lg font-semibold text-text-main">Total Rainfall (Est.)</h3>
             </div>
             <span class="text-xs text-text-light">mm</span>
           </div>
@@ -147,29 +141,21 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="p-4 bg-red-50 rounded-lg">
             <p class="text-xs text-red-600 font-medium mb-1">Temperature</p>
-            <p class="text-2xl font-bold text-red-700">
-              {{ averageTemp.toFixed(1) }}°C
-            </p>
+            <p class="text-2xl font-bold text-red-700">{{ averageTemp.toFixed(1) }}°C</p>
             <p class="text-xs text-red-600 mt-1">
               {{ minTemp.toFixed(1) }}°C - {{ maxTemp.toFixed(1) }}°C
             </p>
           </div>
           <div class="p-4 bg-blue-50 rounded-lg">
             <p class="text-xs text-blue-600 font-medium mb-1">Humidity</p>
-            <p class="text-2xl font-bold text-blue-700">
-              {{ averageHumidity.toFixed(1) }}%
-            </p>
+            <p class="text-2xl font-bold text-blue-700">{{ averageHumidity.toFixed(1) }}%</p>
             <p class="text-xs text-blue-600 mt-1">
               {{ minHumidity.toFixed(1) }}% - {{ maxHumidity.toFixed(1) }}%
             </p>
           </div>
           <div class="p-4 bg-indigo-50 rounded-lg">
-            <p class="text-xs text-indigo-600 font-medium mb-1">
-              Total Rainfall (Est.)
-            </p>
-            <p class="text-2xl font-bold text-indigo-700">
-              {{ totalRainfall.toFixed(1) }}mm
-            </p>
+            <p class="text-xs text-indigo-600 font-medium mb-1">Total Rainfall (Est.)</p>
+            <p class="text-2xl font-bold text-indigo-700">{{ totalRainfall.toFixed(1) }}mm</p>
             <p class="text-xs text-indigo-600 mt-1">over period</p>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { useRouter } from 'vue-router'
 
@@ -15,13 +16,33 @@ const password = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
 const isLoading = ref(false)
+const showResendButton = ref(false)
 
 const router = useRouter()
+
+// --- Rate Limiting for Auto-Resend (PREVENTS "TOO MANY REQUESTS") ---
+const resendAttempts = ref(0)
+const lastResendTime = ref(0)
+const MAX_AUTO_RESENDS = 2 // Only auto-resend twice
+const RESEND_COOLDOWN = 60000 // 1 minute cooldown between resends
+
+const canAutoResend = () => {
+  const now = Date.now()
+  const timeSinceLastResend = now - lastResendTime.value
+
+  // Reset counter after 5 minutes
+  if (timeSinceLastResend > 300000) {
+    resendAttempts.value = 0
+  }
+
+  return resendAttempts.value < MAX_AUTO_RESENDS && timeSinceLastResend > RESEND_COOLDOWN
+}
 
 // --- Helper to clear messages ---
 const clearMessages = () => {
   errorMessage.value = ''
   successMessage.value = ''
+  showResendButton.value = false
 }
 
 // --- Auto-clear messages after delay ---
@@ -41,6 +62,48 @@ const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
+// --- Resend Verification Email (MANUAL) ---
+const resendVerification = async () => {
+  try {
+    isLoading.value = true
+    clearMessages()
+
+    // Sign in temporarily to get user object
+    const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
+    const user = userCredential.user
+
+    if (!user.emailVerified) {
+      await sendEmailVerification(user)
+      await auth.signOut()
+
+      lastResendTime.value = Date.now()
+      resendAttempts.value++
+
+      showMessage(
+        'success',
+        "✅ Verification email sent! Check your email inbox and spam folder. If your email doesn't exist, you cannot verify this account.",
+        12000,
+      )
+    } else {
+      await auth.signOut()
+      showMessage('success', 'Your email is already verified! Please try signing in again.')
+    }
+  } catch (error) {
+    console.error('Resend Verification Error:', error.code)
+    if (error.code === 'auth/too-many-requests') {
+      showMessage(
+        'error',
+        '⏱️ Too many attempts. Please wait 15-30 minutes before trying again.',
+        10000,
+      )
+    } else {
+      showMessage('error', 'Failed to resend verification. Please check your email and password.')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // --- Email/Password Sign In ---
 const signIn = async () => {
   if (!isValidEmail(email.value)) {
@@ -52,7 +115,48 @@ const signIn = async () => {
     isLoading.value = true
     clearMessages()
     const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
-    console.log('Successfully signed in:', userCredential.user.uid)
+    const user = userCredential.user
+
+    // Check if email is verified
+    if (!user.emailVerified) {
+      // AUTO-RESEND with rate limiting
+      if (canAutoResend()) {
+        try {
+          await sendEmailVerification(user)
+          lastResendTime.value = Date.now()
+          resendAttempts.value++
+
+          await auth.signOut()
+          showMessage(
+            'error',
+            'Email not verified! We just sent you a new verification link. Check your inbox and spam folder.',
+            12000,
+          )
+          showResendButton.value = true // Show manual button for next time
+        } catch (resendError) {
+          console.error('Auto-resend failed:', resendError.code)
+          await auth.signOut()
+          showMessage(
+            'error',
+            'Email not verified! Please click "Resend Verification" below to get a new link.',
+            12000,
+          )
+          showResendButton.value = true
+        }
+      } else {
+        // Rate limit reached - show manual button only
+        await auth.signOut()
+        showMessage(
+          'error',
+          'Email not verified! Click "Resend Verification" below to get a new link (wait 1 minute between resends).',
+          12000,
+        )
+        showResendButton.value = true
+      }
+      return
+    }
+
+    console.log('Successfully signed in:', user.uid)
 
     await router.push({ name: 'dashboard' }).catch((err) => {
       console.error('Navigation error:', err)
@@ -66,7 +170,7 @@ const signIn = async () => {
         showMessage('error', 'Please enter a valid email address.')
         break
       case 'auth/user-disabled':
-        showMessage('error', 'This account has been disabled.')
+        showMessage('error', 'This account has been disabled. Contact support.')
         break
       case 'auth/invalid-credential':
       case 'auth/user-not-found':
@@ -74,7 +178,11 @@ const signIn = async () => {
         showMessage('error', 'Invalid email or password. Please try again.')
         break
       case 'auth/too-many-requests':
-        showMessage('error', 'Too many failed attempts. Please try again later.')
+        showMessage(
+          'error',
+          '⏱️ Too many failed attempts. Your account is temporarily locked. Wait 15-30 minutes or use "Forgot Password" to unlock.',
+          15000,
+        )
         break
       default:
         showMessage(
@@ -107,7 +215,8 @@ const handlePasswordReset = async () => {
     await sendPasswordResetEmail(auth, email.value)
     showMessage(
       'success',
-      `A password reset link has been sent to ${email.value}. Please check your inbox.`,
+      `✅ Password reset link sent to ${email.value}. Check your inbox and spam folder.`,
+      8000,
     )
   } catch (error) {
     console.error('Password Reset Error:', error.code)
@@ -120,7 +229,7 @@ const handlePasswordReset = async () => {
         showMessage('error', 'No account found with this email.')
         break
       case 'auth/too-many-requests':
-        showMessage('error', 'Too many requests. Please try again later.')
+        showMessage('error', '⏱️ Too many requests. Please wait 15-30 minutes.')
         break
       default:
         showMessage('error', 'An error occurred. Please try again.')
@@ -211,6 +320,18 @@ const signInWithGoogle = async () => {
         </span>
       </button>
 
+      <!-- Username Login Button -->
+      <button
+        @click="router.push({ name: 'phone-login' })"
+        type="button"
+        :disabled="isLoading"
+        aria-label="Farmer Login with Username"
+        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-gray-400 dark:border-gray-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <Icon icon="ph:user-circle-bold" class="h-5 w-5 text-green-600 dark:text-green-400" />
+        <span class="ml-3 text-sm font-medium"> Username Login - No Email Needed </span>
+      </button>
+
       <!-- Separator -->
       <div class="relative">
         <div class="absolute inset-0 flex items-center">
@@ -288,6 +409,19 @@ const signInWithGoogle = async () => {
           </div>
         </Transition>
 
+        <!-- Resend Verification Button (shows after auto-resend limit reached) -->
+        <Transition name="fade-slide">
+          <button
+            v-if="showResendButton"
+            @click.prevent="resendVerification"
+            type="button"
+            :disabled="isLoading"
+            class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium border-2 border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Resend Verification Email
+          </button>
+        </Transition>
+
         <!-- Sign In Button -->
         <button
           type="submit"
@@ -303,6 +437,24 @@ const signInWithGoogle = async () => {
           {{ isLoading ? 'Signing In...' : 'Sign In' }}
         </button>
       </form>
+
+      <!-- Important Info Box -->
+      <div
+        class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
+      >
+        <div class="flex gap-2">
+          <Icon
+            icon="ph:info-bold"
+            class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+          />
+          <div class="text-blue-700 dark:text-blue-300 text-xs space-y-1">
+            <p class="font-semibold">Getting "Too many attempts" error?</p>
+            <p>• Wait 15-30 minutes before trying again</p>
+            <p>• Make sure you verified your email first</p>
+            <p>• Use "Forgot Password" to reset and unlock</p>
+          </div>
+        </div>
+      </div>
 
       <!-- Link to Sign Up -->
       <div class="text-center">
