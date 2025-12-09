@@ -181,19 +181,19 @@ const signInWithGoogle = async () => {
 
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4 transition-colors duration-500"
+    class="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-500"
   >
     <div
-      class="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
+      class="max-w-md w-full bg-surface rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
     >
       <!-- Header -->
       <div class="text-center">
         <Icon
           icon="ph:cloud-sun-bold"
-          class="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
+          class="h-12 w-12 text-primary mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
         />
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Create Account</h2>
-        <p class="text-gray-600 dark:text-gray-300 mt-2">Sign up with your email account</p>
+        <h2 class="text-3xl font-bold text-text-main">Create Account</h2>
+        <p class="text-text-light mt-2">Sign up with your email account</p>
       </div>
 
       <!-- Social Sign-in -->
@@ -202,13 +202,13 @@ const signInWithGoogle = async () => {
         type="button"
         :disabled="isLoading"
         aria-label="Sign up with Google"
-        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
+        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-border bg-surface hover:bg-hover text-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
       >
         <Icon v-if="!isLoading" icon="flat-color-icons:google" class="h-5 w-5" />
         <Icon
           v-else
           icon="eos-icons:loading"
-          class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
+          class="h-5 w-5 animate-spin text-primary"
         />
         <span class="ml-3 text-sm font-medium">
           {{ isLoading ? 'Please wait...' : 'Sign up with Google' }}
@@ -216,13 +216,13 @@ const signInWithGoogle = async () => {
       </button>
 
       <!-- Separator -->
-      <div class="relative">
+      <div class="relative py-4">
         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+          <div class="w-full border-t border-border"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-            Or sign up with email
+          <span class="px-6 bg-separator text-text-light relative z-10">
+            Or sign in with email
           </span>
         </div>
       </div>
@@ -233,13 +233,13 @@ const signInWithGoogle = async () => {
         <div>
           <label
             for="email"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+            class="block text-sm font-medium text-text-main mb-1"
           >
             Email Address
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-gray-400" />
+              <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-text-light" />
             </div>
             <input
               v-model="email"
@@ -247,12 +247,12 @@ const signInWithGoogle = async () => {
               id="email"
               aria-label="Email Address"
               autocomplete="email"
-              class="block w-full pl-10 pr-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
+              class="block w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
               placeholder="yourname@example.com"
               required
             />
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p class="text-xs text-text-light mt-1">
             Any email address (Gmail, Yahoo, school email, etc.)
           </p>
         </div>
@@ -261,7 +261,7 @@ const signInWithGoogle = async () => {
         <div>
           <label
             for="password"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+            class="block text-sm font-medium text-text-main mb-1"
           >
             Password
           </label>
@@ -271,18 +271,18 @@ const signInWithGoogle = async () => {
             id="password"
             aria-label="Password"
             autocomplete="new-password"
-            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
+            class="block w-full px-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
             placeholder="••••••••"
             required
           />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Must be at least 6 characters</p>
+          <p class="text-xs text-text-light mt-1">Must be at least 6 characters</p>
         </div>
 
         <!-- Confirm Password -->
         <div>
           <label
             for="confirmPassword"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+            class="block text-sm font-medium text-text-main mb-1"
           >
             Confirm Password
           </label>
@@ -292,7 +292,7 @@ const signInWithGoogle = async () => {
             id="confirmPassword"
             aria-label="Confirm Password"
             autocomplete="new-password"
-            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
+            class="block w-full px-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
             placeholder="••••••••"
             required
           />
@@ -300,14 +300,14 @@ const signInWithGoogle = async () => {
 
         <!-- Important Warning -->
         <div
-          class="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800"
+          class="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800"
         >
           <div class="flex gap-2">
             <Icon
               icon="ph:warning-bold"
-              class="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5"
+              class="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5"
             />
-            <div class="text-yellow-800 dark:text-yellow-200 text-xs space-y-1">
+            <div class="text-orange-800 dark:text-orange-200 text-xs space-y-1">
               <p class="font-semibold">⚠️ IMPORTANT: Use Your REAL Email Address!</p>
               <p>• Verification email will be sent to your inbox</p>
               <p>• If your email doesn't exist, you CANNOT login</p>
@@ -319,12 +319,12 @@ const signInWithGoogle = async () => {
 
         <!-- Messages -->
         <Transition name="fade-slide">
-          <div v-if="errorMessage" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50">
+          <div v-if="errorMessage" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800/30">
             <p class="text-red-700 dark:text-red-300 text-sm text-center">{{ errorMessage }}</p>
           </div>
         </Transition>
         <Transition name="fade-slide">
-          <div v-if="successMessage" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50">
+          <div v-if="successMessage" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800/30">
             <p class="text-green-700 dark:text-green-300 text-sm text-center">
               {{ successMessage }}
             </p>
@@ -336,12 +336,12 @@ const signInWithGoogle = async () => {
           type="submit"
           :disabled="isLoading"
           aria-label="Create account"
-          class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-full text-base font-medium border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+          class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-full text-base font-medium border border-border text-text-main bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Icon
             v-if="isLoading"
             icon="eos-icons:loading"
-            class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
+            class="h-5 w-5 animate-spin text-primary"
           />
           {{ isLoading ? 'Creating Account...' : 'Create Account' }}
         </button>
@@ -349,11 +349,11 @@ const signInWithGoogle = async () => {
 
       <!-- Link to Sign In -->
       <div class="text-center">
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-text-light">
           Already have an account?
           <router-link
             to="/login"
-            class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors duration-300"
+            class="font-medium text-primary hover:opacity-80 hover:underline transition-colors duration-300"
           >
             Sign In
           </router-link>

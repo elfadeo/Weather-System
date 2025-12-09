@@ -3,20 +3,18 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-10">
-        <h1 class="text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
+        <h1 class="text-4xl font-bold text-text-main tracking-tight">
           Data Reports
         </h1>
-        <p class="text-[var(--color-text-light)] mt-2">
+        <p class="text-text-light mt-2">
           Generate comprehensive weather data reports with flexible time ranges and grouping
           options.
         </p>
       </div>
 
       <!-- Quick Time Range Shortcuts -->
-      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-6">
-        <h3
-          class="text-sm font-semibold text-[var(--color-text-main)] mb-3 uppercase tracking-wide"
-        >
+      <div class="bg-surface rounded-2xl shadow-md p-6 mb-6 ring-1 ring-border">
+        <h3 class="text-sm font-semibold text-text-main mb-3 uppercase tracking-wide">
           Quick Time Range
         </h3>
         <div class="flex flex-wrap gap-2">
@@ -27,8 +25,8 @@
             :class="[
               'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
               activePreset === preset.value
-                ? 'bg-primary text-on-primary shadow-md'
-                : 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+                ? 'bg-primary text-text-main dark:text-white shadow-md'
+                : 'bg-background hover:bg-hover border border-border text-text-main',
             ]"
           >
             <Icon :icon="preset.icon" class="inline h-4 w-4 mr-1" />
@@ -38,16 +36,13 @@
       </div>
 
       <!-- Custom Filters + Actions -->
-      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-8">
+      <div class="bg-surface rounded-2xl shadow-md p-6 mb-8 ring-1 ring-border">
         <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
           <!-- Left: Filters -->
           <div class="flex flex-wrap items-end gap-4">
             <!-- Start Date -->
             <div>
-              <label
-                for="startDate"
-                class="block text-sm font-medium text-[var(--color-text-main)] mb-1"
-              >
+              <label for="startDate" class="block text-sm font-medium text-text-main mb-1">
                 Start Date & Time
               </label>
               <input
@@ -55,16 +50,13 @@
                 id="startDate"
                 v-model="startDateTime"
                 @change="activePreset = 'custom'"
-                class="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] bg-[var(--color-background)] text-[var(--color-text-main)]"
+                class="border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-text-main"
               />
             </div>
 
             <!-- End Date -->
             <div>
-              <label
-                for="endDate"
-                class="block text-sm font-medium text-[var(--color-text-main)] mb-1"
-              >
+              <label for="endDate" class="block text-sm font-medium text-text-main mb-1">
                 End Date & Time
               </label>
               <input
@@ -72,22 +64,19 @@
                 id="endDate"
                 v-model="endDateTime"
                 @change="activePreset = 'custom'"
-                class="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] bg-[var(--color-background)] text-[var(--color-text-main)]"
+                class="border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-text-main"
               />
             </div>
 
             <!-- Group By -->
             <div>
-              <label
-                for="groupBy"
-                class="block text-sm font-medium text-[var(--color-text-main)] mb-1"
-              >
+              <label for="groupBy" class="block text-sm font-medium text-text-main mb-1">
                 Group By
               </label>
               <select
                 id="groupBy"
                 v-model="groupBy"
-                class="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] bg-[var(--color-background)] text-[var(--color-text-main)]"
+                class="border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary bg-background text-text-main"
               >
                 <option value="hourly">Hourly</option>
                 <option value="daily">Daily</option>
@@ -103,7 +92,7 @@
             <button
               @click="exportToCSV"
               :disabled="!aggregatedData.length || isExporting"
-              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="isExporting === 'csv'" class="flex items-center">
                 <Icon icon="ph:circle-notch-bold" class="h-5 w-5 mr-2 animate-spin" />
@@ -118,7 +107,7 @@
             <button
               @click="exportToPDF"
               :disabled="!aggregatedData.length || isExporting"
-              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-red-600 text-white rounded-lg shadow-sm hover:bg-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              class="flex items-center justify-center px-4 py-2 min-w-[140px] bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 text-white rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <span v-if="isExporting === 'pdf'" class="flex items-center">
                 <Icon icon="ph:circle-notch-bold" class="h-5 w-5 mr-2 animate-spin" />
@@ -133,12 +122,9 @@
         </div>
 
         <!-- Data Summary -->
-        <div
-          v-if="aggregatedData.length"
-          class="mt-4 pt-4 border-t border-gray-200 dark:border-white/10"
-        >
+        <div v-if="aggregatedData.length" class="mt-4 pt-4 border-t border-border">
           <div class="flex items-center justify-between text-sm">
-            <p class="text-[var(--color-text-light)]">
+            <p class="text-text-light">
               <Icon icon="ph:info-bold" class="inline h-4 w-4 mr-1" />
               Showing <strong>{{ aggregatedData.length }}</strong> {{ groupBy }} period(s) •
               <strong>{{ rawReportData.length }}</strong> total readings •
@@ -149,71 +135,57 @@
       </div>
 
       <!-- Data Table -->
-      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md overflow-hidden">
+      <div class="bg-surface rounded-2xl shadow-md overflow-hidden ring-1 ring-border">
         <div v-if="isLoading" class="p-12 text-center">
           <Icon
             icon="ph:circle-notch-bold"
-            class="h-12 w-12 text-[var(--color-primary)] mx-auto mb-4 animate-spin"
+            class="h-12 w-12 text-primary mx-auto mb-4 animate-spin"
           />
-          <p class="text-[var(--color-text-light)]">Loading data...</p>
+          <p class="text-text-light">Loading data...</p>
         </div>
 
         <div v-else-if="!aggregatedData.length" class="p-12 text-center">
-          <Icon icon="ph:database-bold" class="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p class="text-lg font-medium text-[var(--color-text-main)] mb-2">No data available</p>
-          <p class="text-sm text-[var(--color-text-light)]">
+          <Icon icon="ph:database-bold" class="h-16 w-16 text-text-light opacity-50 mx-auto mb-4" />
+          <p class="text-lg font-medium text-text-main mb-2">No data available</p>
+          <p class="text-sm text-text-light">
             Try selecting a different date range or check if your sensors are sending data.
           </p>
         </div>
 
         <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-white/10">
-            <thead class="bg-[var(--color-background)]">
+          <table class="min-w-full divide-y divide-border">
+            <thead class="bg-hover">
               <tr>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
-                >
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                   Period
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
-                >
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                   Avg. Temp (°C)
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
-                >
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                   Avg. Humidity (%)
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
-                >
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                   Avg. Rain Rate (mm/hr)
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
-                >
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                   Period Rainfall (mm)
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
-                >
+                <th class="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                   Readings
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-[var(--color-surface)] divide-y divide-gray-200 dark:divide-white/10">
+            <tbody class="bg-surface divide-y divide-border">
               <tr
                 v-for="record in aggregatedData"
                 :key="record.period"
-                class="hover:bg-[var(--color-background)] transition-colors"
+                class="hover:bg-background dark:hover:bg-hover transition-colors"
               >
-                <td
-                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-main)]"
-                >
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-main">
                   {{ record.period }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-main">
                   <span
                     :class="[
                       'inline-flex items-center px-2 py-1 rounded',
@@ -223,7 +195,7 @@
                     {{ record.temperature }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-main">
                   <span
                     :class="[
                       'inline-flex items-center px-2 py-1 rounded',
@@ -233,10 +205,10 @@
                     {{ record.humidity }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-main">
                   {{ record.rainfallRate }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-main">
                   <span
                     :class="[
                       'inline-flex items-center px-2 py-1 rounded font-medium',
@@ -246,7 +218,7 @@
                     {{ record.periodRainfall }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-light)]">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-text-light">
                   {{ record.count }}
                 </td>
               </tr>
@@ -561,36 +533,35 @@ const aggregatedData = computed(() => {
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 })
 
-// Color helpers for visual feedback
+// Color helpers for visual feedback - ENHANCED for consistency
 const getTempColor = (temp) => {
-  if (temp === 'N/A') return 'bg-gray-100 text-gray-600'
+  if (temp === 'N/A') return 'bg-background border border-border text-text-light'
   const t = parseFloat(temp)
-  if (t >= 35) return 'bg-red-100 text-red-700'
-  if (t >= 30) return 'bg-orange-100 text-orange-700'
-  if (t >= 25) return 'bg-yellow-100 text-yellow-700'
-  if (t >= 20) return 'bg-green-100 text-green-700'
-  return 'bg-blue-100 text-blue-700'
+  if (t >= 35) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+  if (t >= 30) return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+  if (t >= 25) return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+  if (t >= 20) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+  return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
 }
 
 const getHumidityColor = (humidity) => {
-  if (humidity === 'N/A') return 'bg-gray-100 text-gray-600'
+  if (humidity === 'N/A') return 'bg-background border border-border text-text-light'
   const h = parseFloat(humidity)
-  if (h >= 80) return 'bg-blue-100 text-blue-700'
-  if (h >= 60) return 'bg-cyan-100 text-cyan-700'
-  if (h >= 40) return 'bg-green-100 text-green-700'
-  return 'bg-yellow-100 text-yellow-700'
+  if (h >= 80) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+  if (h >= 60) return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+  if (h >= 40) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+  return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
 }
 
 const getRainfallColor = (rainfall) => {
-  if (rainfall === 'N/A') return 'bg-gray-100 text-gray-600'
+  if (rainfall === 'N/A') return 'bg-background border border-border text-text-light'
   const r = parseFloat(rainfall)
-  if (r === 0) return 'bg-gray-100 text-gray-600'
-  if (r < 2.5) return 'bg-blue-50 text-blue-600'
-  if (r < 10) return 'bg-blue-100 text-blue-700'
-  if (r < 50) return 'bg-blue-200 text-blue-800'
-  return 'bg-blue-300 text-blue-900'
+  if (r === 0) return 'bg-background border border-border text-text-light'
+  if (r < 2.5) return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+  if (r < 10) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+  if (r < 50) return 'bg-blue-200 dark:bg-blue-800/40 text-blue-800 dark:text-blue-200'
+  return 'bg-blue-300 dark:bg-blue-700/50 text-blue-900 dark:text-blue-100'
 }
-
 // Export CSV
 const exportToCSV = () => {
   if (!aggregatedData.value.length) return

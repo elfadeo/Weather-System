@@ -3,16 +3,16 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <header
-        class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-[var(--color-surface)]/40 pb-4 gap-4 sm:gap-0"
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-border/40 pb-4 gap-4 sm:gap-0"
       >
         <!-- Left Side: Title -->
-        <h1 class="text-3xl sm:text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
+        <h1 class="text-3xl sm:text-4xl font-bold text-text-main tracking-tight">
           Dashboard
         </h1>
 
         <!-- Right Side: Status Indicators -->
         <div
-          class="flex items-center text-sm text-[var(--color-text-light)]"
+          class="flex items-center text-sm text-text-light"
           aria-live="polite"
           role="status"
         >
@@ -39,7 +39,7 @@
 
               <!-- Status Label -->
               <span
-                :class="isOnline ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                :class="isOnline ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'"
                 class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200"
               >
                 {{ isOnline ? 'Online' : 'Offline' }}
@@ -48,10 +48,10 @@
 
             <!-- Last Updated Timestamp -->
             <div v-if="lastUpdated" class="flex items-center ml-4 text-xs sm:text-sm">
-              <span class="mx-2 text-[var(--color-text-light)]/50">|</span>
+              <span class="mx-2 text-text-light/50">|</span>
               <span>
                 Last updated:
-                <strong class="text-[var(--color-text-main)]">
+                <strong class="text-text-main">
                   {{ new Date(lastUpdated).toLocaleString() }}
                 </strong>
               </span>
@@ -65,7 +65,7 @@
 
       <!-- Calibration Note -->
       <section class="mt-6 text-center">
-        <p class="text-xs text-[var(--color-text-light)] italic">
+        <p class="text-xs text-text-light italic">
           Note: Rainfall data is based on provisional calibration values. For highest accuracy,
           sensor calibration against a reference gauge is recommended.
         </p>
@@ -78,7 +78,7 @@
 
       <!-- Map Section -->
       <section class="mt-10">
-        <h2 class="text-2xl font-bold text-[var(--color-text-main)] mb-4">Station Location</h2>
+        <h2 class="text-2xl font-bold text-text-main mb-4">Station Location</h2>
 
         <!-- Map -->
         <WeatherMap
@@ -94,9 +94,9 @@
         <!-- Fallback -->
         <div
           v-else
-          class="bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-background)] rounded-3xl shadow-lg p-6 h-96 flex items-center justify-center transition-all duration-300"
+          class="bg-gradient-to-br from-surface to-background rounded-3xl shadow-lg p-6 h-96 flex items-center justify-center transition-all duration-300"
         >
-          <p class="text-[var(--color-text-light)] animate-pulse">Loading map data...</p>
+          <p class="text-text-light animate-pulse">Loading map data...</p>
         </div>
       </section>
     </div>
