@@ -33,6 +33,8 @@
   --color-hover: #e8eaed; /* Light mode hover (soft gray) */
   --color-border: #e5e7eb; /* Light mode border */
 
+  --color-primary-text: #ffffff; /* White text for dark primary in light mode */
+
   /* Extended color palette */
   --color-red-50: #fef2f2;
   --color-red-100: #fee2e2;
@@ -90,6 +92,8 @@ html.dark {
   /* Hover & Border */
   --color-hover: #2a2a2a; /* Dark mode hover (soft gray, not pure white) */
   --color-border: #374151; /* Dark mode border */
+
+  --color-primary-text: #1a1a1a; /* Dark text for light primary in dark mode */
 
   /* Extended color palette - dark mode variants */
   --color-red-50: #1f1212;
@@ -211,21 +215,33 @@ html.dark .bg-separator {
 }
 
 .shadow-md {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .shadow-lg {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 html.dark .shadow-sm {
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 0 0 1px rgb(255 255 255 / 0.05);
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.3),
+    0 0 0 1px rgb(255 255 255 / 0.05);
 }
 
 html.dark .shadow-md {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2), 0 0 0 1px rgb(255 255 255 / 0.05);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.3),
+    0 2px 4px -2px rgb(0 0 0 / 0.2),
+    0 0 0 1px rgb(255 255 255 / 0.05);
 }
 
 html.dark .shadow-lg {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3), 0 0 0 1px rgb(255 255 255 / 0.08);
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.4),
+    0 4px 6px -4px rgb(0 0 0 / 0.3),
+    0 0 0 1px rgb(255 255 255 / 0.08);
 }

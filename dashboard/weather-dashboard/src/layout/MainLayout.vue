@@ -1,49 +1,49 @@
 <template>
-  <div class="flex h-screen bg-background font-sans overflow-hidden">
+  <div class="min-h-screen flex flex-col lg:flex-row bg-background font-sans overflow-x-hidden">
     <!-- SIDEBAR -->
     <Sidebar ref="sidebarRef" @update:expanded="isSidebarExpanded = $event" />
 
     <!-- MAIN AREA -->
-    <div class="flex-1 flex flex-col relative min-w-0">
+    <div class="flex-1 flex flex-col min-w-0">
       <!-- HEADER -->
       <header
-        class="bg-background/80 backdrop-blur-lg px-4 md:px-6 flex items-center justify-between h-20 shrink-0 border-b border-hover z-20"
+        class="bg-background/90 backdrop-blur-lg px-3 sm:px-4 md:px-6 h-16 sm:h-20 flex items-center justify-between border-b border-hover z-20"
       >
-        <div class="flex items-center">
+        <div class="flex items-center gap-2 sm:gap-3">
           <!-- Mobile Sidebar Toggle -->
           <button
             @click="toggleMobileSidebar"
-            class="lg:hidden p-3 mr-2 rounded-lg text-text-light hover:bg-surface active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-primary"
+            class="lg:hidden p-2 sm:p-3 rounded-lg text-text-light hover:bg-surface active:scale-95 transition focus:outline-none focus:ring-2 focus:ring-primary"
             :aria-label="isSidebarMobileOpen ? 'Close sidebar' : 'Open sidebar'"
-            :aria-expanded="isSidebarMobileOpen"
           >
-            <Icon :icon="sidebarOpenIcon" class="h-6 w-6" />
+            <Icon :icon="sidebarOpenIcon" class="h-6 w-6 sm:h-7 sm:w-7" />
           </button>
 
+          <!-- Icon -->
           <Icon
             icon="ph:cloud-sun-bold"
-            class="h-7 w-7 text-primary hidden sm:block"
-            aria-hidden="true"
+            class="h-6 w-6 sm:h-7 sm:w-7 text-primary hidden sm:block"
           />
-          <span class="ml-2 text-lg font-bold text-text-main hidden sm:block">
+
+          <!-- Title -->
+          <span class="text-base sm:text-lg font-bold text-text-main hidden sm:block">
             Weather Monitoring System
           </span>
         </div>
 
-        <div class="flex items-center">
-          <button
-            @click="toggleTheme"
-            class="p-2 rounded-full text-text-light hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition"
-            :aria-label="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-          >
-            <Icon :icon="isDarkMode ? 'ph:sun-bold' : 'ph:moon-bold'" class="h-6 w-6" />
-          </button>
-        </div>
+        <!-- Theme Toggle -->
+        <button
+          @click="toggleTheme"
+          class="p-2 sm:p-3 rounded-full text-text-light hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition"
+          :aria-label="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          <Icon :icon="isDarkMode ? 'ph:sun-bold' : 'ph:moon-bold'" class="h-6 w-6 sm:h-7 sm:w-7" />
+        </button>
       </header>
 
-      <!-- CONTENT -->
+      <!-- MAIN CONTENT -->
       <main
-        class="flex-1 p-6 overflow-y-auto bg-background scroll-smooth overscroll-none"
+        class="flex-1 p-4 sm:p-5 md:p-6 lg:p-8 overflow-y-auto overflow-x-hidden scroll-smooth overscroll-none bg-background"
         role="main"
       >
         <router-view v-slot="{ Component }">
@@ -53,7 +53,8 @@
         </router-view>
       </main>
 
-      <AppFooter class="shrink-0" />
+      <!-- FOOTER (always visible, mobile-safe) -->
+      <AppFooter class="mt-auto shrink-0" />
     </div>
   </div>
 </template>
@@ -70,7 +71,7 @@ const { isDarkMode, toggleTheme } = useTheme()
 const sidebarRef = ref(null)
 const isSidebarExpanded = ref(true)
 
-// Track mobile sidebar state
+// Mobile sidebar state
 const isSidebarMobileOpen = computed(() => {
   return sidebarRef.value?.isMobileOpen?.value ?? false
 })

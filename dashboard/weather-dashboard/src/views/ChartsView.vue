@@ -3,12 +3,8 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-4xl font-bold text-text-main tracking-tight">
-          Charts & Trends
-        </h1>
-        <p class="text-text-light mt-2">
-          View historical graphs of weather parameters
-        </p>
+        <h1 class="text-4xl font-bold text-text-main tracking-tight">Charts & Trends</h1>
+        <p class="text-text-light mt-2">View historical graphs of weather parameters</p>
       </div>
 
       <!-- Control Panel -->
@@ -36,9 +32,7 @@
       <!-- Charts Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Temperature Chart -->
-        <div
-          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border"
-        >
+        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-red-500"></div>
@@ -60,9 +54,7 @@
         </div>
 
         <!-- Humidity Chart -->
-        <div
-          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border"
-        >
+        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -84,9 +76,7 @@
         </div>
 
         <!-- Rainfall Rate Chart -->
-        <div
-          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border"
-        >
+        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
@@ -108,9 +98,7 @@
         </div>
 
         <!-- Total Rainfall Chart -->
-        <div
-          class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border"
-        >
+        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-teal-500"></div>
@@ -139,24 +127,38 @@
       >
         <h3 class="text-lg font-semibold text-text-main mb-4">Period Summary</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30">
-            <p class="text-xs text-red-600 dark:text-red-400 font-medium mb-1">Temperature</p>
-            <p class="text-2xl font-bold text-red-700 dark:text-red-300">{{ averageTemp.toFixed(1) }}°C</p>
-            <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+          <div
+            class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30"
+          >
+            <p class="text-xs text-red-800 dark:text-red-400 font-medium mb-1">Temperature</p>
+            <p class="text-2xl font-bold text-red-900 dark:text-red-300">
+              {{ averageTemp.toFixed(1) }}°C
+            </p>
+            <p class="text-xs text-red-800 dark:text-red-400 mt-1">
               {{ minTemp.toFixed(1) }}°C - {{ maxTemp.toFixed(1) }}°C
             </p>
           </div>
-          <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/30">
-            <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mb-1">Humidity</p>
-            <p class="text-2xl font-bold text-blue-700 dark:text-blue-300">{{ averageHumidity.toFixed(1) }}%</p>
-            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+          <div
+            class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/30"
+          >
+            <p class="text-xs text-blue-800 dark:text-blue-400 font-medium mb-1">Humidity</p>
+            <p class="text-2xl font-bold text-blue-900 dark:text-blue-300">
+              {{ averageHumidity.toFixed(1) }}%
+            </p>
+            <p class="text-xs text-blue-800 dark:text-blue-400 mt-1">
               {{ minHumidity.toFixed(1) }}% - {{ maxHumidity.toFixed(1) }}%
             </p>
           </div>
-          <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800/30">
-            <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">Total Rainfall (Est.)</p>
-            <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-300">{{ totalRainfall.toFixed(1) }}mm</p>
-            <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">over period</p>
+          <div
+            class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800/30"
+          >
+            <p class="text-xs text-indigo-800 dark:text-indigo-400 font-medium mb-1">
+              Total Rainfall (Est.)
+            </p>
+            <p class="text-2xl font-bold text-indigo-900 dark:text-indigo-300">
+              {{ totalRainfall.toFixed(1) }}mm
+            </p>
+            <p class="text-xs text-indigo-800 dark:text-indigo-400 mt-1">over period</p>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ export default {
         primary: 'var(--color-primary)',
         'text-main': 'var(--color-text-main)',
         'text-light': 'var(--color-text-light)',
+        'primary-text': 'var(--color-primary-text)', // ADD THIS LINE
 
         // UI element colors (ADDED THESE TWO)
         hover: 'var(--color-hover)',

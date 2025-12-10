@@ -6,16 +6,10 @@
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-border/40 pb-4 gap-4 sm:gap-0"
       >
         <!-- Left Side: Title -->
-        <h1 class="text-3xl sm:text-4xl font-bold text-text-main tracking-tight">
-          Dashboard
-        </h1>
+        <h1 class="text-3xl sm:text-4xl font-bold text-text-main tracking-tight">Dashboard</h1>
 
         <!-- Right Side: Status Indicators -->
-        <div
-          class="flex items-center text-sm text-text-light"
-          aria-live="polite"
-          role="status"
-        >
+        <div class="flex items-center text-sm text-text-light" aria-live="polite" role="status">
           <!-- Connecting State -->
           <span v-if="lastUpdated === null">Connecting...</span>
 
@@ -39,7 +33,11 @@
 
               <!-- Status Label -->
               <span
-                :class="isOnline ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'"
+                :class="
+                  isOnline
+                    ? 'bg-green-100 text-green-900 dark:bg-green-900/20 dark:text-green-400'
+                    : 'bg-red-100 text-red-900 dark:bg-red-900/20 dark:text-red-400'
+                "
                 class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200"
               >
                 {{ isOnline ? 'Online' : 'Offline' }}

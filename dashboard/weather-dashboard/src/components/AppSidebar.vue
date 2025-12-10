@@ -16,30 +16,20 @@
   </transition>
 
   <!-- Sidebar -->
-  <aside
-    @click.stop
-    class="fixed lg:static top-0 left-0 z-40 h-screen bg-surface text-text-main border-r border-hover flex flex-col transition-all duration-300 ease-in-out will-change-transform"
-    :class="{
-      'w-64': isExpanded,
-      'w-20': !isExpanded,
-      'translate-x-0': isMobileOpen,
-      '-translate-x-full lg:translate-x-0': !isMobileOpen,
-    }"
-    :aria-hidden="!isMobileOpen && 'true'"
-  >
+  <aside @click.stop :class="sidebarClasses" :aria-hidden="!isMobileOpen" role="complementary">
     <nav
-      class="flex-1 px-4 space-y-3 mt-4 overflow-y-auto no-scrollbar"
+      class="flex-1 px-3 sm:px-4 py-4 space-y-3 overflow-y-auto no-scrollbar"
       role="navigation"
       aria-label="Main navigation"
     >
       <!-- Mobile Close Button -->
-      <div class="flex lg:hidden justify-end mb-4">
+      <div class="flex lg:hidden justify-end mb-2">
         <button
           @click="closeMobile"
-          class="p-3 text-text-light hover:text-primary active:scale-95 transition"
+          class="p-2 sm:p-3 text-text-light hover:text-primary active:scale-95 transition rounded-md"
           aria-label="Close sidebar"
         >
-          <Icon icon="ph:x-bold" class="h-7 w-7" />
+          <Icon icon="ph:x-bold" class="h-6 w-6 sm:h-7 sm:w-7" />
         </button>
       </div>
 
@@ -83,11 +73,13 @@
           ]"
           :aria-current="isActive ? 'page' : undefined"
         >
-          <Icon :icon="item.icon" class="h-6 w-6" aria-hidden="true" />
+          <Icon :icon="item.icon" class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
 
-          <span v-if="isExpanded" class="ml-4 whitespace-nowrap">{{ item.name }}</span>
+          <span v-if="isExpanded" class="ml-4 whitespace-nowrap text-sm sm:text-base">
+            {{ item.name }}
+          </span>
 
-          <!-- Tooltip -->
+          <!-- Tooltip (only on large when collapsed) -->
           <div
             v-if="!isExpanded"
             class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
@@ -100,7 +92,7 @@
     </nav>
 
     <!-- Profile + Logout -->
-    <div class="px-4 py-5 space-y-2 border-t border-hover">
+    <div class="px-3 sm:px-4 pt-3 border-t border-hover" :style="{ paddingBottom: safeAreaBottom }">
       <!-- Profile -->
       <router-link to="/profile" custom v-slot="{ href, navigate, isActive }">
         <a
@@ -120,8 +112,8 @@
           ]"
           :aria-current="isActive ? 'page' : undefined"
         >
-          <Icon icon="ph:user-circle-bold" class="h-6 w-6" aria-hidden="true" />
-          <span v-if="isExpanded" class="ml-4">Profile</span>
+          <Icon icon="ph:user-circle-bold" class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+          <span v-if="isExpanded" class="ml-4 text-sm sm:text-base">Profile</span>
 
           <!-- Tooltip -->
           <div
@@ -141,8 +133,8 @@
         :class="{ 'justify-center': !isExpanded }"
         aria-label="Logout"
       >
-        <Icon icon="ph:sign-out-bold" class="h-6 w-6" aria-hidden="true" />
-        <span v-if="isExpanded" class="ml-4">Logout</span>
+        <Icon icon="ph:sign-out-bold" class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
+        <span v-if="isExpanded" class="ml-4 text-sm sm:text-base">Logout</span>
 
         <!-- Tooltip -->
         <div
@@ -158,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { auth } from '@/firebase'
 import { signOut } from 'firebase/auth'
@@ -199,6 +191,7 @@ const closeMobileOnNavigate = () => {
   }
 }
 
+// expose toggleMobile and isMobileOpen for parent usage (MainLayout)
 defineExpose({ toggleMobile, isMobileOpen })
 
 const handleLogout = async () => {
@@ -209,6 +202,33 @@ const handleLogout = async () => {
     console.error('Logout failed:', error)
   }
 }
+
+/*
+  Computed classes:
+  - On mobile: when open -> slide in (translate-x-0) and width w-4/5
+  - On mobile: when closed -> -translate-x-full
+  - On lg and up: always visible (lg:translate-x-0) and widths are controlled by isExpanded (lg:w-64 / lg:w-20)
+  - min-h-screen keeps the sidebar full height without forcing page overflow
+*/
+const sidebarClasses = computed(() => {
+  let base =
+    'fixed lg:static top-0 left-0 z-40 bg-surface text-text-main border-r border-hover flex flex-col transition-transform duration-300 ease-in-out will-change-transform min-h-screen'
+  const lgWidth = isExpanded.value ? ' lg:w-64' : ' lg:w-20'
+  // mobile width when open should be comfortable (80% of viewport)
+  const mobileOpen = ' w-4/5'
+  if (isMobileOpen.value) {
+    return base + lgWidth + mobileOpen + ' translate-x-0'
+  } else {
+    // closed on mobile: hide off-canvas. on lg: visible with lg widths
+    const mobileClosed = '-translate-x-full lg:translate-x-0'
+    // ensure a reasonable default width for small screens when closed (so icon alignment works)
+    const defaultMobileWidth = isExpanded.value ? ' w-64' : ' w-20'
+    return base + lgWidth + defaultMobileWidth + ' ' + mobileClosed
+  }
+})
+
+// safe area bottom to avoid iPhone notch overlap (fallback to 12px)
+const safeAreaBottom = `env(safe-area-inset-bottom, 12px)`
 </script>
 
 <style scoped>

@@ -1,31 +1,34 @@
 <template>
   <footer
     role="contentinfo"
-    class="bg-surface text-text-light py-6 px-6 border-t border-t-gray-200 dark:border-t-gray-700"
+    class="bg-surface text-text-light py-4 sm:py-6 px-4 sm:px-6 border-t border-gray-200 dark:border-gray-700"
   >
     <div
-      class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm"
+      class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm"
     >
       <!-- Copyright -->
-      <p class="text-center sm:text-left">
+      <p class="text-center sm:text-left leading-tight">
         &copy; {{ currentYear }} {{ companyName }}. All Rights Reserved.
       </p>
 
       <!-- Legal Links -->
-      <nav class="flex items-center space-x-4" aria-label="Legal navigation">
+      <nav
+        class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4"
+        aria-label="Legal navigation"
+      >
         <router-link
           to="/privacy-policy"
-          class="hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1 transition-colors duration-200"
+          class="hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1.5 py-0.5 transition-colors duration-200"
           aria-label="Read our privacy policy"
         >
           Privacy Policy
         </router-link>
 
-        <span class="text-text-light" aria-hidden="true">|</span>
+        <span class="hidden sm:block text-text-light" aria-hidden="true">|</span>
 
         <router-link
           to="/terms-of-service"
-          class="hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 py-1 transition-colors duration-200"
+          class="hover:text-primary focus:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-1.5 py-0.5 transition-colors duration-200"
           aria-label="Read our terms of service"
         >
           Terms of Service
@@ -38,7 +41,6 @@
 <script setup>
 import { computed } from 'vue'
 
-// Props for flexibility
 defineProps({
   companyName: {
     type: String,
@@ -46,12 +48,10 @@ defineProps({
   },
 })
 
-// Computed year (calculated once)
 const currentYear = computed(() => new Date().getFullYear())
 </script>
 
 <style scoped>
-/* Optional: Add custom styles if needed */
 footer a {
   position: relative;
 }
@@ -59,12 +59,12 @@ footer a {
 footer a::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: -1px;
   left: 0;
   width: 0;
-  height: 2px;
+  height: 1.5px;
   background-color: currentColor;
-  transition: width 0.3s ease;
+  transition: width 0.25s ease;
 }
 
 footer a:hover::after,

@@ -1,16 +1,6 @@
-dist/assets/leaflet-src.esm-C6uo2YWw.js    149.41 kB │ gzip:  43.23 kB
-dist/assets/index.es-C9zr2DfY.js           159.21 kB │ gzip:  53.37 kB
-dist/assets/html2canvas.esm-B0tyYwQk.js    202.36 kB │ gzip:  48.04 kB
-dist/assets/index-BaU8iXfP.js            2,328.41 kB │ gzip: 661.45 kB
-(!) Some chunks are larger than 500 kB after minification. Consider:
-- Using dynamic import() to code-split the application
-- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-✓ built in 10.98s
-Build Completed in /vercel/output [27s]
-Deploying outputs...
-Deployment completed
-Creating build cache...
-Created build cache: 19.141s
-Uploading build cache [116.55 MB]
-Build cache uploaded: 1.757s
+“Make this component/page fully responsive for mobile, tablet, and desktop.
+Prioritize a clean layout for small screens (360–480px).
+Convert fixed sizes into responsive units, stack columns vertically on mobile,
+and ensure text, buttons, and spacing scale properly.
+If needed, adjust padding, font-size, and flex/grid behavior.
+Provide me the updated code.”

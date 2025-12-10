@@ -310,11 +310,7 @@ const signInWithGoogle = async () => {
         class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-border bg-surface hover:bg-hover text-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
       >
         <Icon v-if="!isLoading" icon="flat-color-icons:google" class="h-5 w-5" />
-        <Icon
-          v-else
-          icon="eos-icons:loading"
-          class="h-5 w-5 animate-spin text-primary"
-        />
+        <Icon v-else icon="eos-icons:loading" class="h-5 w-5 animate-spin text-primary" />
         <span class="ml-3 text-sm font-medium">
           {{ isLoading ? 'Please wait...' : 'Sign in with Google' }}
         </span>
@@ -348,10 +344,7 @@ const signInWithGoogle = async () => {
       <form @submit.prevent="signIn" class="space-y-6">
         <!-- Email -->
         <div>
-          <label
-            for="email"
-            class="block text-sm font-medium text-text-main mb-1"
-          >
+          <label for="email" class="block text-sm font-medium text-text-main mb-1">
             Email Address
           </label>
           <input
@@ -368,10 +361,7 @@ const signInWithGoogle = async () => {
         <!-- Password -->
         <div>
           <div class="flex items-center justify-between">
-            <label
-              for="password"
-              class="block text-sm font-medium text-text-main mb-1"
-            >
+            <label for="password" class="block text-sm font-medium text-text-main mb-1">
               Password
             </label>
             <button
@@ -397,12 +387,18 @@ const signInWithGoogle = async () => {
 
         <!-- Messages -->
         <Transition name="fade-slide">
-          <div v-if="errorMessage" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800/30">
+          <div
+            v-if="errorMessage"
+            class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800/30"
+          >
             <p class="text-red-700 dark:text-red-300 text-sm text-center">{{ errorMessage }}</p>
           </div>
         </Transition>
         <Transition name="fade-slide">
-          <div v-if="successMessage" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800/30">
+          <div
+            v-if="successMessage"
+            class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800/30"
+          >
             <p class="text-green-700 dark:text-green-300 text-sm text-center">
               {{ successMessage }}
             </p>
