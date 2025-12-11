@@ -134,7 +134,7 @@ watch(mapRef, (newMapRefValue) => {
                   <span class="font-medium text-primary">{{ humidity }}%</span>
                 </p>
                 <p class="flex items-center justify-between text-sm">
-                  <span class="text-text-light">Rainfall Rate (Est.)</span>
+                  <span class="text-text-light">Rainfall Rate</span>
                   <span class="font-medium text-indigo-500 dark:text-indigo-400"
                     >{{ rainfall }} mm/hr</span
                   >

@@ -69,7 +69,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { rtdb } from '@/firebase.js'
 import { ref as dbRef, onValue, off, query, limitToLast } from 'firebase/database'
-import Sparkline from './SparklineChart.vue'
+import Sparkline from '@/components/Dashboard/SparklineChart.vue'
 
 defineProps({
   weatherData: {

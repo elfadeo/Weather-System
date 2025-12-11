@@ -82,7 +82,7 @@
           <!-- Tooltip (only on large when collapsed) -->
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
+            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md"
             role="tooltip"
           >
             {{ item.name }}
@@ -118,7 +118,7 @@
           <!-- Tooltip -->
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md"
             role="tooltip"
           >
             Profile
@@ -139,7 +139,7 @@
         <!-- Tooltip -->
         <div
           v-if="!isExpanded"
-          class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+          class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md"
           role="tooltip"
         >
           Logout
@@ -212,10 +212,10 @@ const handleLogout = async () => {
 */
 const sidebarClasses = computed(() => {
   let base =
-    'fixed lg:static top-0 left-0 z-40 bg-surface text-text-main border-r border-hover flex flex-col transition-transform duration-300 ease-in-out will-change-transform min-h-screen'
+    'fixed lg:static top-0 left-0 z-40 bg-surface text-text-main border-r border-border flex flex-col transition-transform duration-300 ease-in-out will-change-transform min-h-screen'
   const lgWidth = isExpanded.value ? ' lg:w-64' : ' lg:w-20'
-  // mobile width when open should be comfortable (80% of viewport)
-  const mobileOpen = ' w-4/5'
+  // Responsive mobile width: 85% for very small screens, 75% for small, 70% for medium
+  const mobileOpen = ' w-[85%] xs:w-[80%] sm:w-[75%] md:w-[70%]'
   if (isMobileOpen.value) {
     return base + lgWidth + mobileOpen + ' translate-x-0'
   } else {

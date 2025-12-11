@@ -10,11 +10,11 @@
       <!-- Loading State -->
       <div
         v-if="isLoading"
-        class="text-center p-12 bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm"
+        class="text-center p-12 bg-surface rounded-2xl shadow-md ring-1 ring-border"
       >
         <div class="flex flex-col items-center space-y-3">
           <svg
-            class="animate-spin h-8 w-8 text-blue-500"
+            class="animate-spin h-8 w-8 text-primary"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -33,22 +33,18 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
-          <p class="text-gray-600 dark:text-text-light">Loading your profile...</p>
+          <p class="text-text-light">Loading your profile...</p>
         </div>
       </div>
 
       <!-- Profile Content -->
       <div v-else class="space-y-6">
         <!-- Profile Information Card -->
-        <div
-          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
-        >
-          <h2 class="text-xl font-bold text-gray-900 dark:text-text-main mb-6">
-            Profile Information
-          </h2>
+        <div class="bg-surface rounded-2xl shadow-md p-6 ring-1 ring-border">
+          <h2 class="text-xl font-bold text-text-main mb-6">Profile Information</h2>
 
           <!-- Avatar Section -->
-          <div class="flex items-center pb-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center pb-6 mb-6 border-b border-border">
             <div class="relative">
               <div
                 class="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 text-white text-3xl font-bold shadow-lg"
@@ -63,33 +59,28 @@
               </div>
             </div>
             <div class="ml-4">
-              <p class="text-lg font-semibold text-gray-900 dark:text-text-main">
+              <p class="text-lg font-semibold text-text-main">
                 {{ profile.displayName || 'No name set' }}
               </p>
-              <p class="text-sm text-gray-600 dark:text-text-light">{{ user?.email }}</p>
+              <p class="text-sm text-text-light">{{ user?.email }}</p>
             </div>
           </div>
 
           <!-- Profile Fields -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2">
-                Email Address
-              </label>
+              <label class="block text-sm font-medium text-text-light mb-2"> Email Address </label>
               <input
                 type="email"
                 :value="user?.email"
                 disabled
-                class="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm cursor-not-allowed text-gray-500 dark:text-gray-400 px-4 py-2.5"
+                class="w-full bg-hover border border-border rounded-lg shadow-sm cursor-not-allowed text-text-light px-4 py-2.5"
               />
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
+              <p class="text-xs text-text-light mt-1">Email cannot be changed</p>
             </div>
 
             <div>
-              <label
-                for="displayName"
-                class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2"
-              >
+              <label for="displayName" class="block text-sm font-medium text-text-light mb-2">
                 Display Name
               </label>
               <input
@@ -97,15 +88,12 @@
                 id="displayName"
                 v-model="profile.displayName"
                 placeholder="e.g., Juan Dela Cruz"
-                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-text-main px-4 py-2.5 transition"
+                class="w-full bg-background border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-text-main px-4 py-2.5 transition"
               />
             </div>
 
             <div>
-              <label
-                for="location"
-                class="block text-sm font-medium text-gray-700 dark:text-text-light mb-2"
-              >
+              <label for="location" class="block text-sm font-medium text-text-light mb-2">
                 Location
               </label>
               <input
@@ -113,9 +101,9 @@
                 id="location"
                 v-model="profile.location"
                 placeholder="e.g., Manila, Philippines"
-                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-text-main px-4 py-2.5 transition"
+                class="w-full bg-background border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-text-main px-4 py-2.5 transition"
               />
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p class="text-xs text-text-light mt-1">
                 This helps in providing more localized recommendations
               </p>
             </div>
@@ -123,36 +111,25 @@
         </div>
 
         <!-- Notification Preferences -->
-        <div
-          class="bg-white/70 dark:bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-gray-200 dark:border-hover"
-        >
-          <h2 class="text-xl font-bold text-gray-900 dark:text-text-main mb-6">
-            Notification Settings
-          </h2>
+        <div class="bg-surface rounded-2xl shadow-md p-6 ring-1 ring-border">
+          <h2 class="text-xl font-bold text-text-main mb-6">Notification Settings</h2>
 
           <div class="space-y-4">
             <!-- Email Notifications -->
-            <div
-              class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg"
-            >
+            <div class="flex items-center justify-between p-4 bg-background rounded-lg">
               <div class="flex-1">
                 <div class="flex items-center space-x-2">
-                  <Icon
-                    icon="ph:envelope-simple-bold"
-                    class="h-5 w-5 text-gray-600 dark:text-gray-400"
-                  />
-                  <span class="text-sm font-medium text-gray-900 dark:text-text-main"
-                    >Email Notifications</span
-                  >
+                  <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-text-light" />
+                  <span class="text-sm font-medium text-text-main">Email Notifications</span>
                 </div>
-                <p class="text-xs text-gray-600 dark:text-text-light mt-1 ml-7">
+                <p class="text-xs text-text-light mt-1 ml-7">
                   Receive alert emails when thresholds are exceeded
                 </p>
               </div>
               <button
                 @click="profile.emailNotifications = !profile.emailNotifications"
-                :class="profile.emailNotifications ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                :class="profile.emailNotifications ? 'bg-primary' : 'bg-hover'"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <span
                   :class="profile.emailNotifications ? 'translate-x-6' : 'translate-x-1'"
@@ -161,7 +138,7 @@
               </button>
             </div>
 
-            <!-- Email Recipients Management (NEW) -->
+            <!-- Email Recipients Management -->
             <Transition name="fade-slide">
               <div
                 v-if="profile.emailNotifications"
@@ -173,15 +150,11 @@
                     class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
                   />
                   <div class="flex-1">
-                    <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                      Email Alerts Enabled
-                    </p>
-                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    <p class="text-sm font-medium text-text-main">Email Alerts Enabled</p>
+                    <p class="text-xs text-text-light mt-1">
                       Your email will receive weather alerts: <strong>{{ user?.email }}</strong>
                     </p>
-                    <p
-                      class="text-xs text-blue-600 dark:text-blue-400 mt-2 flex items-center gap-1"
-                    >
+                    <p class="text-xs text-text-light mt-2 flex items-center gap-1">
                       <Icon icon="ph:info-bold" class="h-3 w-3" />
                       Your login email is automatically added to recipients when this is enabled
                     </p>
@@ -194,26 +167,21 @@
             <PushNotificationSettings />
 
             <!-- SMS Notifications with Multiple Numbers -->
-            <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg space-y-3">
+            <div class="p-4 bg-background rounded-lg space-y-3">
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <div class="flex items-center space-x-2">
-                    <Icon
-                      icon="ph:device-mobile-bold"
-                      class="h-5 w-5 text-gray-600 dark:text-gray-400"
-                    />
-                    <span class="text-sm font-medium text-gray-900 dark:text-text-main"
-                      >SMS Notifications</span
-                    >
+                    <Icon icon="ph:device-mobile-bold" class="h-5 w-5 text-text-light" />
+                    <span class="text-sm font-medium text-text-main">SMS Notifications</span>
                   </div>
-                  <p class="text-xs text-gray-600 dark:text-text-light mt-1 ml-7">
+                  <p class="text-xs text-text-light mt-1 ml-7">
                     Receive text alerts via Semaphore (PH provider)
                   </p>
                 </div>
                 <button
                   @click="smsSettings.enabled = !smsSettings.enabled"
-                  :class="smsSettings.enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  :class="smsSettings.enabled ? 'bg-primary' : 'bg-hover'"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                   <span
                     :class="smsSettings.enabled ? 'translate-x-6' : 'translate-x-1'"
@@ -227,13 +195,13 @@
                 <div v-if="smsSettings.enabled" class="mt-3 space-y-3">
                   <!-- Header with count -->
                   <div class="flex items-center justify-between">
-                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <label class="block text-xs font-medium text-text-light">
                       Phone Numbers ({{ smsSettings.phoneNumbers.length }}/5)
                     </label>
                     <button
                       @click="addPhoneNumber"
                       :disabled="smsSettings.phoneNumbers.length >= 5"
-                      class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Icon icon="ph:plus-bold" class="h-3 w-3" />
                       Add Number
@@ -253,7 +221,7 @@
                             type="tel"
                             v-model="smsSettings.phoneNumbers[index].number"
                             placeholder="09171234567 or +639171234567"
-                            class="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-text-main px-3 py-2 text-sm transition"
+                            class="flex-1 bg-surface border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-text-main px-3 py-2 text-sm transition"
                             @blur="validatePhoneNumber(index)"
                           />
                           <button
@@ -270,10 +238,10 @@
                           type="text"
                           v-model="smsSettings.phoneNumbers[index].label"
                           placeholder="Label (optional): e.g., 'Farm Manager', 'Assistant'"
-                          class="mt-2 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-text-main px-3 py-1.5 text-xs transition"
+                          class="mt-2 w-full bg-surface border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary text-text-main px-3 py-1.5 text-xs transition"
                         />
 
-                        <!-- Validation Error for this number -->
+                        <!-- Validation Error -->
                         <p
                           v-if="phone.error"
                           class="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 mt-1"
@@ -287,7 +255,7 @@
                     <!-- Empty state -->
                     <div
                       v-if="smsSettings.phoneNumbers.length === 0"
-                      class="text-center py-6 text-sm text-gray-500 dark:text-gray-400"
+                      class="text-center py-6 text-sm text-text-light"
                     >
                       <Icon icon="ph:phone-plus-bold" class="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p>No phone numbers added yet</p>
@@ -295,7 +263,7 @@
                     </div>
                   </div>
 
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                  <p class="text-xs text-text-light">
                     Format: 09171234567 or +639171234567 • Maximum 5 numbers
                   </p>
 
@@ -308,7 +276,7 @@
                         icon="ph:info-bold"
                         class="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
                       />
-                      <div class="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                      <div class="text-xs text-text-light space-y-1">
                         <p>
                           All numbers will receive SMS alerts via Semaphore API when weather
                           thresholds are exceeded.
@@ -328,7 +296,7 @@
 
         <!-- System Information -->
         <div
-          class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl shadow-sm p-6 border border-blue-200 dark:border-blue-800"
+          class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl shadow-md p-6 border border-blue-200 dark:border-blue-800 ring-1 ring-border"
         >
           <div class="flex items-start space-x-3">
             <Icon
@@ -336,23 +304,24 @@
               class="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
             />
             <div class="flex-1">
-              <h3 class="font-bold text-blue-900 dark:text-blue-100 mb-2">About Alert System</h3>
-              <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+              <h3 class="font-bold text-text-main mb-2">About Alert System</h3>
+              <div class="text-sm text-text-light space-y-2">
                 <p>
-                  <strong>📧 Email Alerts:</strong> Automated via GitHub Actions every 15 minutes.
-                  Emails are sent when sensor readings exceed scientifically validated thresholds
-                  (IRRI & PAGASA).
+                  <strong class="text-text-main">📧 Email Alerts:</strong> Automated via GitHub
+                  Actions every 15 minutes. Emails are sent when sensor readings exceed
+                  scientifically validated thresholds (IRRI & PAGASA).
                 </p>
                 <p>
-                  <strong>📱 Push Notifications:</strong> Instant browser notifications delivered to
-                  your device, even when the app is closed. Enable above for real-time alerts.
+                  <strong class="text-text-main">📱 Push Notifications:</strong> Instant browser
+                  notifications delivered to your device, even when the app is closed. Enable above
+                  for real-time alerts.
                 </p>
                 <p>
-                  <strong>💬 SMS Alerts:</strong> Text message notifications sent via Semaphore API
-                  (Philippine provider) when critical weather conditions are detected. All saved
-                  numbers will receive alerts simultaneously.
+                  <strong class="text-text-main">💬 SMS Alerts:</strong> Text message notifications
+                  sent via Semaphore API (Philippine provider) when critical weather conditions are
+                  detected. All saved numbers will receive alerts simultaneously.
                 </p>
-                <p class="text-xs text-blue-600 dark:text-blue-300 mt-2">
+                <p class="text-xs text-text-light mt-2">
                   All thresholds are based on peer-reviewed research from IRRI (International Rice
                   Research Institute) and PAGASA (Philippine weather authority).
                 </p>
@@ -383,7 +352,7 @@
           <button
             @click="saveProfile"
             :disabled="isSaving || !hasChanges"
-            class="flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            class="flex items-center justify-center px-6 py-2.5 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Icon v-if="isSaving" icon="ph:circle-notch-bold" class="animate-spin h-5 w-5 mr-2" />
             <Icon v-else icon="ph:floppy-disk-bold" class="h-5 w-5 mr-2" />

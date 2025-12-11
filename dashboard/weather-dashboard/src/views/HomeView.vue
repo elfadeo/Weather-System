@@ -106,9 +106,9 @@ import { computed, watchEffect, ref } from 'vue'
 import { useWeatherData } from '@/composables/useWeatherData'
 
 // Components
-import WeatherCards from '@/components/WeatherCards.vue'
-import WeatherMap from '@/components/WeatherMap.vue'
-import InsightCard from '@/components/InsightCard.vue'
+import WeatherCards from '@/components/Dashboard/WeatherCards.vue'
+import WeatherMap from '@/components/Dashboard/WeatherMap.vue'
+import InsightCard from '@/components/Dashboard/InsightCard.vue'
 
 // Centralized weather data
 const { latestData, isLoading } = useWeatherData()
@@ -157,7 +157,7 @@ const weatherData = computed(() => [
   },
   {
     id: 'rainfall_rate',
-    title: 'Rainfall Rate (Est.)',
+    title: 'Rainfall Rate',
     value: rainfallRate.value,
     unit: 'mm/hr',
     icon: 'ph:cloud-rain-bold',
@@ -166,7 +166,7 @@ const weatherData = computed(() => [
   },
   {
     id: 'total_rainfall',
-    title: 'Total Rainfall (Est.)',
+    title: 'Total Rainfall',
     value: totalRainfall.value,
     unit: 'mm',
     icon: 'ph:chart-line-up-bold',

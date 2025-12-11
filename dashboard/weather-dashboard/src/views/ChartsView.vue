@@ -80,7 +80,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">Rainfall Rate (Est.)</h3>
+              <h3 class="text-lg font-semibold text-text-main">Rainfall Rate</h3>
             </div>
             <span class="text-xs text-text-light">mm/hr</span>
           </div>
@@ -102,7 +102,7 @@
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-2">
               <div class="w-3 h-3 rounded-full bg-teal-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">Total Rainfall (Est.)</h3>
+              <h3 class="text-lg font-semibold text-text-main">Total Rainfall</h3>
             </div>
             <span class="text-xs text-text-light">mm</span>
           </div>
@@ -153,7 +153,7 @@
             class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800/30"
           >
             <p class="text-xs text-indigo-800 dark:text-indigo-400 font-medium mb-1">
-              Total Rainfall (Est.)
+              Total Rainfall
             </p>
             <p class="text-2xl font-bold text-indigo-900 dark:text-indigo-300">
               {{ totalRainfall.toFixed(1) }}mm
@@ -178,8 +178,8 @@ import {
   orderByChild,
   startAt,
 } from 'firebase/database'
-import SingleMetricChart from '@/components/SingleMetricChart.vue'
-import LoadingState from '@/components/LoadingState.vue'
+import SingleMetricChart from '@/components/Charts/SingleMetricChart.vue'
+import LoadingState from '@/components/Charts/LoadingState.vue'
 
 // Simple empty state component (inline)
 const EmptyState = {
