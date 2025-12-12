@@ -15,7 +15,7 @@
     ></div>
   </transition>
 
-  <!-- Sidebar -->
+  <!-- Fixed Sidebar -->
   <aside @click.stop :class="sidebarClasses" :aria-hidden="!isMobileOpen" role="complementary">
     <nav
       class="flex-1 px-3 sm:px-4 py-4 space-y-3 overflow-y-auto no-scrollbar"
@@ -82,7 +82,7 @@
           <!-- Tooltip (only on large when collapsed) -->
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md"
+            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md z-50"
             role="tooltip"
           >
             {{ item.name }}
@@ -118,7 +118,7 @@
           <!-- Tooltip -->
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md"
+            class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md z-50"
             role="tooltip"
           >
             Profile
@@ -139,7 +139,7 @@
         <!-- Tooltip -->
         <div
           v-if="!isExpanded"
-          class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md"
+          class="absolute left-full ml-2 hidden lg:block px-2 py-1 text-sm bg-surface border border-border text-gray-900 dark:text-text-main rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md z-50"
           role="tooltip"
         >
           Logout
@@ -204,26 +204,29 @@ const handleLogout = async () => {
 }
 
 /*
-  Computed classes:
-  - On mobile: when open -> slide in (translate-x-0) and width w-4/5
-  - On mobile: when closed -> -translate-x-full
-  - On lg and up: always visible (lg:translate-x-0) and widths are controlled by isExpanded (lg:w-64 / lg:w-20)
-  - min-h-screen keeps the sidebar full height without forcing page overflow
+  ✅ FIXED SIDEBAR LAYOUT:
+  - Mobile: Slides in from left with overlay when opened
+  - Desktop: Always visible, fixed position
+  - Expanded (256px) or Collapsed (80px) on desktop
+  - Smooth transitions between states
 */
 const sidebarClasses = computed(() => {
-  let base =
-    'fixed lg:static top-0 left-0 z-40 bg-surface text-text-main border-r border-border flex flex-col transition-transform duration-300 ease-in-out will-change-transform min-h-screen'
-  const lgWidth = isExpanded.value ? ' lg:w-64' : ' lg:w-20'
-  // Responsive mobile width: 85% for very small screens, 75% for small, 70% for medium
-  const mobileOpen = ' w-[85%] xs:w-[80%] sm:w-[75%] md:w-[70%]'
+  const base =
+    'fixed top-0 left-0 z-40 bg-surface text-text-main border-r border-border flex flex-col transition-all duration-300 ease-in-out will-change-transform h-screen overflow-hidden'
+
+  // Desktop width based on expanded state
+  const desktopWidth = isExpanded.value ? 'lg:w-64' : 'lg:w-20'
+
+  // Mobile width when open
+  const mobileWidth = 'w-[85%] xs:w-[80%] sm:w-[75%] md:w-[70%]'
+
+  // Transform classes
   if (isMobileOpen.value) {
-    return base + lgWidth + mobileOpen + ' translate-x-0'
+    // Mobile open: slide in
+    return `${base} ${desktopWidth} ${mobileWidth} translate-x-0`
   } else {
-    // closed on mobile: hide off-canvas. on lg: visible with lg widths
-    const mobileClosed = '-translate-x-full lg:translate-x-0'
-    // ensure a reasonable default width for small screens when closed (so icon alignment works)
-    const defaultMobileWidth = isExpanded.value ? ' w-64' : ' w-20'
-    return base + lgWidth + defaultMobileWidth + ' ' + mobileClosed
+    // Mobile closed: slide out, but always visible on desktop
+    return `${base} ${desktopWidth} ${mobileWidth} -translate-x-full lg:translate-x-0`
   }
 })
 

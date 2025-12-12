@@ -126,14 +126,16 @@
                   Receive alert emails when thresholds are exceeded
                 </p>
               </div>
+
+              <!-- Enhanced Blue Toggle -->
               <button
                 @click="profile.emailNotifications = !profile.emailNotifications"
-                :class="profile.emailNotifications ? 'bg-primary' : 'bg-hover'"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                :class="profile.emailNotifications ? 'bg-blue-600' : 'bg-blue-300'"
+                class="relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <span
                   :class="profile.emailNotifications ? 'translate-x-6' : 'translate-x-1'"
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300"
                 ></span>
               </button>
             </div>
@@ -168,24 +170,27 @@
 
             <!-- SMS Notifications with Multiple Numbers -->
             <div class="p-4 bg-background rounded-lg space-y-3">
-              <div class="flex items-center justify-between">
+              <!-- SMS Notifications -->
+              <div class="flex items-center justify-between p-4 bg-background rounded-lg">
                 <div class="flex-1">
                   <div class="flex items-center space-x-2">
-                    <Icon icon="ph:device-mobile-bold" class="h-5 w-5 text-text-light" />
+                    <Icon icon="ph:cell-signal-full-bold" class="h-5 w-5 text-text-light" />
                     <span class="text-sm font-medium text-text-main">SMS Notifications</span>
                   </div>
                   <p class="text-xs text-text-light mt-1 ml-7">
-                    Receive text alerts via Semaphore (PH provider)
+                    Receive SMS alerts for weather updates and sensor thresholds
                   </p>
                 </div>
+
+                <!-- Enhanced Blue Toggle -->
                 <button
                   @click="smsSettings.enabled = !smsSettings.enabled"
-                  :class="smsSettings.enabled ? 'bg-primary' : 'bg-hover'"
-                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  :class="smsSettings.enabled ? 'bg-blue-600' : 'bg-blue-300'"
+                  class="relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   <span
                     :class="smsSettings.enabled ? 'translate-x-6' : 'translate-x-1'"
-                    class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+                    class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300"
                   ></span>
                 </button>
               </div>
@@ -352,10 +357,11 @@
           <button
             @click="saveProfile"
             :disabled="isSaving || !hasChanges"
-            class="flex items-center justify-center px-6 py-2.5 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            class="flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
           >
             <Icon v-if="isSaving" icon="ph:circle-notch-bold" class="animate-spin h-5 w-5 mr-2" />
             <Icon v-else icon="ph:floppy-disk-bold" class="h-5 w-5 mr-2" />
+
             <span v-if="isSaving">Saving...</span>
             <span v-else>{{ hasChanges ? 'Save Changes' : 'No Changes' }}</span>
           </button>

@@ -1,13 +1,16 @@
 <template>
-  <div class="min-h-screen flex flex-col lg:flex-row bg-background font-sans overflow-x-hidden">
-    <!-- SIDEBAR -->
+  <div class="min-h-screen flex bg-background font-sans overflow-x-hidden">
+    <!-- FIXED SIDEBAR -->
     <Sidebar ref="sidebarRef" @update:expanded="isSidebarExpanded = $event" />
 
-    <!-- MAIN AREA -->
-    <div class="flex-1 flex flex-col min-w-0">
-      <!-- HEADER -->
+    <!-- MAIN AREA - Add left margin to account for fixed sidebar -->
+    <div
+      class="flex-1 flex flex-col min-w-0 transition-all duration-300"
+      :class="isSidebarExpanded ? 'lg:ml-64' : 'lg:ml-20'"
+    >
+      <!-- HEADER - Now sticky at top of main area -->
       <header
-        class="bg-background/90 backdrop-blur-lg px-3 sm:px-4 md:px-6 h-16 sm:h-20 flex items-center justify-between border-b border-hover z-20"
+        class="sticky top-0 bg-background/90 backdrop-blur-lg px-3 sm:px-4 md:px-6 h-16 sm:h-20 flex items-center justify-between border-b border-hover z-20"
       >
         <div class="flex items-center gap-2 sm:gap-3">
           <!-- Mobile Sidebar Toggle -->
@@ -53,7 +56,7 @@
         </router-view>
       </main>
 
-      <!-- FOOTER (always visible, mobile-safe) -->
+      <!-- FOOTER -->
       <AppFooter class="mt-auto shrink-0" />
     </div>
   </div>
@@ -71,7 +74,6 @@ const { isDarkMode, toggleTheme } = useTheme()
 const sidebarRef = ref(null)
 const isSidebarExpanded = ref(true)
 
-// Mobile sidebar state
 const isSidebarMobileOpen = computed(() => {
   return sidebarRef.value?.isMobileOpen?.value ?? false
 })

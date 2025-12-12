@@ -390,7 +390,7 @@ const performFetch = (startTs, endTs) => {
     dbRef(rtdb, 'sensor_logs'),
     orderByChild('timestamp'),
     startAt(startTs),
-    endAt(endTs)
+    endAt(endTs),
   )
 
   // Check if it's a large dataset (more than 7 days)
@@ -423,7 +423,7 @@ const performFetch = (startTs, endTs) => {
         console.error('Error fetching report data:', error)
         rawReportData.value = []
         isLoading.value = false
-      }
+      },
     )
   }
 }
@@ -577,7 +577,7 @@ const aggregatedData = computed(() => {
       record,
       'rainRateEstimated_mm_hr_bucket',
       'rainRate_mm_hr',
-      'rainRate_mm'
+      'rainRate_mm',
     )
     if (rainRate !== null) {
       group.rainfallRateSum += rainRate
@@ -591,7 +591,7 @@ const aggregatedData = computed(() => {
       record,
       'rainfall_daily_mm',
       'rainfall_total_estimated_mm_bucket',
-      'rainfall_cumulative_mm'
+      'rainfall_cumulative_mm',
     )
 
     if (!Number.isNaN(timestamp)) {
@@ -615,7 +615,7 @@ const aggregatedData = computed(() => {
       const sorted = group.rainfallReadings.sort((a, b) => a.timestamp - b.timestamp)
 
       if (groupBy.value === 'hourly') {
-        const hourlyValues = sorted.map(r => r.hourly).filter(v => v > 0)
+        const hourlyValues = sorted.map((r) => r.hourly).filter((v) => v > 0)
 
         if (hourlyValues.length > 0) {
           const firstValue = hourlyValues[0]
@@ -640,19 +640,24 @@ const aggregatedData = computed(() => {
         } else {
           const hourlyMap = new Map()
 
-          sorted.forEach(reading => {
+          sorted.forEach((reading) => {
             const date = new Date(reading.timestamp)
             const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`
 
             const current = hourlyMap.get(hourKey)
-            if (!current || reading.hourly > current.hourly ||
-                (reading.hourly === current.hourly && reading.timestamp > current.timestamp)) {
+            if (
+              !current ||
+              reading.hourly > current.hourly ||
+              (reading.hourly === current.hourly && reading.timestamp > current.timestamp)
+            ) {
               hourlyMap.set(hourKey, reading)
             }
           })
 
-          periodRainfall = Array.from(hourlyMap.values())
-            .reduce((sum, reading) => sum + reading.hourly, 0)
+          periodRainfall = Array.from(hourlyMap.values()).reduce(
+            (sum, reading) => sum + reading.hourly,
+            0,
+          )
         }
       }
     }
@@ -662,10 +667,12 @@ const aggregatedData = computed(() => {
     result.push({
       period: group.label,
       temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
-      humidity: group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-      rainfallRate: group.rainfallRateCount > 0
-        ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
-        : 'N/A',
+      humidity:
+        group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
+      rainfallRate:
+        group.rainfallRateCount > 0
+          ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
+          : 'N/A',
       periodRainfall: periodRainfall.toFixed(2),
       count: group.recordCount,
       sortKey: key,

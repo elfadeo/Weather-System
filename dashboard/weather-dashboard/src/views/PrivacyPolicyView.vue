@@ -64,7 +64,9 @@
             Contact Our Data Protection Officer
           </h2>
 
-          <div class="bg-surface rounded-lg p-6 space-y-3 border border-border-light dark:border-border-dark">
+          <div
+            class="bg-surface rounded-lg p-6 space-y-3 border border-border-light dark:border-border-dark"
+          >
             <p class="text-text-light">
               For privacy-related inquiries, data access requests, or complaints:
             </p>
@@ -87,9 +89,7 @@
               <strong>Institution:</strong> Mindanao State University - Main Campus
             </p>
 
-            <p class="text-text-light">
-              <strong>Location:</strong> Marawi City, Philippines
-            </p>
+            <p class="text-text-light"><strong>Location:</strong> Marawi City, Philippines</p>
 
             <p
               class="text-sm text-text-light mt-4 pt-4 border-t border-border-light dark:border-border-dark"
@@ -135,7 +135,7 @@ const lastUpdatedFormatted = computed(() =>
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  })
+  }),
 )
 
 const sections = [
