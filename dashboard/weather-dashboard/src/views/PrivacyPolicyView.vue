@@ -35,8 +35,10 @@
         <p class="text-text-light text-sm">Effective Date: {{ lastUpdatedFormatted }}</p>
       </header>
 
-      <!-- Introduction -->
-      <div class="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-primary rounded">
+      <!-- Introduction Notice Box -->
+      <div
+        class="mb-8 p-4 bg-primary-light/20 dark:bg-primary-dark/20 border-l-4 border-primary rounded"
+      >
         <p class="text-sm text-text-light">
           <strong>Your privacy is important to us.</strong> This Privacy Policy explains how
           AgriSmart Weather Monitoring System collects, uses, shares, and protects your personal
@@ -57,14 +59,16 @@
         </section>
 
         <!-- Data Protection Officer -->
-        <section class="mt-12 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+        <section class="mt-12 pt-8 border-t-2 border-border-light dark:border-border-dark">
           <h2 class="text-xl font-semibold mb-4 text-primary">
             Contact Our Data Protection Officer
           </h2>
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 space-y-3">
+
+          <div class="bg-surface rounded-lg p-6 space-y-3 border border-border-light dark:border-border-dark">
             <p class="text-text-light">
               For privacy-related inquiries, data access requests, or complaints:
             </p>
+
             <p class="text-text-light">
               <strong>Email:</strong>
               <a
@@ -74,15 +78,21 @@
                 ponce.rn952@s.msumain.edu.ph
               </a>
             </p>
+
             <p class="text-text-light">
               <strong>Data Protection Officer:</strong> AgriSmart Weather Monitoring Team
             </p>
+
             <p class="text-text-light">
               <strong>Institution:</strong> Mindanao State University - Main Campus
             </p>
-            <p class="text-text-light"><strong>Location:</strong> Marawi City, Philippines</p>
+
+            <p class="text-text-light">
+              <strong>Location:</strong> Marawi City, Philippines
+            </p>
+
             <p
-              class="text-sm text-text-light mt-4 pt-4 border-t border-gray-300 dark:border-gray-600"
+              class="text-sm text-text-light mt-4 pt-4 border-t border-border-light dark:border-border-dark"
             >
               You also have the right to file a complaint with the
               <a
@@ -99,13 +109,15 @@
         </section>
 
         <!-- Acceptance Notice -->
-        <div class="mt-8 p-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded">
+        <div
+          class="mt-8 p-4 bg-success-light dark:bg-success-dark border-l-4 border-[var(--color-green-main)] rounded"
+        >
           <p class="text-sm text-text-light">
-            <strong
-              >By using our Service, you acknowledge that you have read and understood this Privacy
+            <strong>
+              By using our Service, you acknowledge that you have read and understood this Privacy
               Policy and consent to the collection, use, and disclosure of your information as
-              described herein.</strong
-            >
+              described herein.
+            </strong>
           </p>
         </div>
       </div>
@@ -123,7 +135,7 @@ const lastUpdatedFormatted = computed(() =>
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  }),
+  })
 )
 
 const sections = [

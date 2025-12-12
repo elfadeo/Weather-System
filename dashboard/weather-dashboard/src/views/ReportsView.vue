@@ -255,16 +255,18 @@
 <script setup>
 /*
   Professional Rebuild of Data Reports component
+  - Optimized performance with debouncing
+  - Smart data fetching for large datasets
   - Robust getFieldValue(...fields)
   - Proper unsubscribe handling
   - Loading overlay & disabled actions during load/export
   - CSV & PDF export using Papa & jsPDF+autoTable
-  - Improved rainfall aggregation logic with sensible defaults
+  - Improved rainfall aggregation logic
 */
 
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { rtdb } from '@/firebase.js'
-import { ref as dbRef, query, orderByChild, startAt, endAt, onValue } from 'firebase/database'
+import { ref as dbRef, query, orderByChild, startAt, endAt, onValue, get } from 'firebase/database'
 import { Icon } from '@iconify/vue'
 import Papa from 'papaparse'
 import jsPDF from 'jspdf'
@@ -280,6 +282,7 @@ const isLoading = ref(false)
 const isExporting = ref(false) // false | 'csv' | 'pdf'
 
 let unsubscribe = null
+let fetchTimeout = null
 
 // ---------- PRESETS ----------
 const timePresets = [
@@ -328,7 +331,6 @@ const applyTimePreset = (presetValue) => {
 
 const onCustomRangeSelected = () => {
   activePreset.value = 'custom'
-  // keep groupBy as user selected — do not force override
 }
 
 // Accepts any number of field names and returns Number or null
@@ -344,8 +346,13 @@ const getFieldValue = (record, ...fields) => {
   return null
 }
 
-// ---------- FETCH DATA (RTDB) ----------
+// ---------- OPTIMIZED FETCH DATA ----------
 const fetchData = () => {
+  // Clear any pending fetch
+  if (fetchTimeout) {
+    clearTimeout(fetchTimeout)
+  }
+
   // Validate input
   if (!startDateTime.value || !endDateTime.value) {
     rawReportData.value = []
@@ -359,13 +366,22 @@ const fetchData = () => {
     return
   }
 
-  // Set loading + cleanup previous listener
+  // Debounce: Wait 300ms before actually fetching
+  fetchTimeout = setTimeout(() => {
+    performFetch(startTs, endTs)
+  }, 300)
+}
+
+const performFetch = (startTs, endTs) => {
+  // Set loading state
   isLoading.value = true
-  if (typeof unsubscribe === 'function') {
+
+  // Cleanup previous listener
+  if (unsubscribe) {
     try {
       unsubscribe()
-    } catch {
-      // ignore errors from unsubscribe
+    } catch (err) {
+      console.warn('Unsubscribe error:', err)
     }
     unsubscribe = null
   }
@@ -374,43 +390,66 @@ const fetchData = () => {
     dbRef(rtdb, 'sensor_logs'),
     orderByChild('timestamp'),
     startAt(startTs),
-    endAt(endTs),
+    endAt(endTs)
   )
 
-  unsubscribe = onValue(
-    sensorLogsRef,
-    (snapshot) => {
-      const data = snapshot.val()
-      rawReportData.value = data ? Object.values(data) : []
-      isLoading.value = false
-    },
-    (error) => {
-      console.error('Error fetching report data:', error)
-      rawReportData.value = []
-      isLoading.value = false
-    },
-  )
+  // Check if it's a large dataset (more than 7 days)
+  const timeDiff = endTs - startTs
+  const isLargeDataset = timeDiff > 7 * 24 * 60 * 60 * 1000
+
+  if (isLargeDataset) {
+    // For large datasets, use one-time read
+    get(sensorLogsRef)
+      .then((snapshot) => {
+        const data = snapshot.val()
+        rawReportData.value = data ? Object.values(data) : []
+        isLoading.value = false
+      })
+      .catch((error) => {
+        console.error('Error fetching report data:', error)
+        rawReportData.value = []
+        isLoading.value = false
+      })
+  } else {
+    // For smaller datasets, use real-time listener
+    unsubscribe = onValue(
+      sensorLogsRef,
+      (snapshot) => {
+        const data = snapshot.val()
+        rawReportData.value = data ? Object.values(data) : []
+        isLoading.value = false
+      },
+      (error) => {
+        console.error('Error fetching report data:', error)
+        rawReportData.value = []
+        isLoading.value = false
+      }
+    )
+  }
 }
 
 // watch for time changes
-watch([startDateTime, endDateTime], fetchData, { immediate: true })
+watch([startDateTime, endDateTime], fetchData, { immediate: false })
 
 onMounted(() => {
   applyTimePreset('last24h')
 })
 
 onUnmounted(() => {
-  if (typeof unsubscribe === 'function') {
+  if (fetchTimeout) {
+    clearTimeout(fetchTimeout)
+  }
+  if (unsubscribe) {
     try {
       unsubscribe()
-    } catch {
-      // Intentionally ignoring unsubscribe errors
+    } catch (err) {
+      console.warn('Cleanup error:', err)
     }
     unsubscribe = null
   }
 })
 
-// ---------- COMPUTED: dataTimeRange & aggregatedData ----------
+// ---------- COMPUTED: dataTimeRange ----------
 const dataTimeRange = computed(() => {
   if (!rawReportData.value.length) return 'No data'
   const timestamps = rawReportData.value
@@ -429,6 +468,7 @@ const dataTimeRange = computed(() => {
   return `${fmt(earliest)} to ${fmt(latest)}`
 })
 
+// ---------- COMPUTED: aggregatedData ----------
 const aggregatedData = computed(() => {
   if (!rawReportData.value.length) return []
 
@@ -494,14 +534,16 @@ const aggregatedData = computed(() => {
     }
   }
 
-  const groups = {}
+  // Use Map for better performance
+  const groups = new Map()
 
   rawReportData.value.forEach((record) => {
     const result = getGroupKey(record, groupBy.value)
     if (!result) return
     const { key, label } = result
-    if (!groups[key]) {
-      groups[key] = {
+
+    if (!groups.has(key)) {
+      groups.set(key, {
         label,
         tempSum: 0,
         tempCount: 0,
@@ -509,104 +551,128 @@ const aggregatedData = computed(() => {
         humidityCount: 0,
         rainfallRateSum: 0,
         rainfallRateCount: 0,
-        hourlyRainfalls: [],
-        dailyRainfalls: [],
+        rainfallReadings: [],
         recordCount: 0,
-      }
+      })
     }
 
-    // Temp & humidity
+    const group = groups.get(key)
+
+    // Temperature
     const temp = getFieldValue(record, 'temperature', 'temp')
     if (temp !== null) {
-      groups[key].tempSum += temp
-      groups[key].tempCount++
-    }
-    const hum = getFieldValue(record, 'humidity', 'hum')
-    if (hum !== null) {
-      groups[key].humiditySum += hum
-      groups[key].humidityCount++
+      group.tempSum += temp
+      group.tempCount++
     }
 
-    // Rain rate (legacy names included)
+    // Humidity
+    const hum = getFieldValue(record, 'humidity', 'hum')
+    if (hum !== null) {
+      group.humiditySum += hum
+      group.humidityCount++
+    }
+
+    // Rain rate
     const rainRate = getFieldValue(
       record,
       'rainRateEstimated_mm_hr_bucket',
       'rainRate_mm_hr',
-      'rainRate_mm',
+      'rainRate_mm'
     )
     if (rainRate !== null) {
-      groups[key].rainfallRateSum += rainRate
-      groups[key].rainfallRateCount++
+      group.rainfallRateSum += rainRate
+      group.rainfallRateCount++
     }
 
-    // Hourly / instant rainfall
-    const hourly = getFieldValue(record, 'rainfall_hourly_mm', 'rainfall_hourly', 'rain_mm_hour')
-    if (hourly !== null) groups[key].hourlyRainfalls.push(hourly)
-
-    // Daily / cumulative rainfall
-    const daily = getFieldValue(
+    // Rainfall readings
+    const timestamp = Number(record.timestamp)
+    const hourlyMm = getFieldValue(record, 'rainfall_hourly_mm', 'rainfall_hourly', 'rain_mm_hour')
+    const dailyMm = getFieldValue(
       record,
       'rainfall_daily_mm',
       'rainfall_total_estimated_mm_bucket',
-      'rainfall_cumulative_mm',
+      'rainfall_cumulative_mm'
     )
-    if (daily !== null) groups[key].dailyRainfalls.push(daily)
 
-    groups[key].recordCount++
+    if (!Number.isNaN(timestamp)) {
+      group.rainfallReadings.push({
+        timestamp,
+        hourly: hourlyMm !== null ? hourlyMm : 0,
+        daily: dailyMm !== null ? dailyMm : 0,
+      })
+    }
+
+    group.recordCount++
   })
 
   // Build aggregated list
-  return Object.keys(groups)
-    .map((key) => {
-      const group = groups[key]
-      let periodRainfall = 0
+  const result = []
 
-      // Hourly: sum hourly readings if available; else attempt diff from daily cumulative
+  for (const [key, group] of groups) {
+    let periodRainfall = 0
+
+    if (group.rainfallReadings.length > 0) {
+      const sorted = group.rainfallReadings.sort((a, b) => a.timestamp - b.timestamp)
+
       if (groupBy.value === 'hourly') {
-        if (group.hourlyRainfalls.length) {
-          periodRainfall = group.hourlyRainfalls.reduce((s, v) => s + v, 0)
-        } else if (group.dailyRainfalls.length > 1) {
-          const copy = [...group.dailyRainfalls].sort((a, b) => a - b)
-          periodRainfall = copy[copy.length - 1] - copy[0]
-        } else {
-          periodRainfall = 0
+        const hourlyValues = sorted.map(r => r.hourly).filter(v => v > 0)
+
+        if (hourlyValues.length > 0) {
+          const firstValue = hourlyValues[0]
+          const lastValue = hourlyValues[hourlyValues.length - 1]
+
+          if (lastValue >= firstValue) {
+            periodRainfall = lastValue - firstValue
+          } else {
+            periodRainfall = lastValue
+          }
+
+          if (hourlyValues.length === 1) {
+            periodRainfall = lastValue
+          }
         }
       } else {
-        // For daily/weekly/monthly: prefer diff of cumulative daily values if they look cumulative
-        if (group.dailyRainfalls.length > 1) {
-          const copy = [...group.dailyRainfalls].sort((a, b) => a - b)
-          const min = copy[0]
-          const max = copy[copy.length - 1]
-          if (!Number.isNaN(min) && !Number.isNaN(max)) {
-            periodRainfall = Math.max(0, max - min)
-          } else {
-            // fallback to sum of hourly if daily not reliable
-            periodRainfall = group.hourlyRainfalls.length
-              ? group.hourlyRainfalls.reduce((s, v) => s + v, 0)
-              : 0
-          }
-        } else if (group.hourlyRainfalls.length) {
-          periodRainfall = group.hourlyRainfalls.reduce((s, v) => s + v, 0)
+        const firstDaily = sorted[0].daily
+        const lastDaily = sorted[sorted.length - 1].daily
+
+        if (lastDaily >= firstDaily) {
+          periodRainfall = lastDaily - firstDaily
         } else {
-          periodRainfall = 0
+          const hourlyMap = new Map()
+
+          sorted.forEach(reading => {
+            const date = new Date(reading.timestamp)
+            const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`
+
+            const current = hourlyMap.get(hourKey)
+            if (!current || reading.hourly > current.hourly ||
+                (reading.hourly === current.hourly && reading.timestamp > current.timestamp)) {
+              hourlyMap.set(hourKey, reading)
+            }
+          })
+
+          periodRainfall = Array.from(hourlyMap.values())
+            .reduce((sum, reading) => sum + reading.hourly, 0)
         }
       }
+    }
 
-      return {
-        period: group.label,
-        temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
-        humidity:
-          group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-        rainfallRate:
-          group.rainfallRateCount > 0
-            ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
-            : 'N/A',
-        periodRainfall: Number(periodRainfall).toFixed(2),
-        count: group.recordCount,
-        sortKey: key,
-      }
+    periodRainfall = Math.max(0, periodRainfall)
+
+    result.push({
+      period: group.label,
+      temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
+      humidity: group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
+      rainfallRate: group.rainfallRateCount > 0
+        ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
+        : 'N/A',
+      periodRainfall: periodRainfall.toFixed(2),
+      count: group.recordCount,
+      sortKey: key,
     })
-    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+  }
+
+  return result.sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 })
 
 // ---------- UI Helpers: Colors ----------

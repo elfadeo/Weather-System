@@ -33,7 +33,10 @@
         <p class="text-text-light text-sm">Effective Date: {{ lastUpdatedFormatted }}</p>
       </header>
 
-      <div class="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-primary rounded">
+      <!-- INFO NOTICE -->
+      <div
+        class="mb-8 p-4 bg-[var(--color-primary-light)] dark:bg-[var(--color-primary-dark)] border-l-4 border-primary rounded"
+      >
         <p class="text-sm text-text-light">
           <strong>Welcome to AgriSmart Weather Monitoring System.</strong> By accessing or using our
           service, you agree to be bound by these Terms of Service. Please read them carefully
@@ -51,9 +54,10 @@
           </div>
         </section>
 
-        <section class="mt-12 pt-8 border-t-2 border-gray-200 dark:border-gray-700">
+        <!-- CONTACT INFORMATION -->
+        <section class="mt-12 pt-8 border-t-2 border-border-light dark:border-border-dark">
           <h2 class="text-xl font-semibold mb-4 text-primary">Contact Information</h2>
-          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 space-y-2">
+          <div class="bg-surface rounded-lg p-6 space-y-2 shadow-sm">
             <p class="text-text-light">
               If you have any questions or concerns about these Terms of Service, please contact us:
             </p>
@@ -70,7 +74,10 @@
           </div>
         </section>
 
-        <div class="mt-8 p-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded">
+        <!-- SUCCESS NOTICE -->
+        <div
+          class="mt-8 p-4 bg-[var(--color-green-light)] dark:bg-[var(--color-green-dark)] border-l-4 border-[var(--color-green-dark)] rounded"
+        >
           <p class="text-sm text-text-light">
             <strong
               >By using this service, you acknowledge that you have read, understood, and agree to
