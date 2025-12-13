@@ -5,81 +5,119 @@
       <!-- Animated background elements -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div
-          class="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl transition-all duration-500"
+          class="absolute top-10 sm:top-20 left-5 sm:left-10 w-48 sm:w-72 h-48 sm:h-72 bg-primary/10 rounded-full blur-3xl transition-all duration-500"
           :style="{ transform: `translateY(${scrollY * 0.5}px)` }"
         />
         <div
-          class="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl transition-all duration-500"
+          class="absolute bottom-10 sm:bottom-20 right-5 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-primary/5 rounded-full blur-3xl transition-all duration-500"
           :style="{ transform: `translateY(${scrollY * -0.3}px)` }"
         />
       </div>
 
       <!-- Navigation -->
-      <nav
-        class="relative z-10 flex items-center justify-between px-4 sm:px-6 py-6 max-w-7xl mx-auto"
-      >
-        <div class="flex items-center space-x-2">
-          <Icon
-            icon="ph:cloud-sun-bold"
-            class="w-7 h-7 sm:w-8 sm:h-8 text-primary transition-colors duration-500"
-          />
-          <span class="text-xl sm:text-2xl font-bold text-text-main transition-colors duration-500"
-            >Climate Monitor</span
-          >
-        </div>
-        <div class="flex items-center gap-3 sm:gap-6">
+      <nav class="relative z-10 max-w-7xl mx-auto px-4 py-4 sm:py-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-1.5 sm:space-x-2">
+            <Icon
+              icon="ph:cloud-sun-bold"
+              class="w-6 h-6 sm:w-8 sm:h-8 text-primary transition-colors duration-500"
+            />
+            <span class="text-base sm:text-xl lg:text-2xl font-bold text-text-main transition-colors duration-500"
+              >Climate Monitor</span
+            >
+          </div>
+
+          <!-- Mobile menu button -->
           <button
-            @click="$router.push({ name: 'login' })"
-            class="text-text-light hover:text-text-main text-sm font-medium transition-colors duration-200"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+            class="sm:hidden p-2 text-text-light hover:text-text-main transition-colors"
           >
-            Sign In
+            <Icon :icon="mobileMenuOpen ? 'ph:x-bold' : 'ph:list-bold'" class="w-5 h-5" />
           </button>
-          <button
-            @click="$router.push({ name: 'signup' })"
-            class="px-4 sm:px-5 py-2 text-sm font-medium text-text-main border border-border rounded-lg hover:bg-hover transition-all duration-200"
-          >
-            Get Started
-          </button>
+
+          <!-- Desktop menu -->
+          <div class="hidden sm:flex items-center gap-3 sm:gap-6">
+            <button
+              @click="$router.push({ name: 'login' })"
+              class="text-text-light hover:text-text-main text-sm font-medium transition-colors duration-200"
+            >
+              Sign In
+            </button>
+            <button
+              @click="$router.push({ name: 'signup' })"
+              class="px-4 sm:px-5 py-2 text-sm font-medium text-primary-text bg-primary rounded-lg hover:opacity-90 transition-all duration-200"
+            >
+              Get Started
+            </button>
+          </div>
         </div>
+
+        <!-- Mobile menu -->
+        <transition
+          enter-active-class="transition-all duration-300 ease-out"
+          enter-from-class="opacity-0 -translate-y-2"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition-all duration-200 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-2"
+        >
+          <div v-if="mobileMenuOpen" class="sm:hidden mt-4 pb-4 space-y-3">
+            <button
+              @click="$router.push({ name: 'login' }); mobileMenuOpen = false"
+              class="block w-full text-center px-4 py-3 text-sm font-medium text-text-main bg-surface/50 border border-border/50 rounded-lg hover:bg-hover transition-all"
+            >
+              Sign In
+            </button>
+            <button
+              @click="$router.push({ name: 'signup' }); mobileMenuOpen = false"
+              class="block w-full text-center px-4 py-3 text-sm font-medium text-primary-text bg-primary rounded-lg hover:opacity-90 transition-all shadow-md"
+            >
+              Get Started
+            </button>
+          </div>
+        </transition>
       </nav>
 
       <!-- Hero Content -->
-      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-32">
-        <div class="text-center space-y-6 animate-fade-in">
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-20 md:py-32">
+        <div class="text-center space-y-4 sm:space-y-6 animate-fade-in">
           <div
-            class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-surface/80 backdrop-blur-sm rounded-full border border-border/50 text-xs sm:text-sm text-text-light mb-4"
+            class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-surface/80 backdrop-blur-sm rounded-full border border-border/50 text-xs sm:text-sm text-text-light"
           >
-            <Icon icon="ph:map-pin-bold" class="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-            <span class="truncate max-w-[250px] sm:max-w-none"
-              >Brgy. Angayen, Baloi, Lanao del Norte</span
+            <Icon icon="ph:map-pin-bold" class="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+            <span class="truncate max-w-[200px] sm:max-w-none"
+              >Angayen, Baloi, Lanao del Norte</span
             >
           </div>
+
           <h1
             class="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold leading-tight text-text-main transition-colors duration-500 px-2"
           >
-            IoT-Based Climate Monitoring
+            IoT Climate Monitoring
             <span
               class="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-primary/70 mt-1 sm:mt-2"
             >
               for Rice Cultivation
             </span>
           </h1>
+
           <p
-            class="text-base sm:text-lg md:text-xl lg:text-2xl text-text-light max-w-3xl mx-auto transition-colors duration-500 px-2"
+            class="text-sm sm:text-lg md:text-xl lg:text-2xl text-text-light max-w-3xl mx-auto transition-colors duration-500 px-4 leading-relaxed"
           >
             Real-time field monitoring with ESP32 sensors. Track temperature, humidity, and rainfall
-            to protect your crops and optimize irrigation.
+            to protect your crops.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-2 sm:pt-4 px-4">
             <button
               @click="$router.push({ name: 'dashboard' })"
-              class="px-8 py-3 text-sm font-medium text-primary-text bg-primary rounded-lg hover:opacity-90 transition-all duration-200"
+              class="w-full sm:w-auto px-8 py-3 text-sm sm:text-base font-medium text-primary-text bg-primary rounded-lg hover:opacity-90 transition-all duration-200 shadow-lg"
             >
               View Dashboard
             </button>
             <button
               @click="scrollToFeatures"
-              class="px-8 py-3 text-sm font-medium text-text-main border border-border rounded-lg hover:bg-hover transition-all duration-200"
+              class="w-full sm:w-auto px-8 py-3 text-sm sm:text-base font-medium text-text-main border border-border rounded-lg hover:bg-hover transition-all duration-200"
             >
               Learn More
             </button>
@@ -91,25 +129,25 @@
     <!-- How It Works Section -->
     <section
       ref="featuresSection"
-      class="py-16 sm:py-20 px-4 sm:px-6 bg-surface/30 backdrop-blur-sm transition-colors duration-500"
+      class="py-12 sm:py-20 px-4 sm:px-6 bg-surface/30 backdrop-blur-sm transition-colors duration-500"
     >
       <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-12 sm:mb-16">
+        <div class="text-center mb-10 sm:mb-16">
           <h2
-            class="text-3xl sm:text-4xl md:text-5xl font-bold text-text-main mb-4 transition-colors duration-500"
+            class="text-2xl sm:text-4xl md:text-5xl font-bold text-text-main mb-3 sm:mb-4 transition-colors duration-500"
           >
             How the System Works
           </h2>
-          <p class="text-lg sm:text-xl text-text-light transition-colors duration-500">
+          <p class="text-base sm:text-xl text-text-light transition-colors duration-500">
             From field sensors to AI-powered insights
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <div
             v-for="(step, i) in systemSteps"
             :key="i"
-            class="p-4 sm:p-6 lg:p-8 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:border-border transition-all duration-300"
+            class="p-5 sm:p-6 lg:p-8 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:border-border hover:shadow-lg transition-all duration-300"
           >
             <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
               <div
@@ -118,7 +156,7 @@
                 {{ i + 1 }}
               </div>
               <div
-                class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-primary/80 to-primary rounded-2xl flex items-center justify-center transition-colors duration-500"
+                class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-primary/80 to-primary rounded-2xl flex items-center justify-center transition-colors duration-500 shadow-md"
               >
                 <Icon
                   :icon="step.icon"
@@ -142,10 +180,7 @@
                 :key="j"
                 class="flex items-start gap-2 text-xs sm:text-sm text-text-light"
               >
-                <Icon
-                  icon="ph:check-circle-bold"
-                  class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary mt-0.5 flex-shrink-0"
-                />
+                <div class="w-1 h-1 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                 <span>{{ detail }}</span>
               </div>
             </div>
@@ -155,28 +190,28 @@
     </section>
 
     <!-- Key Features Section -->
-    <section class="py-16 sm:py-20 px-4 sm:px-6 transition-colors duration-500">
+    <section class="py-12 sm:py-20 px-4 sm:px-6 transition-colors duration-500">
       <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-12 sm:mb-16">
+        <div class="text-center mb-10 sm:mb-16">
           <h2
-            class="text-3xl sm:text-4xl md:text-5xl font-bold text-text-main mb-4 transition-colors duration-500"
+            class="text-2xl sm:text-4xl md:text-5xl font-bold text-text-main mb-3 sm:mb-4 transition-colors duration-500"
           >
             Powerful Features for Farmers
           </h2>
-          <p class="text-lg sm:text-xl text-text-light transition-colors duration-500">
+          <p class="text-base sm:text-xl text-text-light transition-colors duration-500">
             Everything you need to protect and optimize your rice cultivation
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <div
             v-for="(feature, i) in farmerFeatures"
             :key="i"
-            class="p-4 sm:p-6 lg:p-8 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:bg-surface hover:border-border transition-all duration-300"
+            class="p-5 sm:p-6 lg:p-8 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:bg-surface hover:border-border hover:shadow-lg transition-all duration-300"
           >
             <div class="flex items-start gap-3 sm:gap-4">
               <div
-                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary/80 to-primary rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500"
+                class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary/80 to-primary rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500 shadow-md"
               >
                 <Icon :icon="feature.icon" class="w-5 h-5 sm:w-6 sm:h-6 text-primary-text" />
               </div>
@@ -200,16 +235,16 @@
 
     <!-- Hardware Components -->
     <section
-      class="py-16 sm:py-20 px-4 sm:px-6 bg-surface/30 backdrop-blur-sm transition-colors duration-500"
+      class="py-12 sm:py-20 px-4 sm:px-6 bg-surface/30 backdrop-blur-sm transition-colors duration-500"
     >
       <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-12 sm:mb-16">
+        <div class="text-center mb-10 sm:mb-16">
           <h2
-            class="text-3xl sm:text-4xl md:text-5xl font-bold text-text-main mb-4 transition-colors duration-500"
+            class="text-2xl sm:text-4xl md:text-5xl font-bold text-text-main mb-3 sm:mb-4 transition-colors duration-500"
           >
             Field Device Components
           </h2>
-          <p class="text-lg sm:text-xl text-text-light transition-colors duration-500">
+          <p class="text-base sm:text-xl text-text-light transition-colors duration-500">
             Professional-grade sensors powered by solar energy
           </p>
         </div>
@@ -218,10 +253,10 @@
           <div
             v-for="(component, i) in hardwareComponents"
             :key="i"
-            class="p-4 sm:p-6 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 text-center hover:border-border transition-all duration-300"
+            class="p-4 sm:p-6 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 text-center hover:border-border hover:shadow-lg transition-all duration-300"
           >
             <div
-              class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-primary/80 to-primary rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-colors duration-500"
+              class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-primary/80 to-primary rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 transition-colors duration-500 shadow-md"
             >
               <Icon
                 :icon="component.icon"
@@ -242,11 +277,11 @@
     </section>
 
     <!-- Benefits Section -->
-    <section class="py-16 sm:py-20 px-4 sm:px-6 transition-colors duration-500">
+    <section class="py-12 sm:py-20 px-4 sm:px-6 transition-colors duration-500">
       <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-12 sm:mb-16">
+        <div class="text-center mb-10 sm:mb-16">
           <h2
-            class="text-3xl sm:text-4xl md:text-5xl font-bold text-text-main mb-4 transition-colors duration-500"
+            class="text-2xl sm:text-4xl md:text-5xl font-bold text-text-main mb-3 sm:mb-4 transition-colors duration-500"
           >
             Benefits for Rice Farmers
           </h2>
@@ -256,7 +291,7 @@
           <div
             v-for="(benefit, i) in benefits"
             :key="i"
-            class="p-4 sm:p-6 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:bg-surface hover:border-border transition-all duration-300"
+            class="p-5 sm:p-6 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:bg-surface hover:border-border hover:shadow-lg transition-all duration-300"
           >
             <Icon
               :icon="benefit.icon"
@@ -277,14 +312,14 @@
 
     <!-- Stats Section -->
     <section
-      class="py-16 sm:py-20 px-4 sm:px-6 bg-surface/30 backdrop-blur-sm transition-colors duration-500"
+      class="py-12 sm:py-16 px-4 sm:px-6 bg-surface/30 backdrop-blur-sm transition-colors duration-500"
     >
       <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           <div
             v-for="(stat, i) in stats"
             :key="i"
-            class="text-center p-4 sm:p-5 lg:p-6 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 transition-all duration-300 hover:bg-surface"
+            class="text-center p-5 sm:p-6 rounded-2xl bg-surface/50 backdrop-blur-sm border border-border/50 hover:bg-surface hover:shadow-lg transition-all duration-300"
           >
             <div
               class="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2 transition-colors duration-500"
@@ -302,25 +337,25 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-16 sm:py-20 px-4 sm:px-6 transition-colors duration-500">
-      <div class="max-w-4xl mx-auto text-center">
+    <section class="py-12 sm:py-20 px-4 sm:px-6 transition-colors duration-500">
+      <div class="max-w-4xl mx-auto">
         <div
-          class="bg-gradient-to-br from-primary/90 to-primary rounded-2xl sm:rounded-3xl p-6 sm:p-10 md:p-12 lg:p-16 shadow-lg transition-all duration-500"
+          class="bg-gradient-to-br from-primary/90 to-primary rounded-2xl sm:rounded-3xl p-8 sm:p-12 md:p-16 text-center shadow-2xl"
         >
           <h2
-            class="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold text-primary-text mb-3 sm:mb-4 lg:mb-6 px-2"
+            class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-primary-text mb-4 sm:mb-6"
           >
             Start Monitoring Your Rice Field Today
           </h2>
           <p
-            class="text-sm sm:text-base md:text-lg lg:text-xl text-primary-text/90 mb-4 sm:mb-6 lg:mb-8 max-w-2xl mx-auto px-2"
+            class="text-sm sm:text-lg md:text-xl text-primary-text/90 mb-6 sm:mb-8 max-w-2xl mx-auto"
           >
             Join farmers in Brgy. Angayen using data-driven agriculture to protect crops and
             increase yields
           </p>
           <button
             @click="$router.push({ name: 'dashboard' })"
-            class="px-6 sm:px-8 lg:px-10 py-2.5 sm:py-3 text-sm font-medium bg-surface text-text-main rounded-lg hover:bg-background transition-all duration-200 shadow-md"
+            class="w-full sm:w-auto px-8 sm:px-10 py-3 text-sm sm:text-base font-medium bg-surface text-text-main rounded-lg hover:bg-background transition-all duration-200 shadow-xl"
           >
             Access Dashboard
           </button>
@@ -330,7 +365,7 @@
 
     <!-- Footer -->
     <footer
-      class="py-6 sm:py-8 lg:py-10 px-4 sm:px-6 border-t border-border bg-surface/30 backdrop-blur-sm transition-colors duration-500"
+      class="py-8 sm:py-10 px-4 sm:px-6 border-t border-border bg-surface/30 backdrop-blur-sm transition-colors duration-500"
     >
       <div class="max-w-7xl mx-auto">
         <div
@@ -372,6 +407,7 @@ import { Icon } from '@iconify/vue'
 
 const scrollY = ref(0)
 const featuresSection = ref(null)
+const mobileMenuOpen = ref(false)
 
 const systemSteps = [
   {
@@ -546,6 +582,7 @@ const scrollToFeatures = () => {
   if (featuresSection.value) {
     featuresSection.value.scrollIntoView({ behavior: 'smooth' })
   }
+  mobileMenuOpen.value = false
 }
 
 onMounted(() => {
@@ -570,6 +607,6 @@ onUnmounted(() => {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.8s ease-out;
+  animation: fade-in 0.6s ease-out;
 }
 </style>

@@ -30,7 +30,7 @@
 
           <!-- Title -->
           <span class="text-base sm:text-lg font-bold text-text-main hidden sm:block">
-            Weather Monitoring System
+            Climate Monitoring
           </span>
         </div>
 

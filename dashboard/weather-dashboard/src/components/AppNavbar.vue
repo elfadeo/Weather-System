@@ -40,7 +40,7 @@ const handleSignOut = async () => {
             aria-hidden="true"
           />
           <h1 class="ml-2 text-base sm:text-xl font-bold text-text-main truncate">
-            Weather Monitoring System
+            Climate Monitoring
           </h1>
         </router-link>
 
