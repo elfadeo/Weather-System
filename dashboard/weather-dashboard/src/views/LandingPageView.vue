@@ -151,11 +151,6 @@
           >
             <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
               <div
-                class="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm sm:text-base"
-              >
-                {{ i + 1 }}
-              </div>
-              <div
                 class="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-primary/80 to-primary rounded-2xl flex items-center justify-center transition-colors duration-500 shadow-md"
               >
                 <Icon
