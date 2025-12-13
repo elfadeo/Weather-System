@@ -92,9 +92,12 @@
     </nav>
 
     <!-- Profile + Logout -->
-    <div class="px-3 sm:px-4 pt-3 border-t border-hover" :style="{ paddingBottom: safeAreaBottom }">
+    <div
+      class="px-3 sm:px-4 pt-3 pb-6 border-t border-hover"
+      :style="{ paddingBottom: `calc(${safeAreaBottom} + 1rem)` }"
+    >
       <!-- Profile -->
-      <router-link to="/profile" custom v-slot="{ href, navigate, isActive }">
+      <router-link :to="{ name: 'profile' }" custom v-slot="{ href, navigate, isActive }">
         <a
           :href="href"
           @click="
@@ -103,7 +106,7 @@
               closeMobileOnNavigate()
             }
           "
-          class="relative flex items-center p-3 rounded-xl group transition-all duration-300"
+          class="relative flex items-center p-4 sm:p-3 rounded-xl group transition-all duration-300"
           :class="[
             isExpanded ? '' : 'justify-center',
             isActive
@@ -129,7 +132,7 @@
       <!-- Logout -->
       <button
         @click="handleLogout"
-        class="relative flex w-full items-center p-3 rounded-xl group text-text-light opacity-80 hover:bg-primary/5 hover:text-red-500 transition-all duration-300"
+        class="relative flex w-full items-center p-4 sm:p-3 rounded-xl group text-text-light opacity-80 hover:bg-primary/5 hover:text-red-500 transition-all duration-300 mt-2"
         :class="{ 'justify-center': !isExpanded }"
         aria-label="Logout"
       >
@@ -209,6 +212,7 @@ const handleLogout = async () => {
   - Desktop: Always visible, fixed position
   - Expanded (256px) or Collapsed (80px) on desktop
   - Smooth transitions between states
+  - Improved mobile touch targets for Profile and Logout buttons
 */
 const sidebarClasses = computed(() => {
   const base =
@@ -230,8 +234,8 @@ const sidebarClasses = computed(() => {
   }
 })
 
-// safe area bottom to avoid iPhone notch overlap (fallback to 12px)
-const safeAreaBottom = `env(safe-area-inset-bottom, 12px)`
+// safe area bottom with better fallback for devices without notch
+const safeAreaBottom = `env(safe-area-inset-bottom, 24px)`
 </script>
 
 <style scoped>
