@@ -44,7 +44,7 @@ import { computed } from 'vue'
 defineProps({
   companyName: {
     type: String,
-    default: 'Weather Monitoring System',
+    default: 'Climate Monitoring',
   },
 })
 
