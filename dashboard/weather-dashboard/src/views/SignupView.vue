@@ -183,6 +183,15 @@ const signInWithGoogle = async () => {
   <div
     class="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-500"
   >
+    <!-- Back to Home Button -->
+    <button
+      @click="$router.push({ name: 'landing' })"
+      class="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-text-light hover:text-text-main transition-colors duration-200 z-10"
+    >
+      <Icon icon="ph:arrow-left-bold" class="w-4 h-4" />
+      <span class="text-sm">Back</span>
+    </button>
+
     <div
       class="max-w-md w-full bg-surface rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
     >

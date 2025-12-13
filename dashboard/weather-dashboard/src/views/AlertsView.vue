@@ -72,7 +72,10 @@
             </ul>
 
             <!-- Load More Button -->
-            <div v-if="alertHistory.length >= 50" class="p-3 sm:p-4 border-t border-border text-center">
+            <div
+              v-if="alertHistory.length >= 50"
+              class="p-3 sm:p-4 border-t border-border text-center"
+            >
               <button
                 class="text-sm text-primary hover:underline font-medium"
                 @click="loadMoreAlerts"

@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import MainLayout from '@/layout/MainLayout.vue'
 
 // Views
+import LandingPageView from '@/views/LandingPageView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
 import UsernameLoginView from '@/views/UsernameLoginView.vue'
@@ -37,6 +38,12 @@ const getCurrentUser = () => {
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // Public landing page
+    {
+      path: '/',
+      name: 'landing',
+      component: LandingPageView,
+    },
     {
       path: '/login',
       name: 'login',
@@ -50,10 +57,11 @@ const router = createRouter({
     {
       path: '/phone-login',
       name: 'phone-login',
-      component: UsernameLoginView, // ✅ Changed from PhoneLoginView to UsernameLoginView
+      component: UsernameLoginView,
     },
+    // Protected dashboard routes
     {
-      path: '/',
+      path: '/dashboard',
       component: MainLayout,
       meta: { requiresAuth: true },
       children: [
@@ -102,18 +110,22 @@ const router = createRouter({
   ],
 })
 
-// The correct async navigation guard
+// Navigation guard
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
   const isAuthenticated = await getCurrentUser()
 
   if (requiresAuth && !isAuthenticated) {
+    // Redirect to login if route requires auth and user is not authenticated
     next({ name: 'login' })
   } else if (
     isAuthenticated &&
-    (to.name === 'login' || to.name === 'signup' || to.name === 'phone-login')
+    (to.name === 'login' ||
+      to.name === 'signup' ||
+      to.name === 'phone-login' ||
+      to.name === 'landing')
   ) {
-    // Redirect authenticated users away from login, signup, AND phone-login pages
+    // Redirect authenticated users away from public pages to dashboard
     next({ name: 'dashboard' })
   } else {
     next()

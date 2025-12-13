@@ -12,7 +12,9 @@
       <!-- Alert Content -->
       <div class="flex-1 min-w-0 w-full">
         <!-- Header with title and timestamp -->
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 mb-2">
+        <div
+          class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 mb-2"
+        >
           <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2 mb-1">
               <h3 class="font-bold text-sm sm:text-base text-text-main">{{ alertStyle.title }}</h3>
@@ -22,7 +24,9 @@
           </div>
 
           <!-- Timestamp -->
-          <div class="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0 text-left sm:text-right flex-shrink-0">
+          <div
+            class="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0 text-left sm:text-right flex-shrink-0"
+          >
             <p class="text-xs sm:text-sm font-medium text-text-light">{{ formattedTime }}</p>
             <span class="text-text-light sm:hidden">•</span>
             <p class="text-xs text-text-light sm:mt-1">{{ relativeTime }}</p>
@@ -82,7 +86,9 @@
           class="mt-2 sm:mt-3 flex items-center space-x-2 text-xs text-green-800 dark:text-green-300"
         >
           <Icon icon="ph:check-circle-bold" class="h-4 w-4 flex-shrink-0" />
-          <span class="break-words">Email notification sent to {{ recipientCount }} recipient(s)</span>
+          <span class="break-words"
+            >Email notification sent to {{ recipientCount }} recipient(s)</span
+          >
         </div>
 
         <!-- Scientific Reference -->
