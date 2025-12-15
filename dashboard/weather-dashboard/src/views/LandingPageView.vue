@@ -65,7 +65,7 @@
           <div v-if="mobileMenuOpen" class="sm:hidden mt-4 pb-4 space-y-3">
             <button
               @click="
-                $router.push({ name: 'login' })
+                $router.push({ name: 'login' });
                 mobileMenuOpen = false
               "
               class="block w-full text-center px-4 py-3 text-sm font-medium text-text-main bg-surface/50 border border-border/50 rounded-lg hover:bg-hover transition-all"
@@ -74,7 +74,7 @@
             </button>
             <button
               @click="
-                $router.push({ name: 'signup' })
+                $router.push({ name: 'signup' });
                 mobileMenuOpen = false
               "
               class="block w-full text-center px-4 py-3 text-sm font-medium text-primary-text bg-primary rounded-lg hover:opacity-90 transition-all shadow-md"
