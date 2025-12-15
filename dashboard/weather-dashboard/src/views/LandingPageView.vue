@@ -22,7 +22,8 @@
               icon="ph:cloud-sun-bold"
               class="w-6 h-6 sm:w-8 sm:h-8 text-primary transition-colors duration-500"
             />
-            <span class="text-base sm:text-xl lg:text-2xl font-bold text-text-main transition-colors duration-500"
+            <span
+              class="text-base sm:text-xl lg:text-2xl font-bold text-text-main transition-colors duration-500"
               >Climate Monitoring</span
             >
           </div>
@@ -63,13 +64,19 @@
         >
           <div v-if="mobileMenuOpen" class="sm:hidden mt-4 pb-4 space-y-3">
             <button
-              @click="$router.push({ name: 'login' }); mobileMenuOpen = false"
+              @click="
+                $router.push({ name: 'login' })
+                mobileMenuOpen = false
+              "
               class="block w-full text-center px-4 py-3 text-sm font-medium text-text-main bg-surface/50 border border-border/50 rounded-lg hover:bg-hover transition-all"
             >
               Sign In
             </button>
             <button
-              @click="$router.push({ name: 'signup' }); mobileMenuOpen = false"
+              @click="
+                $router.push({ name: 'signup' })
+                mobileMenuOpen = false
+              "
               class="block w-full text-center px-4 py-3 text-sm font-medium text-primary-text bg-primary rounded-lg hover:opacity-90 transition-all shadow-md"
             >
               Get Started
@@ -386,9 +393,7 @@
           </div>
         </div>
         <div class="text-center text-text-light text-xs sm:text-sm transition-colors duration-500">
-          <p class="px-2">
-            © 2025 Climate Monitoring. All Rights Reserved.
-          </p>
+          <p class="px-2">© 2025 Climate Monitoring. All Rights Reserved.</p>
         </div>
       </div>
     </footer>
