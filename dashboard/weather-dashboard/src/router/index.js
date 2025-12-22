@@ -19,9 +19,6 @@ import ProfileView from '@/views/ProfileView.vue'
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue'
 import TermsOfServiceView from '@/views/TermsOfServiceView.vue'
 
-/**
- * A helper function to wait for Firebase auth to initialize.
- */
 const getCurrentUser = () => {
   return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(
@@ -38,7 +35,6 @@ const getCurrentUser = () => {
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // Public landing page
     {
       path: '/',
       name: 'landing',
@@ -59,6 +55,19 @@ const router = createRouter({
       name: 'phone-login',
       component: UsernameLoginView,
     },
+
+    // --- LEGAL ROUTES (MOVED TO ROOT LEVEL) ---
+    {
+      path: '/privacy-policy',
+      name: 'privacy-policy',
+      component: PrivacyPolicyView,
+    },
+    {
+      path: '/terms-of-service',
+      name: 'terms-of-service',
+      component: TermsOfServiceView,
+    },
+
     // Protected dashboard routes
     {
       path: '/dashboard',
@@ -95,16 +104,6 @@ const router = createRouter({
           name: 'profile',
           component: ProfileView,
         },
-        {
-          path: 'privacy-policy',
-          name: 'privacy-policy',
-          component: PrivacyPolicyView,
-        },
-        {
-          path: 'terms-of-service',
-          name: 'terms-of-service',
-          component: TermsOfServiceView,
-        },
       ],
     },
   ],
@@ -116,7 +115,6 @@ router.beforeEach(async (to, from, next) => {
   const isAuthenticated = await getCurrentUser()
 
   if (requiresAuth && !isAuthenticated) {
-    // Redirect to login if route requires auth and user is not authenticated
     next({ name: 'login' })
   } else if (
     isAuthenticated &&
@@ -125,7 +123,6 @@ router.beforeEach(async (to, from, next) => {
       to.name === 'phone-login' ||
       to.name === 'landing')
   ) {
-    // Redirect authenticated users away from public pages to dashboard
     next({ name: 'dashboard' })
   } else {
     next()
