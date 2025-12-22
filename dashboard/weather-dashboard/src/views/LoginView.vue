@@ -286,224 +286,356 @@ const signInWithGoogle = async () => {
 
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-500"
+    class="min-h-screen flex items-center justify-center bg-background text-text-main font-sans overflow-hidden relative selection:bg-primary selection:text-primary-text transition-colors duration-300"
   >
-    <!-- Back to Home Button -->
-    <button
-      @click="$router.push({ name: 'landing' })"
-      class="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-text-light hover:text-text-main transition-colors duration-200 z-10"
-    >
-      <Icon icon="ph:arrow-left-bold" class="w-4 h-4" />
-      <span class="text-sm">Back</span>
-    </button>
+    <div
+      class="fixed inset-0 opacity-[0.035] pointer-events-none z-0 mix-blend-multiply"
+      style="background-image: url('https://grainy-gradients.vercel.app/noise.svg')"
+    ></div>
 
     <div
-      class="max-w-md w-full bg-surface rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
+      class="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none animate-float-slow"
+    ></div>
+    <div
+      class="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none animate-float-slow"
+      style="animation-delay: -5s"
+    ></div>
+
+    <button
+      @click="$router.push({ name: 'landing' })"
+      class="absolute top-6 left-6 z-20 flex items-center gap-3 text-text-light hover:text-text-main transition-colors duration-200 group"
     >
-      <!-- Header -->
-      <div class="text-center">
-        <Icon
-          icon="ph:cloud-sun-bold"
-          class="h-12 w-12 text-primary mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
-        />
-        <h2 class="text-3xl font-bold text-text-main">Welcome Back</h2>
-        <p class="text-text-light mt-2">Sign in to access your dashboard</p>
-      </div>
-
-      <!-- Social Sign-in -->
-      <button
-        @click="signInWithGoogle"
-        type="button"
-        :disabled="isLoading"
-        aria-label="Sign in with Google"
-        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-border bg-surface hover:bg-hover text-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
+      <div
+        class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300 backdrop-blur-sm"
       >
-        <Icon v-if="!isLoading" icon="flat-color-icons:google" class="h-5 w-5" />
-        <Icon v-else icon="eos-icons:loading" class="h-5 w-5 animate-spin text-primary" />
-        <span class="ml-3 text-sm font-medium">
-          {{ isLoading ? 'Please wait...' : 'Sign in with Google' }}
-        </span>
-      </button>
-
-      <!-- Username Login Button -->
-      <button
-        @click="router.push({ name: 'phone-login' })"
-        type="button"
-        :disabled="isLoading"
-        aria-label="Farmer Login with Username"
-        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-border bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 text-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <Icon icon="ph:user-circle-bold" class="h-5 w-5 text-green-600 dark:text-green-400" />
-        <span class="ml-3 text-sm font-medium"> Username Login - No Email Needed </span>
-      </button>
-
-      <!-- Separator -->
-      <div class="relative py-4">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-border"></div>
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-6 bg-separator text-text-light relative z-10">
-            Or sign in with email
-          </span>
-        </div>
+        <Icon icon="ph:arrow-left-bold" class="w-4 h-4" />
       </div>
+      <span
+        class="text-sm font-medium hidden sm:inline opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300"
+        >Back home</span
+      >
+    </button>
 
-      <!-- Email/Password Form -->
-      <form @submit.prevent="signIn" class="space-y-6">
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-sm font-medium text-text-main mb-1">
-            Email Address
-          </label>
-          <input
-            v-model="email"
-            type="email"
-            id="email"
-            aria-label="Email Address"
-            class="block w-full px-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
-            placeholder="you@example.com"
-            required
-          />
+    <div class="w-full max-w-[420px] mx-4 relative z-10">
+      <div
+        class="bg-surface/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-border/60 p-6 sm:p-10 animate-fade-in-up"
+      >
+        <div class="text-center mb-8">
+          <div
+            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-4 rotate-3 hover:rotate-12 transition-transform duration-500 shadow-inner ring-1 ring-primary/20"
+          >
+            <Icon icon="ph:cloud-sun-bold" class="w-7 h-7" />
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-text-main">Welcome Back</h2>
+          <p class="text-text-light text-sm mt-2">Sign in to access your climate data</p>
         </div>
 
-        <!-- Password -->
-        <div>
-          <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm font-medium text-text-main mb-1">
-              Password
-            </label>
-            <button
-              @click.prevent="handlePasswordReset"
-              type="button"
-              :disabled="isLoading"
-              aria-label="Reset password"
-              class="text-sm font-medium text-primary hover:opacity-80 hover:underline transition-colors duration-300 disabled:opacity-50"
-            >
-              Forgot Password?
-            </button>
-          </div>
-          <input
-            v-model="password"
-            type="password"
-            id="password"
-            aria-label="Password"
-            class="block w-full px-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-
-        <!-- Messages -->
-        <Transition name="fade-slide">
-          <div
-            v-if="errorMessage"
-            class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800/30"
-          >
-            <p class="text-red-700 dark:text-red-300 text-sm text-center">{{ errorMessage }}</p>
-          </div>
-        </Transition>
-        <Transition name="fade-slide">
-          <div
-            v-if="successMessage"
-            class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800/30"
-          >
-            <p class="text-green-700 dark:text-green-300 text-sm text-center">
-              {{ successMessage }}
-            </p>
-          </div>
-        </Transition>
-
-        <!-- Resend Verification Button (shows after auto-resend limit reached) -->
-        <Transition name="fade-slide">
+        <div class="space-y-3">
           <button
-            v-if="showResendButton"
-            @click.prevent="resendVerification"
+            @click="signInWithGoogle"
             type="button"
             :disabled="isLoading"
-            class="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium border-2 border-orange-400 dark:border-orange-600 text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full relative flex items-center justify-center py-3 px-4 rounded-xl border border-border bg-background hover:bg-hover text-text-main font-medium transition-all duration-300 hover:-translate-y-0.5 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
           >
-            Resend Verification Email
-          </button>
-        </Transition>
-
-        <!-- Sign In Button -->
-        <button
-          type="submit"
-          :disabled="isLoading"
-          aria-label="Sign in"
-          class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-full text-base font-medium border border-border text-text-main bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Icon
-            v-if="isLoading"
-            icon="eos-icons:loading"
-            class="h-5 w-5 animate-spin text-primary"
-          />
-          {{ isLoading ? 'Signing In...' : 'Sign In' }}
-        </button>
-      </form>
-
-      <!-- Important Info Box - Only shows when user gets "too many attempts" error -->
-      <Transition name="fade-slide">
-        <div
-          v-if="errorMessage && errorMessage.includes('Too many')"
-          class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
-        >
-          <div class="flex gap-2">
             <Icon
-              icon="ph:info-bold"
-              class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+              v-if="!isLoading"
+              icon="flat-color-icons:google"
+              class="w-5 h-5 absolute left-4"
             />
-            <div class="text-blue-700 dark:text-blue-300 text-xs space-y-1">
-              <p class="font-semibold">How to fix this:</p>
-              <p>• Wait 15-30 minutes before trying again</p>
-              <p>• Make sure you verified your email first</p>
-              <p>• Use "Forgot Password" to reset and unlock</p>
-            </div>
+            <Icon
+              v-else
+              icon="eos-icons:loading"
+              class="w-5 h-5 absolute left-4 animate-spin text-primary"
+            />
+            <span class="text-sm">
+              {{ isLoading ? 'Please wait...' : 'Sign in with Google' }}
+            </span>
+          </button>
+
+          <button
+            @click="router.push({ name: 'phone-login' })"
+            type="button"
+            :disabled="isLoading"
+            class="w-full relative flex items-center justify-center py-3 px-4 rounded-xl border border-green-200/50 dark:border-green-800/50 bg-green-50/50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 text-text-main font-medium transition-all duration-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed group"
+          >
+            <Icon
+              icon="ph:user-circle-bold"
+              class="w-5 h-5 absolute left-4 text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform"
+            />
+            <span class="text-sm"
+              >Username Login
+              <span class="text-[10px] opacity-60 ml-1 font-normal">(No Email)</span></span
+            >
+          </button>
+        </div>
+
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-border"></div>
+          </div>
+          <div class="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
+            <span class="px-4 bg-surface text-text-light/70 backdrop-blur-xl">
+              Or continue with
+            </span>
           </div>
         </div>
-      </Transition>
 
-      <!-- Link to Sign Up -->
-      <div class="text-center">
-        <p class="text-sm text-text-light">
-          Don't have an account?
-          <router-link
-            to="/signup"
-            class="font-medium text-primary hover:opacity-80 hover:underline transition-colors duration-300"
+        <form @submit.prevent="signIn" class="space-y-5">
+          <div class="space-y-1.5">
+            <label
+              for="email"
+              class="block text-xs font-bold text-text-light uppercase tracking-wide ml-1"
+            >
+              Email
+            </label>
+            <div class="relative group">
+              <input
+                v-model="email"
+                type="email"
+                id="email"
+                class="block w-full px-4 py-3.5 pl-11 rounded-xl bg-background border border-border text-text-main placeholder-text-light/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="farmer@example.com"
+                required
+              />
+              <Icon
+                icon="ph:envelope-simple"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-primary transition-colors"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between ml-1">
+              <label
+                for="password"
+                class="block text-xs font-bold text-text-light uppercase tracking-wide"
+              >
+                Password
+              </label>
+              <button
+                @click.prevent="handlePasswordReset"
+                type="button"
+                :disabled="isLoading"
+                class="text-xs font-semibold text-primary hover:text-primary/70 transition-colors"
+              >
+                Forgot Password?
+              </button>
+            </div>
+            <div class="relative group">
+              <input
+                v-model="password"
+                type="password"
+                id="password"
+                class="block w-full px-4 py-3.5 pl-11 rounded-xl bg-background border border-border text-text-main placeholder-text-light/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="••••••••"
+                required
+              />
+              <Icon
+                icon="ph:lock-key"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-primary transition-colors"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="w-full flex justify-center items-center gap-2 py-4 px-4 rounded-xl bg-primary text-primary-text font-bold text-sm shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
           >
-            Sign Up
-          </router-link>
-        </p>
+            <Icon v-if="isLoading" icon="eos-icons:loading" class="w-5 h-5 animate-spin" />
+            <span>{{ isLoading ? 'Signing In...' : 'Sign In to Dashboard' }}</span>
+          </button>
+        </form>
+
+        <div class="space-y-3 mt-6">
+          <Transition name="fade-slide">
+            <div
+              v-if="errorMessage"
+              class="p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm flex gap-3 items-start animate-fade-in"
+            >
+              <Icon
+                icon="ph:warning-circle-bold"
+                class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+              />
+              <div class="space-y-1">
+                <p class="text-red-700 dark:text-red-300 font-medium leading-tight">
+                  {{ errorMessage }}
+                </p>
+                <div
+                  v-if="errorMessage.includes('Too many')"
+                  class="text-red-600/80 dark:text-red-400/80 text-xs mt-2 pl-1 border-l-2 border-red-300 dark:border-red-700"
+                >
+                  <p class="font-semibold">Try these steps:</p>
+                  <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                    <li>Wait 15-30 minutes</li>
+                    <li>Check email verification</li>
+                    <li>Reset password</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </Transition>
+
+          <Transition name="fade-slide">
+            <div
+              v-if="successMessage"
+              class="p-4 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm flex gap-3 items-start animate-fade-in"
+            >
+              <Icon
+                icon="ph:check-circle-bold"
+                class="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5"
+              />
+              <p class="text-green-700 dark:text-green-300 font-medium leading-tight">
+                {{ successMessage }}
+              </p>
+            </div>
+          </Transition>
+
+          <Transition name="fade-slide">
+            <button
+              v-if="showResendButton"
+              @click.prevent="resendVerification"
+              type="button"
+              :disabled="isLoading"
+              class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wide border border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all duration-300"
+            >
+              <Icon icon="ph:paper-plane-right-bold" class="w-4 h-4" />
+              Resend Verification Email
+            </button>
+          </Transition>
+        </div>
+
+        <div class="mt-8 text-center border-t border-border pt-6">
+          <p class="text-sm text-text-light">
+            Don't have an account?
+            <router-link
+              to="/signup"
+              class="font-bold text-primary hover:text-primary/80 transition-colors ml-1 inline-flex items-center gap-1 group"
+            >
+              Sign Up
+              <Icon
+                icon="ph:arrow-right-bold"
+                class="w-3 h-3 group-hover:translate-x-1 transition-transform"
+              />
+            </router-link>
+          </p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* === CONSISTENT LANDING PAGE THEME VARIABLES ===
+   Ensures this page looks exactly like the landing page even if standalone
+*/
+:root {
+  --vt-c-white-mute: #f2f2f2;
+
+  /* LIGHT MODE */
+  --color-background: #f8f9fa;
+  --color-surface: rgba(255, 255, 255, 0.85);
+  --color-primary: #1a73e8;
+  --color-text-main: #202124;
+  --color-text-light: #5f6368;
+  --color-hover: #f1f3f4;
+  --color-border: #e5e7eb;
+  --color-primary-text: #ffffff;
+
+  /* Custom Green for Username Button */
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-600: #16a34a;
+}
+
+/* DARK MODE SUPPORT */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #000000;
+    --color-surface: rgba(20, 20, 20, 0.8);
+    --color-primary: #8ab4f8;
+    --color-text-main: #e8eaed;
+    --color-text-light: #9aa0a6;
+    --color-hover: #2a2a2a;
+    --color-border: #374151;
+    --color-primary-text: #1a1a1a;
+
+    --color-green-50: #0d1e13;
+    --color-green-100: #1a2d20;
+    --color-green-600: #7be0a3;
+  }
+}
+
+/* Local Utility Mappings */
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.bg-background {
+  background-color: var(--color-background);
+}
+.text-text-main {
+  color: var(--color-text-main);
+}
+.text-text-light {
+  color: var(--color-text-light);
+}
+.border-border {
+  border-color: var(--color-border);
+}
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.text-primary {
+  color: var(--color-primary);
+}
+.text-primary-text {
+  color: var(--color-primary-text);
+}
+
+/* Animation Classes */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+.fade-slide-enter-from,
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-10px) scale(0.95);
 }
-</style>
 
-<style>
-@keyframes fade-in {
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(1.1);
+  }
+}
+.animate-float-slow {
+  animation: float-slow 15s infinite ease-in-out;
+}
+
+@keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(20px) scale(0.96);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 .animate-fade-in {

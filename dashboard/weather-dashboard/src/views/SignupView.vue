@@ -181,214 +181,323 @@ const signInWithGoogle = async () => {
 
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-500"
+    class="min-h-screen flex items-center justify-center bg-background text-text-main font-sans overflow-hidden relative selection:bg-primary selection:text-primary-text transition-colors duration-300"
   >
-    <!-- Back to Home Button -->
-    <button
-      @click="$router.push({ name: 'landing' })"
-      class="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-2 text-text-light hover:text-text-main transition-colors duration-200 z-10"
-    >
-      <Icon icon="ph:arrow-left-bold" class="w-4 h-4" />
-      <span class="text-sm">Back</span>
-    </button>
+    <div
+      class="fixed inset-0 opacity-[0.035] pointer-events-none z-0 mix-blend-multiply"
+      style="background-image: url('https://grainy-gradients.vercel.app/noise.svg')"
+    ></div>
 
     <div
-      class="max-w-md w-full bg-surface rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
+      class="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none animate-float-slow"
+    ></div>
+    <div
+      class="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none animate-float-slow"
+      style="animation-delay: -5s"
+    ></div>
+
+    <button
+      @click="$router.push({ name: 'landing' })"
+      class="absolute top-6 left-6 z-20 flex items-center gap-3 text-text-light hover:text-text-main transition-colors duration-200 group"
     >
-      <!-- Header -->
-      <div class="text-center">
-        <Icon
-          icon="ph:cloud-sun-bold"
-          class="h-12 w-12 text-primary mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
-        />
-        <h2 class="text-3xl font-bold text-text-main">Create Account</h2>
-        <p class="text-text-light mt-2">Sign up with your email account</p>
-      </div>
-
-      <!-- Social Sign-in -->
-      <button
-        @click="signInWithGoogle"
-        type="button"
-        :disabled="isLoading"
-        aria-label="Sign up with Google"
-        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-border bg-surface hover:bg-hover text-text-main focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
+      <div
+        class="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300 backdrop-blur-sm"
       >
-        <Icon v-if="!isLoading" icon="flat-color-icons:google" class="h-5 w-5" />
-        <Icon v-else icon="eos-icons:loading" class="h-5 w-5 animate-spin text-primary" />
-        <span class="ml-3 text-sm font-medium">
-          {{ isLoading ? 'Please wait...' : 'Sign up with Google' }}
-        </span>
-      </button>
-
-      <!-- Separator -->
-      <div class="relative py-4">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-border"></div>
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-6 bg-separator text-text-light relative z-10">
-            Or sign in with email
-          </span>
-        </div>
+        <Icon icon="ph:arrow-left-bold" class="w-4 h-4" />
       </div>
+      <span
+        class="text-sm font-medium hidden sm:inline opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300"
+        >Back home</span
+      >
+    </button>
 
-      <!-- Email/Password Form -->
-      <form @submit.prevent="signUp" class="space-y-6">
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-sm font-medium text-text-main mb-1">
-            Email Address
-          </label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-text-light" />
-            </div>
-            <input
-              v-model="email"
-              type="email"
-              id="email"
-              aria-label="Email Address"
-              autocomplete="email"
-              class="block w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
-              placeholder="yourname@example.com"
-              required
-            />
+    <div class="w-full max-w-[460px] mx-4 relative z-10 my-8">
+      <div
+        class="bg-surface/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-border/60 p-6 sm:p-10 animate-fade-in-up"
+      >
+        <div class="text-center mb-8">
+          <div
+            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-4 rotate-3 hover:rotate-12 transition-transform duration-500 shadow-inner ring-1 ring-primary/20"
+          >
+            <Icon icon="ph:cloud-sun-bold" class="w-7 h-7" />
           </div>
-          <p class="text-xs text-text-light mt-1">
-            Any email address (Gmail, Yahoo, school email, etc.)
-          </p>
+          <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-text-main">
+            Create Account
+          </h2>
+          <p class="text-text-light text-sm mt-2">Join the climate monitoring network</p>
         </div>
 
-        <!-- Password -->
-        <div>
-          <label for="password" class="block text-sm font-medium text-text-main mb-1">
-            Password
-          </label>
-          <input
-            v-model="password"
-            type="password"
-            id="password"
-            aria-label="Password"
-            autocomplete="new-password"
-            class="block w-full px-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
-            placeholder="••••••••"
-            required
-          />
-          <p class="text-xs text-text-light mt-1">Must be at least 6 characters</p>
-        </div>
-
-        <!-- Confirm Password -->
-        <div>
-          <label for="confirmPassword" class="block text-sm font-medium text-text-main mb-1">
-            Confirm Password
-          </label>
-          <input
-            v-model="confirmPassword"
-            type="password"
-            id="confirmPassword"
-            aria-label="Confirm Password"
-            autocomplete="new-password"
-            class="block w-full px-4 py-3 border border-border rounded-lg bg-background focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-300 text-text-main"
-            placeholder="••••••••"
-            required
-          />
-        </div>
-
-        <!-- Important Warning -->
-        <div
-          class="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800"
+        <button
+          @click="signInWithGoogle"
+          type="button"
+          :disabled="isLoading"
+          class="w-full relative flex items-center justify-center py-3 px-4 rounded-xl border border-border bg-background hover:bg-hover text-text-main font-medium transition-all duration-300 hover:-translate-y-0.5 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group mb-6"
         >
-          <div class="flex gap-2">
-            <Icon
-              icon="ph:warning-bold"
-              class="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5"
-            />
-            <div class="text-orange-800 dark:text-orange-200 text-xs space-y-1">
-              <p class="font-semibold">⚠️ IMPORTANT: Use Your REAL Email Address!</p>
-              <p>• Verification email will be sent to your inbox</p>
-              <p>• If your email doesn't exist, you CANNOT login</p>
-              <p>• Check inbox AND spam folder for verification link</p>
-              <p>• You must verify before you can sign in</p>
-            </div>
+          <Icon v-if="!isLoading" icon="flat-color-icons:google" class="w-5 h-5 absolute left-4" />
+          <Icon
+            v-else
+            icon="eos-icons:loading"
+            class="w-5 h-5 absolute left-4 animate-spin text-primary"
+          />
+          <span class="text-sm">
+            {{ isLoading ? 'Please wait...' : 'Sign up with Google' }}
+          </span>
+        </button>
+
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-border"></div>
+          </div>
+          <div class="relative flex justify-center text-[10px] uppercase tracking-widest font-bold">
+            <span class="px-4 bg-surface text-text-light/70 backdrop-blur-xl">
+              Or register with email
+            </span>
           </div>
         </div>
 
-        <!-- Messages -->
-        <Transition name="fade-slide">
-          <div
-            v-if="errorMessage"
-            class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800/30"
-          >
-            <p class="text-red-700 dark:text-red-300 text-sm text-center">{{ errorMessage }}</p>
-          </div>
-        </Transition>
-        <Transition name="fade-slide">
-          <div
-            v-if="successMessage"
-            class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800/30"
-          >
-            <p class="text-green-700 dark:text-green-300 text-sm text-center">
-              {{ successMessage }}
+        <form @submit.prevent="signUp" class="space-y-4">
+          <div class="space-y-1">
+            <label
+              for="email"
+              class="block text-xs font-bold text-text-light uppercase tracking-wide ml-1"
+            >
+              Email Address
+            </label>
+            <div class="relative group">
+              <input
+                v-model="email"
+                type="email"
+                id="email"
+                class="block w-full px-4 py-3 pl-11 rounded-xl bg-background border border-border text-text-main placeholder-text-light/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="yourname@example.com"
+                required
+              />
+              <Icon
+                icon="ph:envelope-simple"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-primary transition-colors"
+              />
+            </div>
+            <p class="text-[10px] text-text-light ml-1 opacity-70">
+              Supports Gmail, Yahoo, school emails, etc.
             </p>
           </div>
-        </Transition>
 
-        <!-- Sign Up Button -->
-        <button
-          type="submit"
-          :disabled="isLoading"
-          aria-label="Create account"
-          class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-full text-base font-medium border border-border text-text-main bg-surface hover:bg-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Icon
-            v-if="isLoading"
-            icon="eos-icons:loading"
-            class="h-5 w-5 animate-spin text-primary"
-          />
-          {{ isLoading ? 'Creating Account...' : 'Create Account' }}
-        </button>
-      </form>
+          <div class="space-y-1">
+            <label
+              for="password"
+              class="block text-xs font-bold text-text-light uppercase tracking-wide ml-1"
+            >
+              Password
+            </label>
+            <div class="relative group">
+              <input
+                v-model="password"
+                type="password"
+                id="password"
+                class="block w-full px-4 py-3 pl-11 rounded-xl bg-background border border-border text-text-main placeholder-text-light/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="••••••••"
+                required
+              />
+              <Icon
+                icon="ph:lock-key"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-primary transition-colors"
+              />
+            </div>
+            <p class="text-[10px] text-text-light ml-1 opacity-70">Min. 6 characters</p>
+          </div>
 
-      <!-- Link to Sign In -->
-      <div class="text-center">
-        <p class="text-sm text-text-light">
-          Already have an account?
-          <router-link
-            to="/login"
-            class="font-medium text-primary hover:opacity-80 hover:underline transition-colors duration-300"
+          <div class="space-y-1">
+            <label
+              for="confirmPassword"
+              class="block text-xs font-bold text-text-light uppercase tracking-wide ml-1"
+            >
+              Confirm Password
+            </label>
+            <div class="relative group">
+              <input
+                v-model="confirmPassword"
+                type="password"
+                id="confirmPassword"
+                class="block w-full px-4 py-3 pl-11 rounded-xl bg-background border border-border text-text-main placeholder-text-light/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-300"
+                placeholder="••••••••"
+                required
+              />
+              <Icon
+                icon="ph:lock-key-fill"
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light group-focus-within:text-primary transition-colors"
+              />
+            </div>
+          </div>
+
+          <div
+            class="p-4 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 mt-4 backdrop-blur-sm transition-colors duration-300"
           >
-            Sign In
-          </router-link>
-        </p>
+            <div class="flex gap-3">
+              <Icon
+                icon="ph:warning-circle-bold"
+                class="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5"
+              />
+              <div class="text-orange-800 dark:text-orange-200 text-xs space-y-1.5">
+                <p class="font-bold uppercase tracking-wide">Important: Use Real Email</p>
+                <ul class="list-disc pl-3 space-y-0.5">
+                  <li>Verification link will be sent to inbox</li>
+                  <li>Unverified accounts <strong>cannot login</strong></li>
+                  <li>Check spam folder if link is missing</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="w-full flex justify-center items-center gap-2 py-3.5 px-4 rounded-xl bg-primary text-primary-text font-bold text-sm shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+          >
+            <Icon v-if="isLoading" icon="eos-icons:loading" class="w-5 h-5 animate-spin" />
+            <span>{{ isLoading ? 'Creating Account...' : 'Create Account' }}</span>
+          </button>
+        </form>
+
+        <div class="space-y-3 mt-4">
+          <Transition name="fade-slide">
+            <div
+              v-if="errorMessage"
+              class="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm flex gap-3 items-center text-center justify-center animate-fade-in"
+            >
+              <p class="text-red-700 dark:text-red-300 font-medium">{{ errorMessage }}</p>
+            </div>
+          </Transition>
+
+          <Transition name="fade-slide">
+            <div
+              v-if="successMessage"
+              class="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm flex gap-3 items-center text-center justify-center animate-fade-in"
+            >
+              <p class="text-green-700 dark:text-green-300 font-medium">{{ successMessage }}</p>
+            </div>
+          </Transition>
+        </div>
+
+        <div class="mt-8 text-center border-t border-border pt-6">
+          <p class="text-sm text-text-light">
+            Already have an account?
+            <router-link
+              to="/login"
+              class="font-bold text-primary hover:text-primary/80 transition-colors ml-1 inline-flex items-center gap-1 group"
+            >
+              Sign In
+              <Icon
+                icon="ph:arrow-right-bold"
+                class="w-3 h-3 group-hover:translate-x-1 transition-transform"
+              />
+            </router-link>
+          </p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* === CONSISTENT LANDING PAGE THEME VARIABLES === */
+:root {
+  --vt-c-white-mute: #f2f2f2;
+
+  /* LIGHT MODE */
+  --color-background: #f8f9fa;
+  --color-surface: rgba(255, 255, 255, 0.85);
+  --color-primary: #1a73e8;
+  --color-text-main: #202124;
+  --color-text-light: #5f6368;
+  --color-hover: #f1f3f4;
+  --color-border: #e5e7eb;
+  --color-primary-text: #ffffff;
+}
+
+/* DARK MODE SUPPORT */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #000000;
+    --color-surface: rgba(20, 20, 20, 0.8);
+    --color-primary: #8ab4f8;
+    --color-text-main: #e8eaed;
+    --color-text-light: #9aa0a6;
+    --color-hover: #2a2a2a;
+    --color-border: #374151;
+    --color-primary-text: #1a1a1a;
+  }
+}
+
+/* Local Utility Mappings */
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.bg-background {
+  background-color: var(--color-background);
+}
+.text-text-main {
+  color: var(--color-text-main);
+}
+.text-text-light {
+  color: var(--color-text-light);
+}
+.border-border {
+  border-color: var(--color-border);
+}
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.text-primary {
+  color: var(--color-primary);
+}
+.text-primary-text {
+  color: var(--color-primary-text);
+}
+
+/* Animation Classes */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateY(-8px);
-}
+.fade-slide-enter-from,
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-10px) scale(0.95);
 }
-</style>
 
-<style>
-@keyframes fade-in {
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(1.1);
+  }
+}
+.animate-float-slow {
+  animation: float-slow 15s infinite ease-in-out;
+}
+
+@keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(20px) scale(0.96);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 .animate-fade-in {

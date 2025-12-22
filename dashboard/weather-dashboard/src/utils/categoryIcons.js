@@ -1,7 +1,11 @@
 export function getCategoryIcon(category) {
   const categoryLower = category.toLowerCase()
 
-  if (categoryLower.includes('typhoon') || categoryLower.includes('storm') || categoryLower.includes('flood')) {
+  if (
+    categoryLower.includes('typhoon') ||
+    categoryLower.includes('storm') ||
+    categoryLower.includes('flood')
+  ) {
     return {
       bg: 'bg-blue-100 dark:bg-blue-900/40',
       text: 'text-blue-600 dark:text-blue-300',
@@ -9,7 +13,11 @@ export function getCategoryIcon(category) {
     }
   }
 
-  if (categoryLower.includes('crop') || categoryLower.includes('farming') || categoryLower.includes('irrigation')) {
+  if (
+    categoryLower.includes('crop') ||
+    categoryLower.includes('farming') ||
+    categoryLower.includes('irrigation')
+  ) {
     return {
       bg: 'bg-green-100 dark:bg-green-900/40',
       text: 'text-green-600 dark:text-green-300',

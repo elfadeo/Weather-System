@@ -37,7 +37,9 @@ export async function callGeminiAPI(prompt) {
       const errorMessage = errorBody.error?.message || response.statusText
       // Handle "Limit: 0" specifically to be helpful
       if (errorMessage.includes('limit: 0')) {
-        throw new Error('Quota exhausted or Model not available in free tier. Try checking your billing in Google AI Studio.')
+        throw new Error(
+          'Quota exhausted or Model not available in free tier. Try checking your billing in Google AI Studio.',
+        )
       }
       throw new Error(`Gemini API Error (${response.status}): ${errorMessage}`)
     }
@@ -47,7 +49,7 @@ export async function callGeminiAPI(prompt) {
 
     // Check for safety blocks
     if (candidate?.finishReason === 'SAFETY') {
-       throw new Error('The model refused to answer due to safety concerns.')
+      throw new Error('The model refused to answer due to safety concerns.')
     }
 
     if (!candidate?.content?.parts?.[0]?.text) {
@@ -55,7 +57,6 @@ export async function callGeminiAPI(prompt) {
     }
 
     return candidate.content.parts[0].text
-
   } catch (error) {
     console.error('Gemini Request Failed:', error)
     throw error

@@ -40,19 +40,15 @@ const props = defineProps({
 
 const { latestData, isLoading: isDataLoading } = useWeatherData()
 const { fetchHistoricalData, historicalSummary } = useHistoricalData()
-const {
-  generateRecommendations,
-  recommendations,
-  isGenerating,
-  generationError
-} = useGeminiRecommendations()
+const { generateRecommendations, recommendations, isGenerating, generationError } =
+  useGeminiRecommendations()
 
-const rainfallRate = computed(() =>
-  latestData.value?.rainRateEstimated_mm_hr_bucket?.toFixed(2) || 'N/A'
+const rainfallRate = computed(
+  () => latestData.value?.rainRateEstimated_mm_hr_bucket?.toFixed(2) || 'N/A',
 )
 
-const totalRainfall = computed(() =>
-  latestData.value?.rainfall_total_estimated_mm_bucket?.toFixed(2) || 'N/A'
+const totalRainfall = computed(
+  () => latestData.value?.rainfall_total_estimated_mm_bucket?.toFixed(2) || 'N/A',
 )
 
 const handleGenerate = async () => {

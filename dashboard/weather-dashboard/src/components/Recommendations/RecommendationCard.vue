@@ -1,5 +1,7 @@
 <template>
-  <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow">
+  <div
+    class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow"
+  >
     <div class="flex items-center mb-3">
       <div
         class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"

@@ -3,9 +3,7 @@
     <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
       <div class="flex-1">
         <h2 class="text-xl font-bold text-text-main">Analysis Input</h2>
-        <p class="text-text-light mt-1">
-          Using the latest sensor readings to generate insights:
-        </p>
+        <p class="text-text-light mt-1">Using the latest sensor readings to generate insights:</p>
 
         <CurrentDataDisplay
           :is-loading="isDataLoading"
