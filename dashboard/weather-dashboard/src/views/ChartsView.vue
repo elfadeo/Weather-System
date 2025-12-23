@@ -4,7 +4,7 @@
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text-main)]">
-            Charts & Trends
+            Weather Charts
           </h1>
           <p class="text-sm text-[var(--color-text-light)] mt-1">
             Historical analysis of weather parameters

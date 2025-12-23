@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex bg-[var(--color-background)] font-sans text-[var(--color-text-main)] overflow-x-hidden transition-colors duration-300 selection:bg-[var(--color-primary)] selection:text-white"
+    class="min-h-screen flex bg-[var(--color-background)] font-sans text-[var(--color-text-main)] overflow-x-hidden transition-colors duration-500 selection:bg-[var(--color-primary)] selection:text-white"
   >
     <Sidebar
       ref="sidebarRef"
@@ -9,44 +9,42 @@
     />
 
     <div
-      class="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+      class="flex-1 flex flex-col min-w-0 min-h-screen transition-[margin] duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
       :class="isSidebarExpanded ? 'lg:ml-[260px]' : 'lg:ml-[80px]'"
     >
       <header
-        class="sticky top-0 z-30 w-full bg-[var(--color-surface)]/80 backdrop-blur-md border-b border-[var(--color-border)] transition-all duration-300 safe-top"
+        class="sticky top-0 z-30 w-full bg-[var(--color-surface)]/80 backdrop-blur-xl border-b border-[var(--color-border)]/40 transition-all duration-300 safe-top"
       >
-        <div class="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
+
+          <div class="flex items-center gap-4 flex-1 min-w-0">
             <button
               @click="toggleMobileSidebar"
-              class="lg:hidden p-2 -ml-2 text-[var(--color-text-light)] hover:text-[var(--color-primary)] hover:bg-[var(--color-hover)] rounded-lg active:scale-95 transition-all focus:outline-none"
+              class="lg:hidden p-2 -ml-2 text-[var(--color-text-light)] hover:text-[var(--color-primary)] hover:bg-[var(--color-hover)] rounded-full active:scale-95 transition-all focus:outline-none"
               :aria-label="isSidebarMobileOpen ? 'Close menu' : 'Open menu'"
             >
               <Icon :icon="sidebarOpenIcon" class="h-6 w-6" />
             </button>
 
-            <div class="flex items-center gap-2 min-w-0 flex-1 lg:hidden">
-              <div class="flex items-center justify-center text-[var(--color-primary)]">
+            <div class="flex items-center gap-3 lg:hidden">
+              <span class="text-[var(--color-primary)]">
                 <Icon icon="ph:cloud-sun-duotone" class="h-6 w-6" />
-              </div>
-              <h1 class="text-base font-bold tracking-tight truncate text-[var(--color-text-main)]">
+              </span>
+              <h1 class="text-sm font-semibold tracking-wide uppercase text-[var(--color-text-main)] truncate">
                 Climate Monitoring
               </h1>
             </div>
 
-            <div class="flex items-center justify-center text-[var(--color-primary)]">
-              <Icon icon="ph:cloud-sun-duotone" class="h-6 w-6" />
-            </div>
-            <h1 class="text-base font-bold tracking-tight truncate text-[var(--color-text-main)]">
-              Climate Monitoring System
-            </h1>
+            <h2 class="hidden lg:block text-lg font-medium tracking-tight text-[var(--color-text-main)]">
+              Dashboard Overview
+            </h2>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-3 shrink-0">
             <button
               @click="toggleTheme"
-              class="group p-2.5 rounded-full text-[var(--color-text-light)] hover:bg-[var(--color-hover)] hover:text-[var(--color-primary)] active:scale-95 transition-all focus:outline-none"
-              :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+              class="group relative p-2.5 rounded-full text-[var(--color-text-light)] hover:bg-[var(--color-hover)] hover:text-[var(--color-text-main)] transition-all focus:outline-none"
+              :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
             >
               <Icon
                 :icon="isDarkMode ? 'ph:sun-bold' : 'ph:moon-bold'"
@@ -57,48 +55,51 @@
         </div>
       </header>
 
-      <main class="flex-grow p-4 sm:p-6 lg:p-8 overflow-x-hidden safe-bottom" role="main">
-        <router-view v-slot="{ Component }">
-          <transition name="fade-slide" mode="out-in">
-            <component :is="Component" :key="$route.path" />
-          </transition>
-        </router-view>
+      <main class="flex-grow p-4 sm:p-8 lg:p-10 safe-bottom overflow-x-hidden">
+        <div class="max-w-7xl mx-auto w-full h-full">
+          <router-view v-slot="{ Component }">
+            <transition name="fade-slide" mode="out-in">
+              <component :is="Component" :key="$route.path" />
+            </transition>
+          </router-view>
+        </div>
       </main>
 
-      <AppFooter class="mt-auto shrink-0 z-10" />
+      <AppFooter class="mt-auto shrink-0 z-10 opacity-60 hover:opacity-100 transition-opacity duration-300" />
     </div>
 
     <transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 translate-y-4 scale-95"
-      enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 translate-y-0 scale-100"
-      leave-to-class="opacity-0 translate-y-4 scale-95"
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-8 opacity-0 scale-95"
+      enter-to-class="translate-y-0 opacity-100 scale-100"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-95"
     >
       <div
         v-if="errorMessage"
-        class="fixed bottom-6 right-6 z-[100] max-w-sm w-full safe-bottom-toast"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-8 z-[100] safe-bottom-toast"
         role="alert"
       >
         <div
-          class="bg-[var(--color-surface)] border-l-4 border-[var(--color-red-500)] shadow-lg rounded-r-lg p-4 flex items-start gap-3 ring-1 ring-black/5 dark:ring-white/10"
+          class="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] shadow-xl rounded-full ring-1 ring-black/5 dark:ring-white/10"
         >
-          <Icon
-            icon="ph:warning-circle-duotone"
-            class="w-5 h-5 text-[var(--color-red-500)] shrink-0 mt-0.5"
-          />
-          <div class="flex-1 min-w-0">
-            <h3 class="text-sm font-semibold text-[var(--color-text-main)]">Error</h3>
-            <p class="text-sm text-[var(--color-text-light)] mt-1 break-words leading-relaxed">
-              {{ errorMessage }}
-            </p>
+          <div class="flex items-center justify-center bg-[var(--color-red-500)]/10 rounded-full p-1.5">
+            <Icon
+              icon="ph:warning-circle-bold"
+              class="w-4 h-4 text-[var(--color-red-500)]"
+            />
           </div>
+
+          <span class="text-sm font-medium text-[var(--color-text-main)] pr-2">
+            {{ errorMessage }}
+          </span>
+
           <button
             @click="clearError"
-            class="p-1 text-[var(--color-text-light)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-hover)] rounded-md transition-colors shrink-0"
+            class="p-1 -mr-1 text-[var(--color-text-light)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-hover)] rounded-full transition-colors"
           >
-            <Icon icon="ph:x-bold" class="w-4 h-4" />
+            <Icon icon="ph:x-bold" class="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -120,7 +121,6 @@ const { isDarkMode, toggleTheme } = useTheme()
 const sidebarRef = ref(null)
 const isSidebarExpanded = ref(true)
 
-// Track mobile state via the ref exposed in Sidebar.vue
 const isSidebarMobileOpen = computed(() => {
   return sidebarRef.value?.isMobileOpen ?? false
 })
@@ -140,11 +140,11 @@ const errorMessage = ref('')
 let errorTimeout = null
 
 const handleSignOutError = (error) => {
-  errorMessage.value = error?.message || 'Failed to sign out. Please try again.'
+  errorMessage.value = error?.message || 'Unable to sign out.'
   clearTimeout(errorTimeout)
   errorTimeout = setTimeout(() => {
     clearError()
-  }, 5000)
+  }, 4000)
 }
 
 const clearError = () => {
@@ -174,25 +174,23 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Page Transition */
+/* Smooth Page Transition */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(15px);
 }
 
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-5px);
 }
 
-/* Safe Area Support */
+/* Safe Area & Layout Utilities */
 .safe-top {
   padding-top: env(safe-area-inset-top, 0);
 }
@@ -202,15 +200,13 @@ onUnmounted(() => {
 }
 
 .safe-bottom-toast {
-  bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 0) + 1.5rem));
+  bottom: max(2rem, calc(env(safe-area-inset-bottom, 0) + 2rem));
 }
 
-/* Custom Scrollbar
-   Uses CSS variables to adapt to the theme perfectly
-*/
+/* Minimalist Scrollbar: Invisible until hover */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -218,11 +214,14 @@ onUnmounted(() => {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
+  background-color: transparent; /* Hidden by default */
   border-radius: 99px;
-  border: 2px solid transparent; /* Creates padding effect */
-  background-clip: content-box;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s;
+}
+
+/* Show scrollbar when hovering over the scrollable area */
+:hover::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -232,6 +231,11 @@ onUnmounted(() => {
 /* Firefox */
 * {
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s;
+}
+
+*:hover {
   scrollbar-color: var(--color-border) transparent;
 }
 </style>
