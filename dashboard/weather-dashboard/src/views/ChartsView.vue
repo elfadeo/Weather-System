@@ -1,164 +1,260 @@
 <template>
   <div class="p-4 sm:p-6 lg:p-8 font-sans">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-4xl font-bold text-text-main tracking-tight">Charts & Trends</h1>
-        <p class="text-text-light mt-2">View historical graphs of weather parameters</p>
-      </div>
+    <div class="max-w-7xl mx-auto space-y-8">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text-main)]">
+            Charts & Trends
+          </h1>
+          <p class="text-sm text-[var(--color-text-light)] mt-1">
+            Historical analysis of weather parameters
+          </p>
+        </div>
 
-      <!-- Control Panel -->
-      <div
-        class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 mb-6 border border-border"
-      >
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h3 class="text-lg font-semibold text-text-main">Data Time Range</h3>
-            <p class="text-sm text-text-light mt-1">Select the time period to visualize</p>
-          </div>
+        <div class="relative min-w-[200px]">
+          <label class="sr-only">Select Time Range</label>
           <select
             v-model="selectedTimeRange"
             :disabled="isLoading"
-            class="bg-surface border border-border rounded-lg py-2.5 px-4 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+            class="appearance-none w-full rounded-lg border-0 bg-[var(--color-surface)] py-2.5 pl-4 pr-10 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] text-sm font-medium shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="last7">Last 7 Readings</option>
             <option value="weekly">Weekly Average</option>
             <option value="monthly">Monthly Average</option>
             <option value="yearly">Yearly Average</option>
           </select>
+          <div
+            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[var(--color-text-light)]"
+          >
+            <Icon icon="ph:caret-down-bold" class="h-4 w-4" />
+          </div>
         </div>
       </div>
 
-      <!-- Charts Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Temperature Chart -->
-        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-2">
-              <div class="w-3 h-3 rounded-full bg-red-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">Temperature</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <template v-if="isLoading">
+          <div
+            v-for="i in 3"
+            :key="i"
+            class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-sm animate-pulse h-32 relative overflow-hidden"
+          >
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-border)]/50"></div>
+            <div class="pl-4 space-y-4">
+              <div class="h-3 w-20 bg-[var(--color-border)] rounded"></div>
+              <div class="h-8 w-24 bg-[var(--color-border)] rounded"></div>
+              <div class="h-3 w-32 bg-[var(--color-border)] rounded"></div>
             </div>
-            <span class="text-xs text-text-light">°Celsius</span>
           </div>
-          <div class="h-[300px]">
+        </template>
+
+        <template v-else-if="chartData.labels.length > 0">
+          <div
+            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+          >
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-red-500)]"></div>
+            <div class="pl-4">
+              <div class="flex items-center gap-2 mb-2">
+                <Icon
+                  icon="ph:thermometer-simple-duotone"
+                  class="h-4 w-4 text-[var(--color-red-500)]"
+                />
+                <span
+                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+                  >Temperature</span
+                >
+              </div>
+              <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
+                {{ summaryStats.temp.avg }}°C
+              </p>
+              <p class="text-xs text-[var(--color-text-light)]">
+                Range:
+                <span class="font-medium text-[var(--color-text-main)]"
+                  >{{ summaryStats.temp.min }}°</span
+                >
+                <span class="opacity-50 mx-1">/</span>
+                <span class="font-medium text-[var(--color-text-main)]"
+                  >{{ summaryStats.temp.max }}°</span
+                >
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+          >
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]"></div>
+            <div class="pl-4">
+              <div class="flex items-center gap-2 mb-2">
+                <Icon icon="ph:drop-duotone" class="h-4 w-4 text-[var(--color-primary)]" />
+                <span
+                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+                  >Humidity</span
+                >
+              </div>
+              <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
+                {{ summaryStats.humidity.avg }}%
+              </p>
+              <p class="text-xs text-[var(--color-text-light)]">
+                Range:
+                <span class="font-medium text-[var(--color-text-main)]"
+                  >{{ summaryStats.humidity.min }}%</span
+                >
+                <span class="opacity-50 mx-1">/</span>
+                <span class="font-medium text-[var(--color-text-main)]"
+                  >{{ summaryStats.humidity.max }}%</span
+                >
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+          >
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-purple-500)]"></div>
+            <div class="pl-4">
+              <div class="flex items-center gap-2 mb-2">
+                <Icon icon="ph:cloud-rain-duotone" class="h-4 w-4 text-[var(--color-purple-500)]" />
+                <span
+                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+                  >Total Rainfall</span
+                >
+              </div>
+              <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
+                {{ summaryStats.rainfall
+                }}<span class="text-lg font-normal text-[var(--color-text-light)] ml-1">mm</span>
+              </p>
+              <p class="text-xs text-[var(--color-text-light)]">Accumulated over period</p>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <span class="flex h-3 w-3 rounded-full bg-[var(--color-red-500)]"></span>
+              <div>
+                <h3
+                  class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+                >
+                  Temperature
+                </h3>
+              </div>
+            </div>
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+              >°Celsius</span
+            >
+          </div>
+          <div class="h-[280px] w-full">
             <SingleMetricChart
               v-if="!isLoading && temperatureChartData.data.length > 0"
               :chart-data="temperatureChartData"
-              :color="'#ef4444'"
-              :label="'Temperature (°C)'"
-              :suffix="'°C'"
+              color="#dc2626"
+              label="Temperature (°C)"
+              suffix="°C"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No temperature data available" />
+            <EmptyState v-else message="No temperature data" />
           </div>
         </div>
 
-        <!-- Humidity Chart -->
-        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-2">
-              <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">Humidity</h3>
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <span class="flex h-3 w-3 rounded-full bg-[var(--color-primary)]"></span>
+              <div>
+                <h3
+                  class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+                >
+                  Humidity
+                </h3>
+              </div>
             </div>
-            <span class="text-xs text-text-light">Percentage</span>
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+              >% Percent</span
+            >
           </div>
-          <div class="h-[300px]">
+          <div class="h-[280px] w-full">
             <SingleMetricChart
               v-if="!isLoading && humidityChartData.data.length > 0"
               :chart-data="humidityChartData"
-              :color="'#3b82f6'"
-              :label="'Humidity (%)'"
-              :suffix="'%'"
+              color="#1a73e8"
+              label="Humidity (%)"
+              suffix="%"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No humidity data available" />
+            <EmptyState v-else message="No humidity data" />
           </div>
         </div>
 
-        <!-- Rainfall Rate Chart -->
-        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-2">
-              <div class="w-3 h-3 rounded-full bg-indigo-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">Rainfall Rate</h3>
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <span class="flex h-3 w-3 rounded-full bg-[var(--color-purple-500)]"></span>
+              <div>
+                <h3
+                  class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+                >
+                  Rain Rate
+                </h3>
+              </div>
             </div>
-            <span class="text-xs text-text-light">mm/hr</span>
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+              >mm/hr</span
+            >
           </div>
-          <div class="h-[300px]">
+          <div class="h-[280px] w-full">
             <SingleMetricChart
               v-if="!isLoading && rainfallChartData.data.length > 0"
               :chart-data="rainfallChartData"
-              :color="'#6366f1'"
-              :label="'Rainfall Rate (mm/hr)'"
-              :suffix="' mm/hr'"
+              color="#8b5cf6"
+              label="Rain Rate"
+              suffix=" mm/hr"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No rainfall rate data available" />
+            <EmptyState v-else message="No rain data" />
           </div>
         </div>
 
-        <!-- Total Rainfall Chart -->
-        <div class="bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-2">
-              <div class="w-3 h-3 rounded-full bg-teal-500"></div>
-              <h3 class="text-lg font-semibold text-text-main">Total Rainfall</h3>
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <span class="flex h-3 w-3 rounded-full bg-[var(--color-teal-500)]"></span>
+              <div>
+                <h3
+                  class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+                >
+                  Total Rainfall
+                </h3>
+              </div>
             </div>
-            <span class="text-xs text-text-light">mm</span>
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+              >mm Total</span
+            >
           </div>
-          <div class="h-[300px]">
+          <div class="h-[280px] w-full">
             <SingleMetricChart
               v-if="!isLoading && totalRainfallChartData.data.length > 0"
               :chart-data="totalRainfallChartData"
-              :color="'#14b8a6'"
-              :label="'Total Rainfall (mm)'"
-              :suffix="' mm'"
+              color="#14b8a6"
+              label="Accumulated Rain"
+              suffix=" mm"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No total rainfall data available" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Data Summary -->
-      <div
-        v-if="!isLoading && chartData.labels.length > 0"
-        class="mt-6 bg-surface/70 backdrop-blur-xl rounded-2xl shadow-sm p-6 border border-border"
-      >
-        <h3 class="text-lg font-semibold text-text-main mb-4">Period Summary</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div
-            class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30"
-          >
-            <p class="text-xs text-red-800 dark:text-red-400 font-medium mb-1">Temperature</p>
-            <p class="text-2xl font-bold text-red-900 dark:text-red-300">
-              {{ averageTemp.toFixed(1) }}°C
-            </p>
-            <p class="text-xs text-red-800 dark:text-red-400 mt-1">
-              {{ minTemp.toFixed(1) }}°C - {{ maxTemp.toFixed(1) }}°C
-            </p>
-          </div>
-          <div
-            class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/30"
-          >
-            <p class="text-xs text-blue-800 dark:text-blue-400 font-medium mb-1">Humidity</p>
-            <p class="text-2xl font-bold text-blue-900 dark:text-blue-300">
-              {{ averageHumidity.toFixed(1) }}%
-            </p>
-            <p class="text-xs text-blue-800 dark:text-blue-400 mt-1">
-              {{ minHumidity.toFixed(1) }}% - {{ maxHumidity.toFixed(1) }}%
-            </p>
-          </div>
-          <div
-            class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800/30"
-          >
-            <p class="text-xs text-indigo-800 dark:text-indigo-400 font-medium mb-1">
-              Total Rainfall
-            </p>
-            <p class="text-2xl font-bold text-indigo-900 dark:text-indigo-300">
-              {{ totalRainfall.toFixed(1) }}mm
-            </p>
-            <p class="text-xs text-indigo-800 dark:text-indigo-400 mt-1">over period</p>
+            <EmptyState v-else message="No rain data" />
           </div>
         </div>
       </div>
@@ -167,7 +263,8 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted, watch, computed } from 'vue'
+import { ref, watch, computed, onBeforeUnmount } from 'vue'
+import { Icon } from '@iconify/vue'
 import { rtdb } from '@/firebase.js'
 import {
   ref as dbRef,
@@ -179,25 +276,46 @@ import {
   startAt,
 } from 'firebase/database'
 import SingleMetricChart from '@/components/Charts/SingleMetricChart.vue'
-import LoadingState from '@/components/Charts/LoadingState.vue'
 
-// Simple empty state component (inline)
-const EmptyState = {
-  props: ['message'],
+// -- Internal Components (Inlined for simplicity, but preferably separate files) --
+
+const LoadingState = {
   template: `
-    <div class="flex items-center justify-center h-full">
-      <div class="text-center">
-        <p class="text-sm text-text-light">{{ message }}</p>
+    <div class="flex h-full w-full items-center justify-center">
+      <div class="flex flex-col items-center">
+        <span class="animate-spin text-[var(--color-primary)] mb-2">
+          <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </span>
+        <span class="text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wide">Loading Data...</span>
       </div>
     </div>
   `,
 }
 
-// --- STATE ---
+const EmptyState = {
+  props: ['message'],
+  components: { Icon },
+  template: `
+    <div class="flex h-full w-full items-center justify-center">
+      <div class="flex flex-col items-center text-center">
+        <div class="mb-3 rounded-full bg-[var(--color-background)] p-3">
+           <svg class="h-6 w-6 text-[var(--color-text-light)] opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+           </svg>
+        </div>
+        <p class="text-sm font-medium text-[var(--color-text-light)]">{{ message }}</p>
+      </div>
+    </div>
+  `,
+}
+
+// --- STATE & LOGIC (Unchanged) ---
 const isLoading = ref(true)
 const selectedTimeRange = ref('last7')
-let unsubscribeRef = null
-let unsubscribeCallback = null
+const firebaseListener = ref(null)
 
 const chartData = ref({
   labels: [],
@@ -207,7 +325,6 @@ const chartData = ref({
   rainfallTotals: [],
 })
 
-// Separate chart data for each metric
 const temperatureChartData = computed(() => ({
   labels: chartData.value.labels,
   data: chartData.value.temperature,
@@ -228,41 +345,27 @@ const totalRainfallChartData = computed(() => ({
   data: chartData.value.rainfallTotals,
 }))
 
-// Summary statistics with safe fallbacks
-const averageTemp = computed(() => {
-  const data = chartData.value.temperature.filter((v) => v > 0)
-  return data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0
-})
-
-const minTemp = computed(() => {
-  const data = chartData.value.temperature.filter((v) => v > 0)
-  return data.length ? Math.min(...data) : 0
-})
-
-const maxTemp = computed(() => {
-  const data = chartData.value.temperature.filter((v) => v > 0)
-  return data.length ? Math.max(...data) : 0
-})
-
-const averageHumidity = computed(() => {
-  const data = chartData.value.humidity.filter((v) => v > 0)
-  return data.length ? data.reduce((a, b) => a + b, 0) / data.length : 0
-})
-
-const minHumidity = computed(() => {
-  const data = chartData.value.humidity.filter((v) => v > 0)
-  return data.length ? Math.min(...data) : 0
-})
-
-const maxHumidity = computed(() => {
-  const data = chartData.value.humidity.filter((v) => v > 0)
-  return data.length ? Math.max(...data) : 0
-})
-
-const totalRainfall = computed(() => {
+const summaryStats = computed(() => {
+  const temps = chartData.value.temperature.filter((v) => v > 0)
+  const hums = chartData.value.humidity.filter((v) => v > 0)
   const totals = chartData.value.rainfallTotals.filter((v) => v >= 0)
-  if (totals.length < 2) return 0
-  return Math.max(0, totals[totals.length - 1] - totals[0])
+
+  const calcStats = (arr) => {
+    if (!arr.length) return { avg: '0.0', min: '0.0', max: '0.0' }
+    const avg = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)
+    const min = Math.min(...arr).toFixed(1)
+    const max = Math.max(...arr).toFixed(1)
+    return { avg, min, max }
+  }
+
+  const rainfall =
+    totals.length >= 2 ? Math.max(0, totals[totals.length - 1] - totals[0]).toFixed(1) : '0.0'
+
+  return {
+    temp: calcStats(temps),
+    humidity: calcStats(hums),
+    rainfall,
+  }
 })
 
 // --- HELPERS ---
@@ -301,7 +404,6 @@ const formatTimestamp = (date, range) => {
   }
 }
 
-// Get ISO week number
 function getWeekNumber(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
   const dayNum = d.getUTCDay() || 7
@@ -344,7 +446,6 @@ const processRecords = (records, range) => {
       }
     }
 
-    // Only add valid numbers
     const temp = Number(record.temperature)
     const hum = Number(record.humidity)
     const rain = Number(record.rainRateEstimated_mm_hr_bucket)
@@ -368,29 +469,22 @@ const processRecords = (records, range) => {
 
   sortedGroups.forEach((g) => {
     labels.push(formatTimestamp(g.timestamp, range))
-
-    // Calculate averages safely
     temperature.push(g.temps.length ? g.temps.reduce((a, b) => a + b, 0) / g.temps.length : 0)
     humidity.push(g.hums.length ? g.hums.reduce((a, b) => a + b, 0) / g.hums.length : 0)
     rainfall.push(g.rains.length ? g.rains.reduce((a, b) => a + b, 0) / g.rains.length : 0)
-
-    // For rainfall total, use the maximum value in the group (cumulative)
-    if (g.rainTotals.length) {
-      rainfallTotals.push(Math.max(...g.rainTotals))
-    } else {
-      rainfallTotals.push(0)
-    }
+    rainfallTotals.push(g.rainTotals.length ? Math.max(...g.rainTotals) : 0)
   })
 
   return { labels, temperature, humidity, rainfall, rainfallTotals }
 }
 
-// --- FIREBASE LISTENER ---
 const listenForHistoricalData = () => {
   isLoading.value = true
 
-  if (unsubscribeRef && unsubscribeCallback) {
-    off(unsubscribeRef, 'value', unsubscribeCallback)
+  if (firebaseListener.value) {
+    const { ref: oldRef, callback } = firebaseListener.value
+    off(oldRef, 'value', callback)
+    firebaseListener.value = null
   }
 
   const historyRef = dbRef(rtdb, 'sensor_logs')
@@ -404,8 +498,7 @@ const listenForHistoricalData = () => {
     historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime))
   }
 
-  unsubscribeRef = historyRef
-  unsubscribeCallback = (snap) => {
+  const callback = (snap) => {
     if (!snap.exists()) {
       chartData.value = {
         labels: [],
@@ -421,17 +514,20 @@ const listenForHistoricalData = () => {
     isLoading.value = false
   }
 
-  onValue(historyQuery, unsubscribeCallback, (error) => {
+  firebaseListener.value = { ref: historyRef, callback }
+
+  onValue(historyQuery, callback, (error) => {
     console.error('Firebase onValue error:', error)
     isLoading.value = false
   })
 }
 
-// --- LIFECYCLE ---
 watch(selectedTimeRange, listenForHistoricalData, { immediate: true })
-onUnmounted(() => {
-  if (unsubscribeRef && unsubscribeCallback) {
-    off(unsubscribeRef, 'value', unsubscribeCallback)
+
+onBeforeUnmount(() => {
+  if (firebaseListener.value) {
+    const { ref: oldRef, callback } = firebaseListener.value
+    off(oldRef, 'value', callback)
   }
 })
 </script>

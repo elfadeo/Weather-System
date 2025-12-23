@@ -11,62 +11,51 @@
       v-if="isMobileOpen"
       class="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
       @click="closeMobile"
+      @touchend.prevent="closeMobile"
       @keydown.esc="closeMobile"
-      @touchmove.prevent
-      tabindex="-1"
+      role="presentation"
       aria-hidden="true"
     ></div>
   </transition>
 
   <aside
-    class="fixed top-0 left-0 z-50 h-[100dvh] bg-surface border-r border-border flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform"
+    ref="sidebarRef"
+    class="fixed top-0 left-0 z-50 h-[100dvh] bg-surface/80 backdrop-blur-xl border-r border-border/50 flex flex-col transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] will-change-transform safe-top"
     :class="sidebarClasses"
     @click.stop
+    @keydown.tab="handleTabKey"
     role="navigation"
     aria-label="Main navigation"
   >
-    <!-- Mobile Close Button Header -->
-    <div
-      class="h-14 xs:h-16 lg:hidden flex items-center justify-end px-3 xs:px-4 shrink-0 safe-top"
-    >
+    <nav class="flex-1 px-3 py-4 lg:py-8 space-y-1 overflow-y-auto no-scrollbar overscroll-contain">
       <button
-        @click="closeMobile"
-        class="p-1.5 xs:p-2 -mr-1 xs:-mr-2 text-text-light hover:text-text-main transition-colors active:scale-90 touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg"
-        aria-label="Close navigation menu"
-      >
-        <Icon icon="ph:x-bold" class="w-5 h-5 xs:w-6 xs:h-6" />
-      </button>
-    </div>
-
-    <!-- Navigation -->
-    <nav
-      class="flex-1 px-2 xs:px-3 py-3 xs:py-4 lg:py-6 space-y-0.5 xs:space-y-1 overflow-y-auto no-scrollbar overscroll-contain lg:pt-8"
-    >
-      <!-- Collapse/Expand Button -->
-      <button
+        ref="firstFocusableRef"
         @click="toggleExpand"
-        class="hidden lg:flex items-center w-full p-2.5 xs:p-3 mb-3 xs:mb-4 rounded-lg xs:rounded-xl text-text-light hover:bg-hover hover:text-text-main transition-all duration-200 group touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
-        :class="{ 'justify-center': !isExpanded }"
+        class="flex items-center gap-3 w-full px-3 py-2.5 mb-6 rounded-xl text-text-light hover:bg-hover/50 hover:text-text-main transition-all duration-200 group touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
+        :class="{ 'justify-center px-0': !isExpanded }"
         :aria-label="isExpanded ? 'Collapse sidebar' : 'Expand sidebar'"
         :title="isExpanded ? 'Collapse sidebar' : 'Expand sidebar'"
       >
-        <Icon
-          :icon="isExpanded ? 'ph:caret-left-bold' : 'ph:list-bold'"
-          class="w-4 h-4 xs:w-5 xs:h-5 transition-transform duration-300 group-hover:scale-110 shrink-0"
-        />
+        <div
+          class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors"
+        >
+          <Icon
+            :icon="isExpanded ? 'ph:caret-left-bold' : 'ph:caret-right-bold'"
+            class="w-4 h-4 text-primary transition-transform duration-300 group-hover:scale-110"
+          />
+        </div>
         <span
-          class="ml-2.5 xs:ml-3 text-xs xs:text-sm whitespace-nowrap overflow-hidden transition-all duration-300 origin-left"
+          class="text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 origin-left"
           :class="[
             isExpanded
               ? 'opacity-100 scale-100 w-auto translate-x-0'
               : 'opacity-0 scale-95 w-0 -translate-x-4',
           ]"
         >
-          Menu
+          Collapse
         </span>
       </button>
 
-      <!-- Navigation Links -->
       <router-link
         v-for="item in navItems"
         :key="item.routeName"
@@ -88,32 +77,33 @@
               closeMobileOnNavigate()
             }
           "
-          class="relative flex items-center p-2.5 xs:p-3 rounded-lg xs:rounded-xl transition-all duration-300 group select-none overflow-hidden touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
+          class="relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group select-none touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
           :class="[
-            !isExpanded ? 'justify-center' : '',
+            !isExpanded ? 'justify-center px-0' : '',
             isActive
-              ? 'bg-primary/10 text-primary font-semibold'
-              : 'text-text-light hover:bg-hover hover:text-text-main font-medium',
+              ? 'bg-primary/10 text-primary font-medium shadow-sm shadow-primary/5'
+              : 'text-text-light hover:bg-hover/50 hover:text-text-main font-normal',
           ]"
           :aria-label="item.name"
           :aria-current="isActive ? 'page' : undefined"
         >
-          <!-- Active Indicator -->
           <div
-            v-if="isActive && isExpanded"
-            class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 xs:h-6 bg-primary rounded-r-full"
-          ></div>
+            class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200"
+            :class="isActive ? 'bg-primary/10' : 'bg-transparent group-hover:bg-hover'"
+          >
+            <Icon
+              :icon="item.icon"
+              class="w-5 h-5 transition-all duration-200"
+              :class="
+                isActive
+                  ? 'text-primary scale-110'
+                  : 'text-text-light group-hover:text-text-main group-hover:scale-110'
+              "
+            />
+          </div>
 
-          <!-- Icon -->
-          <Icon
-            :icon="item.icon"
-            class="w-4 h-4 xs:w-5 xs:h-5 shrink-0 transition-colors duration-300"
-            :class="{ 'text-primary': isActive }"
-          />
-
-          <!-- Label -->
           <span
-            class="ml-2.5 xs:ml-3 text-xs xs:text-sm whitespace-nowrap overflow-hidden transition-all duration-300 origin-left"
+            class="text-sm whitespace-nowrap overflow-hidden transition-all duration-300 origin-left"
             :class="[
               isExpanded
                 ? 'opacity-100 scale-100 w-auto translate-x-0'
@@ -123,10 +113,14 @@
             {{ item.name }}
           </span>
 
-          <!-- Tooltip (Desktop only when collapsed) -->
+          <div
+            v-if="isActive && isExpanded"
+            class="absolute right-3 w-1.5 h-1.5 rounded-full bg-primary"
+          ></div>
+
           <div
             v-if="!isExpanded"
-            class="absolute left-full ml-2 xs:ml-3 px-2.5 xs:px-3 py-1 xs:py-1.5 bg-text-main text-surface text-xs font-semibold rounded-md xs:rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[60] shadow-xl hidden lg:block"
+            class="absolute left-full ml-4 px-3 py-2 bg-background/95 backdrop-blur-sm border border-border text-text-main text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[60] shadow-lg hidden lg:block"
           >
             {{ item.name }}
           </div>
@@ -134,13 +128,11 @@
       </router-link>
     </nav>
 
-    <!-- User Profile Section -->
-    <div class="p-2 xs:p-3 border-t border-border safe-bottom">
+    <div class="p-3 border-t border-border/50 safe-bottom">
       <div
-        class="relative rounded-xl xs:rounded-2xl bg-surface transition-all duration-300 overflow-hidden"
-        :class="[isExpanded ? 'p-2.5 xs:p-3 bg-hover/30' : 'p-0 bg-transparent']"
+        class="relative rounded-xl transition-all duration-300"
+        :class="[isExpanded ? 'p-3 bg-hover/30' : 'p-0']"
       >
-        <!-- Profile Link -->
         <router-link :to="{ name: 'profile' }" custom v-slot="{ href, navigate }">
           <a
             :href="href"
@@ -156,69 +148,56 @@
                 closeMobileOnNavigate()
               }
             "
-            class="flex items-center gap-2.5 xs:gap-3 group cursor-pointer rounded-lg p-1.5 xs:p-2 -m-1.5 xs:-m-2 hover:bg-hover/50 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
+            class="flex items-center gap-3 group cursor-pointer rounded-lg p-2 -m-2 hover:bg-hover/50 transition-all touch-manipulation focus:outline-none focus:ring-2 focus:ring-primary/50"
             :class="{ 'justify-center': !isExpanded }"
             aria-label="View profile"
           >
-            <!-- Avatar -->
             <div
-              class="w-8 h-8 xs:w-9 xs:h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center shrink-0 border border-primary/20 shadow-sm group-hover:ring-2 ring-primary/20 transition-all"
+              class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 flex items-center justify-center shrink-0 border-2 border-primary/20 shadow-sm group-hover:border-primary/40 group-hover:shadow-md group-hover:scale-105 transition-all"
             >
-              <span class="text-xs xs:text-sm font-bold text-primary">{{ userInitials }}</span>
+              <span class="text-sm font-bold text-primary">{{ userInitials }}</span>
             </div>
 
-            <!-- User Info -->
             <div
-              class="flex flex-col overflow-hidden transition-all duration-300"
+              class="flex flex-col overflow-hidden transition-all duration-300 min-w-0"
               :class="[isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden']"
             >
-              <span class="text-xs xs:text-sm font-semibold text-text-main truncate">{{
+              <span class="text-sm font-semibold text-text-main truncate">{{
                 userDisplayName
               }}</span>
-              <span class="text-[10px] xs:text-xs text-text-light truncate">{{ userEmail }}</span>
+              <span class="text-xs text-text-light truncate">{{ userEmail }}</span>
             </div>
 
-            <!-- Tooltip (Desktop only when collapsed) -->
             <div
               v-if="!isExpanded"
-              class="absolute left-full ml-2 xs:ml-3 px-2.5 xs:px-3 py-1 xs:py-1.5 bg-text-main text-surface text-xs font-semibold rounded-md xs:rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[60] shadow-xl hidden lg:block"
+              class="absolute left-full ml-4 px-3 py-2 bg-background/95 backdrop-blur-sm border border-border text-text-main text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[60] shadow-lg hidden lg:block"
             >
               Profile
             </div>
           </a>
         </router-link>
 
-        <!-- Sign Out Button (Expanded) -->
         <button
-          v-if="isExpanded"
+          ref="lastFocusableRef"
           @click="handleSignOut"
           :disabled="isSigningOut"
-          class="mt-1.5 xs:mt-2 flex items-center justify-center gap-1.5 xs:gap-2 w-full p-1 xs:p-1.5 rounded-md xs:rounded-lg text-[10px] xs:text-xs font-medium text-text-light hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          aria-label="Sign out"
-        >
-          <Icon v-if="isSigningOut" icon="ph:spinner" class="w-3 h-3 animate-spin" />
-          <span>{{ isSigningOut ? 'Signing Out...' : 'Sign Out' }}</span>
-        </button>
-
-        <!-- Sign Out Button (Collapsed) -->
-        <button
-          v-else
-          @click="handleSignOut"
-          :disabled="isSigningOut"
-          class="w-full p-2.5 xs:p-3 rounded-lg xs:rounded-xl hover:bg-red-500/10 text-text-light hover:text-red-500 group relative transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          aria-label="Sign out"
-          title="Sign out"
+          class="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium text-text-light hover:text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation focus:outline-none focus:ring-2 focus:ring-red-500/50"
+          :class="[
+            isExpanded ? 'justify-center mt-2' : 'justify-center w-full mt-2 p-2.5 relative',
+          ]"
+          :aria-label="isSigningOut ? 'Signing out' : 'Sign out'"
+          :title="!isExpanded ? 'Sign out' : undefined"
         >
           <Icon
             :icon="isSigningOut ? 'ph:spinner' : 'ph:sign-out-bold'"
-            class="w-4 h-4 xs:w-5 xs:h-5"
-            :class="{ 'animate-spin': isSigningOut }"
+            class="h-3.5 transition-all"
+            :class="[isExpanded ? 'w-3.5' : 'w-5 h-5', { 'animate-spin': isSigningOut }]"
           />
+          <span v-if="isExpanded">{{ isSigningOut ? 'Signing Out...' : 'Sign Out' }}</span>
 
-          <!-- Tooltip (Desktop only) -->
           <div
-            v-if="!isSigningOut"
-            class="absolute left-full ml-2 xs:ml-3 px-2.5 xs:px-3 py-1 xs:py-1.5 bg-text-main text-surface text-xs font-semibold rounded-md xs:rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[60] shadow-xl hidden lg:block"
+            v-if="!isExpanded && !isSigningOut"
+            class="absolute left-full ml-4 px-3 py-2 bg-background/95 backdrop-blur-sm border border-border text-text-main text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0 pointer-events-none whitespace-nowrap z-[60] shadow-lg hidden lg:block"
           >
             Sign Out
           </div>
@@ -229,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
 import { auth } from '@/firebase'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
@@ -244,11 +223,21 @@ const isMobileOpen = ref(false)
 const isSigningOut = ref(false)
 const currentUser = ref(null)
 
+// --- Refs for focus management ---
+const sidebarRef = ref(null)
+const firstFocusableRef = ref(null)
+const lastFocusableRef = ref(null)
+
 // --- Get Current User ---
 onMounted(() => {
   onAuthStateChanged(auth, (user) => {
     currentUser.value = user
   })
+})
+
+// --- Cleanup on unmount ---
+onUnmounted(() => {
+  document.body.style.overflow = ''
 })
 
 // --- User Display Info ---
@@ -290,14 +279,39 @@ const navItems = [
   { name: 'Insights', routeName: 'recommendations', icon: 'ph:sparkle' },
 ]
 
-// --- Focus Management ---
-watch(isMobileOpen, (isOpen) => {
+// --- Focus Management with Focus Trap ---
+watch(isMobileOpen, async (isOpen) => {
   if (isOpen) {
     document.body.style.overflow = 'hidden'
+    // Wait for DOM update, then focus first element
+    await nextTick()
+    firstFocusableRef.value?.focus()
   } else {
     document.body.style.overflow = ''
   }
 })
+
+// --- Handle Tab Key for Focus Trap ---
+const handleTabKey = (event) => {
+  if (!isMobileOpen.value || window.innerWidth >= 1024) return
+
+  const isTabPressed = event.key === 'Tab'
+  if (!isTabPressed) return
+
+  if (event.shiftKey) {
+    // Shift + Tab: Moving backward
+    if (document.activeElement === firstFocusableRef.value) {
+      event.preventDefault()
+      lastFocusableRef.value?.focus()
+    }
+  } else {
+    // Tab: Moving forward
+    if (document.activeElement === lastFocusableRef.value) {
+      event.preventDefault()
+      firstFocusableRef.value?.focus()
+    }
+  }
+}
 
 // --- Actions ---
 const toggleExpand = () => {
@@ -314,7 +328,10 @@ const closeMobile = () => {
 }
 
 const closeMobileOnNavigate = () => {
-  if (window.innerWidth < 1024) closeMobile()
+  const isMobile = window.innerWidth < 1024
+  if (isMobile && isMobileOpen.value) {
+    closeMobile()
+  }
 }
 
 const handleSignOut = async () => {
@@ -334,13 +351,13 @@ const handleSignOut = async () => {
 
 // --- Dynamic Classes ---
 const sidebarClasses = computed(() => {
-  const desktopWidth = isExpanded.value ? 'lg:w-[260px]' : 'lg:w-[80px]'
-  const mobileWidth = 'w-[260px] xs:w-[280px] max-w-[85vw]'
+  const commonWidth = isExpanded.value ? 'w-[260px]' : 'w-[80px]'
 
   if (isMobileOpen.value) {
-    return `${desktopWidth} ${mobileWidth} translate-x-0 shadow-2xl`
+    return `${commonWidth} translate-x-0 shadow-2xl`
   }
-  return `${desktopWidth} ${mobileWidth} -translate-x-full lg:translate-x-0 lg:shadow-none`
+
+  return `${commonWidth} -translate-x-full lg:translate-x-0 lg:shadow-none`
 })
 
 defineExpose({ toggleMobile, isMobileOpen })
@@ -358,17 +375,11 @@ defineExpose({ toggleMobile, isMobileOpen })
 
 /* Safe Area Support */
 .safe-top {
-  padding-top: env(safe-area-inset-top, 0);
+  padding-top: max(1rem, env(safe-area-inset-top, 1rem));
 }
 
 .safe-bottom {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
-}
-
-@media (min-width: 475px) {
-  .safe-bottom {
-    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
-  }
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
 }
 
 /* Touch optimization */

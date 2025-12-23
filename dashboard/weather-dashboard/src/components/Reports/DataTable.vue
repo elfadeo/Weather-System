@@ -1,16 +1,99 @@
 <template>
   <div
-    class="bg-surface rounded-2xl shadow-md overflow-hidden ring-1 ring-border relative min-h-[500px]"
+    class="bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden relative min-h-[400px] flex flex-col"
   >
-    <LoadingOverlay v-if="isLoading" />
+    <Transition
+      enter-active-class="transition-opacity duration-200"
+      enter-from-class="opacity-0"
+      leave-active-class="transition-opacity duration-200"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 bg-[var(--color-surface)]/80 backdrop-blur-[2px] flex items-center justify-center z-20"
+      >
+        <div class="text-center">
+          <Icon
+            icon="ph:circle-notch-bold"
+            class="h-8 w-8 text-[var(--color-primary)] mx-auto mb-3 animate-spin"
+          />
+          <p class="text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wide">
+            Loading report...
+          </p>
+        </div>
+      </div>
+    </Transition>
 
-    <EmptyState v-if="!aggregatedData.length && !isLoading" />
+    <div
+      v-if="!isLoading && !aggregatedData.length"
+      class="absolute inset-0 flex flex-col items-center justify-center z-10"
+    >
+      <div
+        class="w-16 h-16 rounded-full bg-[var(--color-background)] flex items-center justify-center mb-4"
+      >
+        <Icon
+          icon="ph:database-duotone"
+          class="h-8 w-8 text-[var(--color-text-light)] opacity-50"
+        />
+      </div>
+      <h3 class="text-sm font-semibold text-[var(--color-text-main)] mb-1">No Data Found</h3>
+      <p class="text-xs text-[var(--color-text-light)] max-w-[200px] text-center">
+        Try adjusting your time range or filters to see results.
+      </p>
+    </div>
 
-    <div v-if="aggregatedData.length" class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-border">
-        <TableHeader />
-        <tbody class="bg-surface divide-y divide-border">
-          <TableRow v-for="record in aggregatedData" :key="record.sortKey" :record="record" />
+    <div class="overflow-x-auto flex-grow">
+      <table class="w-full text-left border-collapse tabular-nums">
+        <thead
+          class="bg-[var(--color-background)] border-b border-[var(--color-border)] sticky top-0 z-10"
+        >
+          <tr>
+            <th
+              scope="col"
+              class="py-3 px-6 text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider whitespace-nowrap"
+            >
+              Period
+            </th>
+            <th
+              scope="col"
+              class="py-3 px-6 text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider whitespace-nowrap text-right"
+            >
+              Temp (°C)
+            </th>
+            <th
+              scope="col"
+              class="py-3 px-6 text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider whitespace-nowrap text-right"
+            >
+              Humidity (%)
+            </th>
+            <th
+              scope="col"
+              class="py-3 px-6 text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider whitespace-nowrap text-right"
+            >
+              Rain Rate <span class="normal-case opacity-70">(mm/hr)</span>
+            </th>
+            <th
+              scope="col"
+              class="py-3 px-6 text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider whitespace-nowrap text-right"
+            >
+              Total Rain <span class="normal-case opacity-70">(mm)</span>
+            </th>
+            <th
+              scope="col"
+              class="py-3 px-6 text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider whitespace-nowrap text-right"
+            >
+              Readings
+            </th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+          <TableRow
+            v-for="record in aggregatedData"
+            :key="record.sortKey"
+            :record="record"
+            class="transition-colors hover:bg-[var(--color-background)]/50"
+          />
         </tbody>
       </table>
     </div>
@@ -18,9 +101,7 @@
 </template>
 
 <script setup>
-import LoadingOverlay from './LoadingOverlay.vue'
-import EmptyState from './EmptyState.vue'
-import TableHeader from './TableHeader.vue'
+import { Icon } from '@iconify/vue'
 import TableRow from './TableRow.vue'
 
 defineProps({
