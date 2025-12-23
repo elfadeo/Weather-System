@@ -1,7 +1,6 @@
 <template>
   <div class="p-4 sm:p-6 lg:p-8 font-sans">
     <div class="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-
       <!-- Minimal Header -->
       <div class="flex items-end justify-between">
         <div>
@@ -29,7 +28,6 @@
 
       <!-- Main Grid Layout -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-
         <!-- Sidebar: Active Thresholds -->
         <aside class="lg:col-span-1">
           <ThresholdCard />
@@ -37,7 +35,6 @@
 
         <!-- Main Content: Alert History -->
         <main class="lg:col-span-2 space-y-6">
-
           <!-- Alert History Card -->
           <section
             class="bg-surface/40 backdrop-blur-sm rounded-xl border border-border/50"
@@ -75,7 +72,9 @@
               role="status"
               aria-label="No alerts"
             >
-              <div class="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+              <div
+                class="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4"
+              >
                 <Icon
                   icon="ph:shield-check-bold"
                   class="h-8 w-8 text-green-500"
@@ -90,18 +89,11 @@
 
             <!-- Alert List -->
             <ul v-else class="divide-y divide-border/50" role="list" aria-label="Alert history">
-              <AlertItem
-                v-for="alert in alertHistory"
-                :key="alert.id"
-                :alert="alert"
-              />
+              <AlertItem v-for="alert in alertHistory" :key="alert.id" :alert="alert" />
             </ul>
 
             <!-- Load More -->
-            <div
-              v-if="alertHistory.length >= 50"
-              class="px-6 py-4 border-t border-border/50"
-            >
+            <div v-if="alertHistory.length >= 50" class="px-6 py-4 border-t border-border/50">
               <button
                 @click="loadMoreAlerts"
                 class="w-full py-2.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
@@ -113,7 +105,6 @@
 
           <!-- Scientific References -->
           <ScientificReference />
-
         </main>
       </div>
     </div>

@@ -8,7 +8,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
           <!-- Title -->
           <div>
-            <h1 class="text-3xl font-bold text-text-main tracking-tight"> Weather Dashboard</h1>
+            <h1 class="text-3xl font-bold text-text-main tracking-tight">Weather Dashboard</h1>
             <p class="text-sm text-text-light mt-1">Real-time weather monitoring</p>
           </div>
 

@@ -16,7 +16,6 @@
         class="sticky top-0 z-30 w-full bg-[var(--color-surface)]/80 backdrop-blur-xl border-b border-[var(--color-border)]/40 transition-all duration-300 safe-top"
       >
         <div class="px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
-
           <div class="flex items-center gap-4 flex-1 min-w-0">
             <button
               @click="toggleMobileSidebar"
@@ -30,12 +29,16 @@
               <span class="text-[var(--color-primary)]">
                 <Icon icon="ph:cloud-sun-duotone" class="h-6 w-6" />
               </span>
-              <h1 class="text-sm font-semibold tracking-wide uppercase text-[var(--color-text-main)] truncate">
+              <h1
+                class="text-sm font-semibold tracking-wide uppercase text-[var(--color-text-main)] truncate"
+              >
                 Climate Monitoring
               </h1>
             </div>
 
-            <h2 class="hidden lg:block text-lg font-medium tracking-tight text-[var(--color-text-main)]">
+            <h2
+              class="hidden lg:block text-lg font-medium tracking-tight text-[var(--color-text-main)]"
+            >
               Dashboard Overview
             </h2>
           </div>
@@ -65,7 +68,9 @@
         </div>
       </main>
 
-      <AppFooter class="mt-auto shrink-0 z-10 opacity-60 hover:opacity-100 transition-opacity duration-300" />
+      <AppFooter
+        class="mt-auto shrink-0 z-10 opacity-60 hover:opacity-100 transition-opacity duration-300"
+      />
     </div>
 
     <transition
@@ -84,11 +89,10 @@
         <div
           class="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] shadow-xl rounded-full ring-1 ring-black/5 dark:ring-white/10"
         >
-          <div class="flex items-center justify-center bg-[var(--color-red-500)]/10 rounded-full p-1.5">
-            <Icon
-              icon="ph:warning-circle-bold"
-              class="w-4 h-4 text-[var(--color-red-500)]"
-            />
+          <div
+            class="flex items-center justify-center bg-[var(--color-red-500)]/10 rounded-full p-1.5"
+          >
+            <Icon icon="ph:warning-circle-bold" class="w-4 h-4 text-[var(--color-red-500)]" />
           </div>
 
           <span class="text-sm font-medium text-[var(--color-text-main)] pr-2">
@@ -177,7 +181,9 @@ onUnmounted(() => {
 /* Smooth Page Transition */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
 }
 
 .fade-slide-enter-from {
