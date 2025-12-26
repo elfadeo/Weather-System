@@ -16,9 +16,7 @@
         <div>
           <p class="text-sm font-medium text-text-main leading-none">SMS Notifications</p>
           <p class="text-xs text-text-light mt-1.5 leading-tight">
-            {{ phoneNumbers?.length || 0 }} number{{
-              (phoneNumbers?.length || 0) !== 1 ? 's' : ''
-            }}
+            {{ phoneNumbers?.length || 0 }} number{{ (phoneNumbers?.length || 0) !== 1 ? 's' : '' }}
             configured
           </p>
         </div>

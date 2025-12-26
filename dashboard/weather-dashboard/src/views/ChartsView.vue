@@ -9,6 +9,13 @@
           <p class="text-sm text-[var(--color-text-light)] mt-1">
             Historical analysis of weather parameters
           </p>
+          <p
+            v-if="dataAvailabilityInfo"
+            class="text-xs text-[var(--color-text-light)] mt-2 flex items-center gap-2"
+          >
+            <Icon icon="ph:info-duotone" class="h-4 w-4" />
+            <span>{{ dataAvailabilityInfo }}</span>
+          </p>
         </div>
 
         <div class="relative min-w-[200px]">
@@ -19,9 +26,9 @@
             class="appearance-none w-full rounded-lg border-0 bg-[var(--color-surface)] py-2.5 pl-4 pr-10 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] text-sm font-medium shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="last7">Last 7 Readings</option>
-            <option value="weekly">Weekly Average</option>
-            <option value="monthly">Monthly Average</option>
-            <option value="yearly">Yearly Average</option>
+            <option value="weekly">Last 8 Weeks</option>
+            <option value="monthly">Last 12 Months</option>
+            <option value="yearly">Last 5 Years</option>
           </select>
           <div
             class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[var(--color-text-light)]"
@@ -31,7 +38,55 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <!-- Loading Progress Bar -->
+      <div
+        v-if="isLoading && loadingProgress > 0"
+        class="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-4 shadow-sm"
+      >
+        <div class="flex items-center gap-3 mb-2">
+          <Icon
+            icon="ph:circle-notch-bold"
+            class="h-5 w-5 text-[var(--color-primary)] animate-spin"
+          />
+          <span class="text-sm font-medium text-[var(--color-text-main)]">
+            {{ loadingMessage }}
+          </span>
+        </div>
+        <div class="w-full bg-[var(--color-background)] rounded-full h-2 overflow-hidden">
+          <div
+            class="h-full bg-[var(--color-primary)] transition-all duration-300 ease-out"
+            :style="{ width: `${loadingProgress}%` }"
+          ></div>
+        </div>
+        <p class="text-xs text-[var(--color-text-light)] mt-1 text-right">{{ loadingProgress }}%</p>
+      </div>
+
+      <div
+        v-if="!isLoading && !chartData.labels.length"
+        class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center"
+      >
+        <div class="mb-4 rounded-full bg-[var(--color-background)] p-4 inline-flex">
+          <Icon
+            icon="ph:clock-countdown-duotone"
+            class="h-10 w-10 text-[var(--color-text-light)] opacity-50"
+          />
+        </div>
+        <h3 class="text-lg font-semibold text-[var(--color-text-main)] mb-2">
+          No Data for This Time Range
+        </h3>
+        <p class="text-sm text-[var(--color-text-light)] max-w-md mx-auto">
+          Your weather station needs more time to collect historical data for this view.
+          <span v-if="selectedTimeRange === 'monthly'"
+            >Come back after a few months of operation.</span
+          >
+          <span v-else-if="selectedTimeRange === 'yearly'"
+            >Come back after a few years of operation.</span
+          >
+          <span v-else>Try selecting a different time range.</span>
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6" v-else>
         <template v-if="isLoading">
           <div
             v-for="i in 3"
@@ -123,7 +178,9 @@
                 {{ summaryStats.rainfall
                 }}<span class="text-lg font-normal text-[var(--color-text-light)] ml-1">mm</span>
               </p>
-              <p class="text-xs text-[var(--color-text-light)]">Accumulated over period</p>
+              <p class="text-xs text-[var(--color-text-light)]">
+                {{ summaryStats.rainfallNote }}
+              </p>
             </div>
           </div>
         </template>
@@ -268,16 +325,16 @@ import { Icon } from '@iconify/vue'
 import { rtdb } from '@/firebase.js'
 import {
   ref as dbRef,
-  onValue,
-  off,
   query,
-  limitToLast,
   orderByChild,
   startAt,
+  endAt,
+  get,
+  limitToLast,
+  onValue,
+  off,
 } from 'firebase/database'
 import SingleMetricChart from '@/components/Charts/SingleMetricChart.vue'
-
-// -- Internal Components (Inlined for simplicity, but preferably separate files) --
 
 const LoadingState = {
   template: `
@@ -297,7 +354,6 @@ const LoadingState = {
 
 const EmptyState = {
   props: ['message'],
-  components: { Icon },
   template: `
     <div class="flex h-full w-full items-center justify-center">
       <div class="flex flex-col items-center text-center">
@@ -312,10 +368,20 @@ const EmptyState = {
   `,
 }
 
-// --- STATE & LOGIC (Unchanged) ---
+const TIME_RANGES = {
+  LAST_7: 'last7',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+}
+
 const isLoading = ref(true)
+const loadingProgress = ref(0)
+const loadingMessage = ref('')
 const selectedTimeRange = ref('last7')
-const firebaseListener = ref(null)
+const dataAvailabilityInfo = ref('')
+let abortController = null
+let firebaseListener = null
 
 const chartData = ref({
   labels: [],
@@ -361,20 +427,26 @@ const summaryStats = computed(() => {
   const rainfall =
     totals.length >= 2 ? Math.max(0, totals[totals.length - 1] - totals[0]).toFixed(1) : '0.0'
 
+  // Calculate actual date range for rainfall context
+  let rainfallNote = 'Accumulated over period'
+  if (chartData.value.labels.length > 0) {
+    const firstLabel = chartData.value.labels[0]
+    const lastLabel = chartData.value.labels[chartData.value.labels.length - 1]
+
+    if (firstLabel === lastLabel) {
+      rainfallNote = 'From single reading'
+    } else {
+      rainfallNote = `From ${firstLabel} to ${lastLabel}`
+    }
+  }
+
   return {
     temp: calcStats(temps),
     humidity: calcStats(hums),
     rainfall,
+    rainfallNote,
   }
 })
-
-// --- HELPERS ---
-const TIME_RANGES = {
-  LAST_7: 'last7',
-  WEEKLY: 'weekly',
-  MONTHLY: 'monthly',
-  YEARLY: 'yearly',
-}
 
 const formatTimestamp = (date, range) => {
   const phtDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Manila' }))
@@ -412,6 +484,22 @@ function getWeekNumber(date) {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
+const getTimeRangeBounds = (range) => {
+  const now = Date.now()
+  const DAY_MS = 24 * 60 * 60 * 1000
+
+  switch (range) {
+    case TIME_RANGES.WEEKLY:
+      return { start: now - 8 * 7 * DAY_MS, end: now }
+    case TIME_RANGES.MONTHLY:
+      return { start: now - 365 * DAY_MS, end: now }
+    case TIME_RANGES.YEARLY:
+      return { start: now - 5 * 365 * DAY_MS, end: now }
+    default:
+      return null
+  }
+}
+
 const processRecords = (records, range) => {
   if (range === TIME_RANGES.LAST_7) {
     return {
@@ -442,7 +530,6 @@ const processRecords = (records, range) => {
         hums: [],
         rains: [],
         rainTotals: [],
-        count: 0,
       }
     }
 
@@ -455,7 +542,6 @@ const processRecords = (records, range) => {
     if (!isNaN(hum)) acc[key].hums.push(hum)
     if (!isNaN(rain)) acc[key].rains.push(rain)
     if (!isNaN(rainTotal)) acc[key].rainTotals.push(rainTotal)
-    acc[key].count++
 
     return acc
   }, {})
@@ -478,56 +564,200 @@ const processRecords = (records, range) => {
   return { labels, temperature, humidity, rainfall, rainfallTotals }
 }
 
-const listenForHistoricalData = () => {
-  isLoading.value = true
+const fetchInChunks = async (startTs, endTs) => {
+  const CHUNK_SIZE_DAYS = 30
+  const CHUNK_SIZE_MS = CHUNK_SIZE_DAYS * 24 * 60 * 60 * 1000
 
-  if (firebaseListener.value) {
-    const { ref: oldRef, callback } = firebaseListener.value
+  // Calculate sampling rate based on time range
+  const totalDays = (endTs - startTs) / (24 * 60 * 60 * 1000)
+  const samplingRate = totalDays > 180 ? 10 : totalDays > 60 ? 5 : 1 // Sample every Nth record
+
+  const chunks = []
+  let currentStart = startTs
+
+  while (currentStart < endTs) {
+    const currentEnd = Math.min(currentStart + CHUNK_SIZE_MS, endTs)
+    chunks.push({ start: currentStart, end: currentEnd })
+    currentStart = currentEnd
+  }
+
+  loadingMessage.value = `Loading ${chunks.length} data chunks...`
+
+  const allData = []
+  const totalChunks = chunks.length
+
+  for (let i = 0; i < chunks.length; i++) {
+    if (abortController?.signal.aborted) return []
+
+    const chunk = chunks[i]
+    loadingMessage.value = `Loading chunk ${i + 1} of ${totalChunks}...`
+    loadingProgress.value = Math.round(((i + 1) / totalChunks) * 90)
+
+    const historyRef = dbRef(rtdb, 'sensor_logs')
+    const historyQuery = query(
+      historyRef,
+      orderByChild('timestamp'),
+      startAt(chunk.start),
+      endAt(chunk.end),
+    )
+
+    const snapshot = await get(historyQuery)
+
+    if (abortController?.signal.aborted) return []
+
+    if (snapshot.val()) {
+      const chunkData = Object.values(snapshot.val())
+      // Apply sampling for large datasets
+      const sampledData =
+        samplingRate > 1 ? chunkData.filter((_, idx) => idx % samplingRate === 0) : chunkData
+      allData.push(...sampledData)
+    }
+
+    if (i < chunks.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+  }
+
+  loadingMessage.value = 'Processing data...'
+  loadingProgress.value = 95
+
+  const uniqueData = Array.from(new Map(allData.map((item) => [item.timestamp, item])).values())
+
+  return uniqueData
+}
+
+const listenForHistoricalData = async () => {
+  // Cleanup previous listener if exists
+  if (firebaseListener) {
+    const { ref: oldRef, callback } = firebaseListener
     off(oldRef, 'value', callback)
-    firebaseListener.value = null
+    firebaseListener = null
   }
 
-  const historyRef = dbRef(rtdb, 'sensor_logs')
-  const range = selectedTimeRange.value
-  let historyQuery
-
-  if (range === TIME_RANGES.LAST_7) {
-    historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7))
-  } else {
-    const startTime = Date.now() - 365 * 86400000
-    historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime))
+  // Abort any ongoing fetch
+  if (abortController) {
+    abortController.abort()
   }
 
-  const callback = (snap) => {
-    if (!snap.exists()) {
-      chartData.value = {
-        labels: [],
-        temperature: [],
-        humidity: [],
-        rainfall: [],
-        rainfallTotals: [],
+  isLoading.value = true
+  loadingProgress.value = 0
+  loadingMessage.value = 'Preparing query...'
+
+  try {
+    const range = selectedTimeRange.value
+
+    // Use real-time listener for Last 7 Readings
+    if (range === TIME_RANGES.LAST_7) {
+      loadingMessage.value = 'Connecting to live data...'
+
+      const historyRef = dbRef(rtdb, 'sensor_logs')
+      const historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7))
+
+      const callback = (snapshot) => {
+        if (!snapshot.exists()) {
+          chartData.value = {
+            labels: [],
+            temperature: [],
+            humidity: [],
+            rainfall: [],
+            rainfallTotals: [],
+          }
+          dataAvailabilityInfo.value = 'No data available yet'
+        } else {
+          const records = Object.values(snapshot.val())
+          const processed = processRecords(records, range)
+          chartData.value = processed
+
+          // Update data availability info
+          if (records.length > 0) {
+            const oldestTimestamp = Math.min(...records.map((r) => r.timestamp))
+            const dataAgeDays = Math.floor((Date.now() - oldestTimestamp) / (24 * 60 * 60 * 1000))
+            dataAvailabilityInfo.value = `${records.length} readings available (${dataAgeDays} days of data)`
+          }
+        }
+        isLoading.value = false
+        loadingProgress.value = 0
+        loadingMessage.value = ''
       }
+
+      // Store listener reference for cleanup
+      firebaseListener = { ref: historyRef, callback }
+
+      // Attach real-time listener
+      onValue(historyQuery, callback, (error) => {
+        console.error('Firebase onValue error:', error)
+        isLoading.value = false
+        loadingProgress.value = 0
+        loadingMessage.value = ''
+      })
     } else {
-      const processed = processRecords(Object.values(snap.val()), range)
+      // Use chunked fetch for historical views
+      abortController = new AbortController()
+
+      const bounds = getTimeRangeBounds(range)
+      const records = await fetchInChunks(bounds.start, bounds.end)
+
+      if (abortController.signal.aborted) return
+
+      // Check if we have enough data for the requested range
+      if (records.length === 0) {
+        console.warn(`No data found for ${range} time range`)
+        dataAvailabilityInfo.value = 'No historical data found for this time range'
+      } else {
+        const oldestRecord = Math.min(...records.map((r) => r.timestamp))
+        const oldestDate = new Date(oldestRecord)
+        const dataAgeDays = Math.floor((Date.now() - oldestRecord) / (24 * 60 * 60 * 1000))
+
+        console.info(
+          `Data range: ${oldestDate.toLocaleDateString()} to now (${dataAgeDays} days of data)`,
+        )
+
+        // Update availability info
+        dataAvailabilityInfo.value = `${records.length} readings from ${oldestDate.toLocaleDateString()} (${dataAgeDays} days of data)`
+
+        if (range === TIME_RANGES.WEEKLY && dataAgeDays < 56) {
+          dataAvailabilityInfo.value += ' - Need 8+ weeks for full view'
+        } else if (range === TIME_RANGES.MONTHLY && dataAgeDays < 365) {
+          dataAvailabilityInfo.value += ' - Need 12+ months for full view'
+        } else if (range === TIME_RANGES.YEARLY && dataAgeDays < 1825) {
+          dataAvailabilityInfo.value += ' - Need 5+ years for full view'
+        }
+      }
+
+      const processed = processRecords(records, range)
       chartData.value = processed
+      loadingProgress.value = 100
+      isLoading.value = false
+      loadingProgress.value = 0
+      loadingMessage.value = ''
+    }
+  } catch (error) {
+    console.error('Error loading chart data:', error)
+    chartData.value = {
+      labels: [],
+      temperature: [],
+      humidity: [],
+      rainfall: [],
+      rainfallTotals: [],
     }
     isLoading.value = false
+    loadingProgress.value = 0
+    loadingMessage.value = ''
   }
-
-  firebaseListener.value = { ref: historyRef, callback }
-
-  onValue(historyQuery, callback, (error) => {
-    console.error('Firebase onValue error:', error)
-    isLoading.value = false
-  })
 }
 
 watch(selectedTimeRange, listenForHistoricalData, { immediate: true })
 
 onBeforeUnmount(() => {
-  if (firebaseListener.value) {
-    const { ref: oldRef, callback } = firebaseListener.value
+  // Cleanup real-time listener
+  if (firebaseListener) {
+    const { ref: oldRef, callback } = firebaseListener
     off(oldRef, 'value', callback)
+  }
+
+  // Abort any ongoing fetch
+  if (abortController) {
+    abortController.abort()
   }
 })
 </script>

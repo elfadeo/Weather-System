@@ -12,13 +12,29 @@
         v-if="isLoading"
         class="absolute inset-0 bg-[var(--color-surface)]/80 backdrop-blur-[2px] flex items-center justify-center z-20"
       >
-        <div class="text-center">
+        <div class="text-center max-w-sm px-4">
           <Icon
             icon="ph:circle-notch-bold"
             class="h-8 w-8 text-[var(--color-primary)] mx-auto mb-3 animate-spin"
           />
-          <p class="text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wide">
-            Loading report...
+          <p
+            class="text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wide mb-2"
+          >
+            {{ loadingMessage || 'Loading report...' }}
+          </p>
+
+          <!-- Progress bar -->
+          <div
+            v-if="loadingProgress > 0"
+            class="w-full bg-[var(--color-background)] rounded-full h-2 overflow-hidden"
+          >
+            <div
+              class="h-full bg-[var(--color-primary)] transition-all duration-300 ease-out"
+              :style="{ width: `${loadingProgress}%` }"
+            ></div>
+          </div>
+          <p v-if="loadingProgress > 0" class="text-xs text-[var(--color-text-light)] mt-1">
+            {{ loadingProgress }}%
           </p>
         </div>
       </div>
@@ -112,6 +128,14 @@ defineProps({
   isLoading: {
     type: Boolean,
     default: false,
+  },
+  loadingProgress: {
+    type: Number,
+    default: 0,
+  },
+  loadingMessage: {
+    type: String,
+    default: '',
   },
 })
 </script>

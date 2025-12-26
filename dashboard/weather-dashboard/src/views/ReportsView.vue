@@ -19,7 +19,12 @@
         @export-pdf="exportToPDF"
       />
 
-      <DataTable :aggregated-data="aggregatedData" :is-loading="isLoading" />
+      <DataTable
+        :aggregated-data="aggregatedData"
+        :is-loading="isLoading"
+        :loading-progress="loadingProgress"
+        :loading-message="loadingMessage"
+      />
     </div>
   </div>
 </template>
@@ -45,7 +50,8 @@ const isExporting = ref(false)
 
 // Composables
 const { formatDateTimeLocal, timePresets } = useTimePresets()
-const { rawReportData, isLoading, fetchData, cleanup } = useFirebaseData()
+const { rawReportData, isLoading, loadingProgress, loadingMessage, fetchData, cleanup } =
+  useFirebaseData()
 const { aggregateData, getFieldValue } = useDataAggregation()
 const { exportCSV, exportPDF } = useExport()
 
