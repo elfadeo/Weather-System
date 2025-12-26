@@ -152,10 +152,28 @@
             :class="{ 'justify-center': !isExpanded }"
             aria-label="View profile"
           >
+            <!-- Avatar with Google Photo Support -->
             <div
-              class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 flex items-center justify-center shrink-0 border-2 border-primary/20 shadow-sm group-hover:border-primary/40 group-hover:shadow-md group-hover:scale-105 transition-all"
+              class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-2 shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all overflow-hidden"
+              :class="
+                userPhotoURL
+                  ? 'border-primary/30 group-hover:border-primary/50'
+                  : 'bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 border-primary/20 group-hover:border-primary/40'
+              "
             >
-              <span class="text-sm font-bold text-primary">{{ userInitials }}</span>
+              <!-- Show Google Photo if available -->
+              <img
+                v-if="userPhotoURL"
+                :src="userPhotoURL"
+                :alt="userDisplayName"
+                class="w-full h-full object-cover"
+                referrerpolicy="no-referrer"
+                @error="handleImageError"
+              />
+              <!-- Show Initials if no photo -->
+              <span v-else class="text-sm font-bold text-primary">
+                {{ userInitials }}
+              </span>
             </div>
 
             <div
@@ -210,8 +228,9 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
-import { auth } from '@/firebase'
+import { auth, db } from '@/firebase'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 import { useRouter } from 'vue-router'
 
 const emit = defineEmits(['update:expanded', 'sign-out-error'])
@@ -222,18 +241,70 @@ const isExpanded = ref(true)
 const isMobileOpen = ref(false)
 const isSigningOut = ref(false)
 const currentUser = ref(null)
+const userPhotoURL = ref(null)
+const imageError = ref(false)
 
 // --- Refs for focus management ---
 const sidebarRef = ref(null)
 const firstFocusableRef = ref(null)
 const lastFocusableRef = ref(null)
 
-// --- Get Current User ---
+// --- Get Current User and Photo ---
 onMounted(() => {
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     currentUser.value = user
+
+    if (user) {
+      await fetchUserPhoto(user)
+    } else {
+      userPhotoURL.value = null
+    }
   })
 })
+
+// Fetch user photo from multiple sources
+const fetchUserPhoto = async (user) => {
+  imageError.value = false
+
+  try {
+    // 1. First, try Firestore (user might have updated their photo)
+    const userDocRef = doc(db, 'users', user.uid)
+    const docSnap = await getDoc(userDocRef)
+
+    if (docSnap.exists() && docSnap.data().photoURL) {
+      userPhotoURL.value = docSnap.data().photoURL
+      return
+    }
+
+    // 2. Try main photoURL from Firebase Auth
+    if (user.photoURL) {
+      userPhotoURL.value = user.photoURL
+      return
+    }
+
+    // 3. Try provider data (Google Sign-In specific)
+    if (user.providerData && user.providerData.length > 0) {
+      const providerWithPhoto = user.providerData.find((p) => p.photoURL)
+      if (providerWithPhoto) {
+        userPhotoURL.value = providerWithPhoto.photoURL
+        return
+      }
+    }
+
+    // 4. No photo found
+    userPhotoURL.value = null
+  } catch (error) {
+    console.error('Error fetching user photo:', error)
+    userPhotoURL.value = null
+  }
+}
+
+// Handle image load errors
+const handleImageError = () => {
+  console.warn('Failed to load user photo, falling back to initials')
+  imageError.value = true
+  userPhotoURL.value = null
+}
 
 // --- Cleanup on unmount ---
 onUnmounted(() => {
@@ -283,7 +354,6 @@ const navItems = [
 watch(isMobileOpen, async (isOpen) => {
   if (isOpen) {
     document.body.style.overflow = 'hidden'
-    // Wait for DOM update, then focus first element
     await nextTick()
     firstFocusableRef.value?.focus()
   } else {
@@ -299,13 +369,11 @@ const handleTabKey = (event) => {
   if (!isTabPressed) return
 
   if (event.shiftKey) {
-    // Shift + Tab: Moving backward
     if (document.activeElement === firstFocusableRef.value) {
       event.preventDefault()
       lastFocusableRef.value?.focus()
     }
   } else {
-    // Tab: Moving forward
     if (document.activeElement === lastFocusableRef.value) {
       event.preventDefault()
       firstFocusableRef.value?.focus()
@@ -364,7 +432,6 @@ defineExpose({ toggleMobile, isMobileOpen })
 </script>
 
 <style scoped>
-/* Hide Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -373,7 +440,6 @@ defineExpose({ toggleMobile, isMobileOpen })
   scrollbar-width: none;
 }
 
-/* Safe Area Support */
 .safe-top {
   padding-top: max(1rem, env(safe-area-inset-top, 1rem));
 }
@@ -382,13 +448,11 @@ defineExpose({ toggleMobile, isMobileOpen })
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
 }
 
-/* Touch optimization */
 .touch-manipulation {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Optimize for small screens */
 @media (max-width: 374px) {
   aside {
     font-size: 0.875rem;

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue' // Import nextTick
+import { ref, watch, nextTick } from 'vue'
 import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
@@ -57,10 +57,15 @@ const mapConfig = {
 const mapZoom = ref(mapConfig.zoom)
 const isMapLoading = ref(true)
 const mapError = ref(null)
-const mapRef = ref(null) // This ref is connected to your <l-map>
+const mapRef = ref(null)
 
-const onMapReady = () => {
+// 1. IMPROVED: Handle the map when it declares itself "Ready"
+const onMapReady = (mapInstance) => {
   isMapLoading.value = false
+  // Safe place to invalidate size because we have the direct map instance
+  nextTick(() => {
+    mapInstance.invalidateSize()
+  })
 }
 
 const onMapError = (error) => {
@@ -69,15 +74,14 @@ const onMapError = (error) => {
   isMapLoading.value = false
 }
 
-// --- THE FIX IS HERE ---
-// Watch for the mapRef to be populated. This happens when the v-if becomes true.
-watch(mapRef, (newMapRefValue) => {
+// 2. FIXED: Watcher with Safety Checks
+watch(mapRef, async (newMapRefValue) => {
   if (newMapRefValue) {
-    // Use nextTick to ensure the DOM is fully updated and the map container has a size.
-    nextTick(() => {
-      // Access the underlying Leaflet map object and call invalidateSize().
-      newMapRefValue.leafletObject.invalidateSize()
-    })
+    await nextTick() // Wait for DOM update
+
+    // CRITICAL FIX: Check if 'leafletObject' exists before calling methods on it
+    // The ?. (optional chaining) prevents the crash if it's undefined
+    newMapRefValue.leafletObject?.invalidateSize()
   }
 })
 </script>
