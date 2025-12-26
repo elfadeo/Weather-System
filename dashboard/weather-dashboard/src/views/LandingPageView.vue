@@ -45,7 +45,7 @@
             class="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-text-main)] transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110"
           />
           <span class="text-sm sm:text-base font-bold text-[var(--color-text-main)] tracking-tight"
-            >Climate Monitoring System</span
+            >Climate Monitoring</span
           >
         </div>
 
