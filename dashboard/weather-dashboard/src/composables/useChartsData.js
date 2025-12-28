@@ -1,4 +1,4 @@
-// src/composables/useChartsData.js - Optimized Hybrid Version
+// src/composables/useChartsData.js - FINAL CAPSTONE VERSION
 import { ref } from 'vue'
 import { rtdb } from '@/firebase.js'
 import {
@@ -24,21 +24,19 @@ export const TIME_RANGES = {
   YEARLY: 'yearly',
 }
 
-const isMobile = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-}
+const isMobile = () =>
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
 const isSlowConnection = () => {
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
-  if (connection) {
-    return (
-      connection.effectiveType === 'slow-2g' ||
-      connection.effectiveType === '2g' ||
-      connection.effectiveType === '3g' ||
-      connection.saveData === true
-    )
-  }
-  return isMobile()
+  return (
+    (connection &&
+      (connection.effectiveType === 'slow-2g' ||
+        connection.effectiveType === '2g' ||
+        connection.effectiveType === '3g' ||
+        connection.saveData === true)) ||
+    isMobile()
+  )
 }
 
 export function useChartsData() {
@@ -58,14 +56,16 @@ export function useChartsData() {
   let firebaseListener = null
   let isMounted = true
 
+  // Record limits for 1-minute interval data
   const getRecordLimit = (range) => {
+    if (range === TIME_RANGES.LAST_7) return 7
+
     const slow = isSlowConnection()
     const mobile = isMobile()
 
     if (slow) {
       return (
         {
-          [TIME_RANGES.LAST_7]: 500,
           [TIME_RANGES.WEEKLY]: 5000,
           [TIME_RANGES.MONTHLY]: 10000,
           [TIME_RANGES.YEARLY]: 15000,
@@ -76,7 +76,6 @@ export function useChartsData() {
     if (mobile) {
       return (
         {
-          [TIME_RANGES.LAST_7]: 1000,
           [TIME_RANGES.WEEKLY]: 8000,
           [TIME_RANGES.MONTHLY]: 20000,
           [TIME_RANGES.YEARLY]: 30000,
@@ -86,7 +85,6 @@ export function useChartsData() {
 
     return (
       {
-        [TIME_RANGES.LAST_7]: 2000,
         [TIME_RANGES.WEEKLY]: 15000,
         [TIME_RANGES.MONTHLY]: 40000,
         [TIME_RANGES.YEARLY]: 60000,
@@ -95,16 +93,14 @@ export function useChartsData() {
   }
 
   const getSamplingRate = (totalDays, timeRange) => {
-    if (timeRange === TIME_RANGES.LAST_7) {
-      return 1 // No sampling for last 7 days
-    }
+    if (timeRange === TIME_RANGES.LAST_7) return 1
 
-    const mobile = isMobile()
     const slow = isSlowConnection()
+    const mobile = isMobile()
 
     if (slow) {
-      if (totalDays > 180) return 60
-      if (totalDays > 60) return 30
+      if (totalDays > 365) return 60
+      if (totalDays > 180) return 30
       if (totalDays > 30) return 20
       return 10
     }
@@ -117,10 +113,10 @@ export function useChartsData() {
       return 5
     }
 
-    if (totalDays > 180) return 30
-    if (totalDays > 60) return 15
-    if (totalDays > 30) return 10
-    if (totalDays > 14) return 5
+    if (totalDays > 365) return 30
+    if (totalDays > 180) return 15
+    if (totalDays > 60) return 10
+    if (totalDays > 30) return 5
     return 2
   }
 
@@ -128,51 +124,41 @@ export function useChartsData() {
     const now = Date.now()
     const DAY_MS = 24 * 60 * 60 * 1000
 
-    const mobile = isMobile()
-    const slow = isSlowConnection()
-
-    if (slow || mobile) {
-      log('Using reduced time ranges for mobile/slow connection')
-      return {
-        [TIME_RANGES.LAST_7]: { start: now - 7 * DAY_MS, end: now, label: '7 days', days: 7 },
-        [TIME_RANGES.WEEKLY]: { start: now - 4 * 7 * DAY_MS, end: now, label: '4 weeks', days: 28 },
+    return (
+      {
+        [TIME_RANGES.LAST_7]: { start: 0, end: now, label: 'Last 7 Readings', days: 0 },
+        [TIME_RANGES.WEEKLY]: {
+          start: now - 28 * DAY_MS,
+          end: now,
+          label: 'Last 4 Weeks',
+          days: 28,
+        },
         [TIME_RANGES.MONTHLY]: {
           start: now - 180 * DAY_MS,
           end: now,
-          label: '6 months',
+          label: 'Last 6 Months',
           days: 180,
         },
         [TIME_RANGES.YEARLY]: {
-          start: now - 2 * 365 * DAY_MS,
+          start: now - 730 * DAY_MS,
           end: now,
-          label: '2 years',
+          label: 'Last 2 Years',
           days: 730,
         },
-      }[range]
-    }
-
-    return {
-      [TIME_RANGES.LAST_7]: { start: now - 7 * DAY_MS, end: now, label: '7 days', days: 7 },
-      [TIME_RANGES.WEEKLY]: { start: now - 8 * 7 * DAY_MS, end: now, label: '8 weeks', days: 56 },
-      [TIME_RANGES.MONTHLY]: { start: now - 365 * DAY_MS, end: now, label: '12 months', days: 365 },
-      [TIME_RANGES.YEARLY]: {
-        start: now - 5 * 365 * DAY_MS,
-        end: now,
-        label: '5 years',
-        days: 1825,
-      },
-    }[range]
+      }[range] || { start: now - 7 * DAY_MS, end: now, label: 'Last 7 Days', days: 7 }
+    )
   }
 
   const fetchWithFallback = async (range) => {
     const limit = getRecordLimit(range)
     const bounds = getTimeRangeBounds(range)
 
-    log(`⚡ Fetching last ${limit} records from dashboard`)
+    log(`⚡ Fetching last ${limit} records for ${bounds.label}`)
     loadingMessage.value = `Loading ${bounds.label}...`
     loadingProgress.value = 20
 
     try {
+      // Use dashboard database (fast, limited to 10k records)
       const historyRef = dbRef(rtdb, 'sensor_logs_dashboard')
       const historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(limit))
 
@@ -181,42 +167,49 @@ export function useChartsData() {
       loadingProgress.value = 70
 
       if (!snapshot.exists()) {
-        log('No data in database')
-        return []
+        log('⚠️ No data in dashboard - checking main database...')
+
+        // Fallback to main database if dashboard is empty
+        const mainRef = dbRef(rtdb, 'sensor_logs')
+        const mainQuery = query(mainRef, orderByChild('timestamp'), limitToLast(limit))
+        const mainSnapshot = await get(mainQuery)
+
+        if (!mainSnapshot.exists()) {
+          log('❌ No data in any database')
+          return []
+        }
+
+        log('✅ Found data in main database')
+        const allRecords = Object.values(mainSnapshot.val())
+        const filtered = allRecords.filter(
+          (r) => r.timestamp >= bounds.start && r.timestamp <= bounds.end,
+        )
+        log(`Main DB: Fetched ${allRecords.length} → Filtered ${filtered.length}`)
+        loadingProgress.value = 90
+        return filtered
       }
 
       const allRecords = Object.values(snapshot.val())
-      log(`Fetched ${allRecords.length} records`)
+      log(`Dashboard: Fetched ${allRecords.length} records`)
 
-      // Filter to time range
       const filtered = allRecords.filter(
         (r) => r.timestamp >= bounds.start && r.timestamp <= bounds.end,
       )
-
       log(`Filtered to ${filtered.length} records in range`)
       loadingProgress.value = 90
 
       return filtered
     } catch (error) {
-      log('Fallback fetch error:', error)
+      log('❌ Fetch error:', error)
       throw error
     }
   }
 
   const processRecords = (records, range) => {
-    log(`Processing ${records.length} records for ${range}`)
-
     if (!records || records.length === 0) {
-      return {
-        labels: [],
-        temperature: [],
-        humidity: [],
-        rainfall: [],
-        rainfallTotals: [],
-      }
+      return { labels: [], temperature: [], humidity: [], rainfall: [], rainfallTotals: [] }
     }
 
-    // Sort by timestamp
     records.sort((a, b) => a.timestamp - b.timestamp)
 
     if (range === TIME_RANGES.LAST_7) {
@@ -225,26 +218,23 @@ export function useChartsData() {
 
     const bounds = getTimeRangeBounds(range)
     const samplingRate = getSamplingRate(bounds.days, range)
-
     const sampled =
       samplingRate > 1 ? records.filter((_, idx) => idx % samplingRate === 0) : records
 
     if (samplingRate > 1) {
-      log(`Sampled ${records.length} → ${sampled.length} records (rate: ${samplingRate})`)
+      log(`Sampled ${records.length} → ${sampled.length} (rate: ${samplingRate})`)
     }
 
     return processAggregated(sampled, range)
   }
 
-  const processLast7 = (records) => {
-    return {
-      labels: records.map((r) => formatTimestamp(new Date(r.timestamp), TIME_RANGES.LAST_7)),
-      temperature: records.map((r) => Number(r.temperature) || 0),
-      humidity: records.map((r) => Number(r.humidity) || 0),
-      rainfall: records.map((r) => Number(r.rainRateEstimated_mm_hr_bucket) || 0),
-      rainfallTotals: records.map((r) => Number(r.rainfall_total_estimated_mm_bucket) || 0),
-    }
-  }
+  const processLast7 = (records) => ({
+    labels: records.map((r) => formatTimestamp(new Date(r.timestamp), TIME_RANGES.LAST_7)),
+    temperature: records.map((r) => Number(r.temperature) || 0),
+    humidity: records.map((r) => Number(r.humidity) || 0),
+    rainfall: records.map((r) => Number(r.rainRateEstimated_mm_hr_bucket) || 0),
+    rainfallTotals: records.map((r) => Number(r.rainfall_total_estimated_mm_bucket) || 0),
+  })
 
   const processAggregated = (records, range) => {
     const grouped = {}
@@ -254,13 +244,7 @@ export function useChartsData() {
       const key = getGroupKey(date, range)
 
       if (!grouped[key]) {
-        grouped[key] = {
-          timestamp: date,
-          temps: [],
-          hums: [],
-          rains: [],
-          rainTotals: [],
-        }
+        grouped[key] = { timestamp: date, temps: [], hums: [], rains: [], rainTotals: [] }
       }
 
       const temp = Number(record.temperature)
@@ -293,13 +277,13 @@ export function useChartsData() {
 
   const getGroupKey = (date, range) => {
     if (range === TIME_RANGES.WEEKLY) {
-      return `${date.getFullYear()}-W${getWeekNumber(date)}`
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
     }
     if (range === TIME_RANGES.MONTHLY) {
-      return `${date.getFullYear()}-${date.getMonth()}`
+      return `${date.getFullYear()}-W${getWeekNumber(date)}`
     }
     if (range === TIME_RANGES.YEARLY) {
-      return `${date.getFullYear()}`
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     }
     return date.toISOString()
   }
@@ -318,9 +302,17 @@ export function useChartsData() {
       })
     }
     if (range === TIME_RANGES.WEEKLY) {
-      return `Week ${getWeekNumber(pht)}, ${pht.getFullYear()}`
+      return pht.toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })
     }
     if (range === TIME_RANGES.MONTHLY) {
+      return `Week ${getWeekNumber(pht)}, ${pht.getFullYear()}`
+    }
+    if (range === TIME_RANGES.YEARLY) {
       return pht.toLocaleString('en-US', {
         timeZone: 'Asia/Manila',
         month: 'short',
@@ -340,7 +332,12 @@ export function useChartsData() {
 
   const updateAvailabilityInfo = (records, range) => {
     if (!records || records.length === 0) {
-      dataAvailabilityInfo.value = 'No data available for this time range'
+      dataAvailabilityInfo.value = 'No data available'
+      return
+    }
+
+    if (range === TIME_RANGES.LAST_7) {
+      dataAvailabilityInfo.value = `${records.length} live readings • Real-time`
       return
     }
 
@@ -348,40 +345,19 @@ export function useChartsData() {
     const newestTs = Math.max(...records.map((r) => r.timestamp))
     const spanDays = Math.floor((newestTs - oldestTs) / (24 * 60 * 60 * 1000))
 
-    if (spanDays === 0) {
-      dataAvailabilityInfo.value = `${records.length} readings (today)`
-    } else if (spanDays === 1) {
-      dataAvailabilityInfo.value = `${records.length} readings (yesterday & today)`
-    } else {
-      dataAvailabilityInfo.value = `${records.length} readings (${spanDays} day span)`
-    }
-
     const bounds = getTimeRangeBounds(range)
-    if (bounds && range !== TIME_RANGES.LAST_7) {
-      dataAvailabilityInfo.value += ` • ${bounds.label} range`
-    }
-
-    if (range === TIME_RANGES.LAST_7) {
-      dataAvailabilityInfo.value += ' • real-time'
-    } else {
-      dataAvailabilityInfo.value += ' • optimized'
-    }
+    dataAvailabilityInfo.value = `${records.length} readings (${spanDays} day span) • ${bounds.label}`
   }
 
-  // Real-time listener for Last 7 Days (uses onValue for live updates)
   const fetchLast7 = () => {
-    log('Setting up real-time listener for Last 7 Days')
+    log('Setting up real-time listener for Last 7 Readings')
     loadingMessage.value = 'Connecting to live data...'
 
-    const limit = getRecordLimit(TIME_RANGES.LAST_7)
     const historyRef = dbRef(rtdb, 'sensor_logs_dashboard')
-    const historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(limit))
+    const historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7))
 
     const callback = (snapshot) => {
-      if (!isMounted) {
-        log('Component unmounted, ignoring callback')
-        return
-      }
+      if (!isMounted) return
 
       log('📡 Real-time update received')
 
@@ -396,15 +372,9 @@ export function useChartsData() {
         dataAvailabilityInfo.value = 'No data available'
       } else {
         const records = Object.values(snapshot.val())
-        const bounds = getTimeRangeBounds(TIME_RANGES.LAST_7)
-
-        // Filter to last 7 days
-        const filtered = records.filter(
-          (r) => r.timestamp >= bounds.start && r.timestamp <= bounds.end,
-        )
-
-        chartData.value = processRecords(filtered, TIME_RANGES.LAST_7)
-        updateAvailabilityInfo(filtered, TIME_RANGES.LAST_7)
+        log(`Received ${records.length} records`)
+        chartData.value = processRecords(records, TIME_RANGES.LAST_7)
+        updateAvailabilityInfo(records, TIME_RANGES.LAST_7)
       }
 
       isLoading.value = false
@@ -423,17 +393,13 @@ export function useChartsData() {
     })
   }
 
-  // One-time fetch for historical data (weekly, monthly, yearly)
   const fetchHistorical = async (range) => {
     log(`Fetching historical data: ${range}`)
 
     try {
       const records = await fetchWithFallback(range)
 
-      if (abortController?.signal.aborted || !isMounted) {
-        log('Fetch aborted or unmounted')
-        return
-      }
+      if (abortController?.signal.aborted || !isMounted) return
 
       if (records.length === 0) {
         chartData.value = {
@@ -469,9 +435,8 @@ export function useChartsData() {
     }
   }
 
-  // Main fetch function
   const fetchData = async (range = TIME_RANGES.LAST_7) => {
-    log(`\n========== Fetching Chart Data: ${range} ==========`)
+    log(`\n========== Fetching: ${range} ==========`)
     log(
       'Device:',
       isMobile() ? 'Mobile' : 'Desktop',
@@ -479,23 +444,17 @@ export function useChartsData() {
       isSlowConnection() ? 'Slow' : 'Fast',
     )
 
-    // Cleanup any existing listeners/operations
     cleanup()
 
-    // Reset state
     isLoading.value = true
     loadingProgress.value = 0
     loadingMessage.value = 'Initializing...'
-
-    // Create new abort controller for this operation
     abortController = new AbortController()
 
     try {
       if (range === TIME_RANGES.LAST_7) {
-        // Use real-time listener
         fetchLast7()
       } else {
-        // Use one-time fetch
         await fetchHistorical(range)
       }
     } catch (err) {
@@ -508,51 +467,41 @@ export function useChartsData() {
           rainfall: [],
           rainfallTotals: [],
         }
-        dataAvailabilityInfo.value = 'Error loading data. Please try again.'
+        dataAvailabilityInfo.value = 'Error loading data.'
         isLoading.value = false
       }
     }
 
-    log('========================================\n')
+    log('==========================================\n')
   }
 
-  // Cleanup function
   const cleanup = () => {
     if (firebaseListener) {
       const { ref: oldRef, callback } = firebaseListener
       off(oldRef, 'value', callback)
       firebaseListener = null
-      log('✓ Cleaned up Firebase listener')
+      log('✓ Cleaned up listener')
     }
-
     if (abortController) {
       abortController.abort()
       abortController = null
-      log('✓ Aborted pending operations')
     }
   }
 
-  // Unmount handler
   const onUnmount = () => {
-    log('Component unmounting...')
     isMounted = false
     cleanup()
   }
 
   return {
-    // State
     isLoading,
     loadingProgress,
     loadingMessage,
     dataAvailabilityInfo,
     chartData,
-
-    // Methods
     fetchData,
     cleanup,
     onUnmount,
-
-    // Constants
     TIME_RANGES,
   }
 }
