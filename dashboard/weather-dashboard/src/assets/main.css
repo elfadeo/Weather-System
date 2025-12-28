@@ -2,7 +2,6 @@
 
 /* ============================================
    VUE THEME COLOR PALETTE
-   (needed for --vt-c-white-mute reference)
    ============================================ */
 :root {
   --vt-c-white: #ffffff;
@@ -21,21 +20,20 @@
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 }
 
-/* Your custom theme color variables */
+/* ============================================
+   LIGHT MODE VARIABLES
+   ============================================ */
 :root {
-  --color-background: #f8f9fa; /* Light mode background */
-  --color-surface: var(--vt-c-white-mute); /* Light mode cards/surfaces */
-  --color-primary: #1a73e8; /* Light mode primary accent (e.g., buttons) */
-  --color-text-main: #202124; /* Light mode main text */
-  --color-text-light: #5f6368; /* Light mode secondary text */
+  --color-background: #f8f9fa;
+  --color-surface: var(--vt-c-white-mute);
+  --color-primary: #1a73e8;
+  --color-text-main: #202124;
+  --color-text-light: #5f6368;
+  --color-hover: #e8eaed;
+  --color-border: #e5e7eb;
+  --color-primary-text: #ffffff;
 
-  /* Hover & Border */
-  --color-hover: #e8eaed; /* Light mode hover (soft gray) */
-  --color-border: #e5e7eb; /* Light mode border */
-
-  --color-primary-text: #ffffff; /* White text for dark primary in light mode */
-
-  /* Extended color palette */
+  /* Red Palette */
   --color-red-50: #fef2f2;
   --color-red-100: #fee2e2;
   --color-red-200: #fecaca;
@@ -45,6 +43,7 @@
   --color-red-800: #991b1b;
   --color-red-900: #7f1d1d;
 
+  /* Orange Palette */
   --color-orange-50: #fff7ed;
   --color-orange-100: #ffedd5;
   --color-orange-200: #fed7aa;
@@ -54,6 +53,7 @@
   --color-orange-800: #9a3412;
   --color-orange-900: #7c2d12;
 
+  /* Green Palette */
   --color-green-50: #f0fdf4;
   --color-green-100: #dcfce7;
   --color-green-200: #bbf7d0;
@@ -63,6 +63,7 @@
   --color-green-800: #166534;
   --color-green-900: #14532d;
 
+  /* Purple Palette */
   --color-purple-50: #f5f3ff;
   --color-purple-100: #ede9fe;
   --color-purple-200: #ddd6fe;
@@ -72,6 +73,7 @@
   --color-purple-800: #6d28d9;
   --color-purple-900: #5b21b6;
 
+  /* Pink Palette */
   --color-pink-50: #fdf2f8;
   --color-pink-100: #fce7f3;
   --color-pink-200: #fbcfe8;
@@ -80,22 +82,42 @@
   --color-pink-700: #be185d;
   --color-pink-800: #9d174d;
   --color-pink-900: #831843;
+
+  /* Blue Palette (Added for Notable state) */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-400: #60a5fa;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+
+  /* Gray Palette (Added for Normal state) */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-400: #9ca3af;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
 }
 
+/* ============================================
+   DARK MODE VARIABLES
+   ============================================ */
 html.dark {
-  --color-background: #000000; /* True black background */
-  --color-surface: #121212; /* Very dark gray for cards/surfaces */
-  --color-primary: #8ab4f8; /* Dark mode primary accent */
-  --color-text-main: #e8eaed; /* Dark mode main text */
-  --color-text-light: #9aa0a6; /* Dark mode secondary text */
+  --color-background: #000000;
+  --color-surface: #121212;
+  --color-primary: #8ab4f8;
+  --color-text-main: #e8eaed;
+  --color-text-light: #9aa0a6;
+  --color-hover: #2a2a2a;
+  --color-border: #374151;
+  --color-primary-text: #1a1a1a;
 
-  /* Hover & Border */
-  --color-hover: #2a2a2a; /* Dark mode hover (soft gray, not pure white) */
-  --color-border: #374151; /* Dark mode border */
-
-  --color-primary-text: #1a1a1a; /* Dark text for light primary in dark mode */
-
-  /* Extended color palette - dark mode variants */
+  /* Red Palette */
   --color-red-50: #1f1212;
   --color-red-100: #2f1d1d;
   --color-red-200: #4f2e2e;
@@ -105,6 +127,7 @@ html.dark {
   --color-red-800: #f3b8b8;
   --color-red-900: #fcd4d4;
 
+  /* Orange Palette */
   --color-orange-50: #221810;
   --color-orange-100: #332418;
   --color-orange-200: #553b24;
@@ -114,6 +137,7 @@ html.dark {
   --color-orange-800: #fac998;
   --color-orange-900: #ffe1b6;
 
+  /* Green Palette */
   --color-green-50: #0d1e13;
   --color-green-100: #1a2d20;
   --color-green-200: #2a4c33;
@@ -123,6 +147,7 @@ html.dark {
   --color-green-800: #bcf6d6;
   --color-green-900: #ddfff0;
 
+  /* Purple Palette */
   --color-purple-50: #171422;
   --color-purple-100: #231f33;
   --color-purple-200: #3a3255;
@@ -132,6 +157,7 @@ html.dark {
   --color-purple-800: #eac9fe;
   --color-purple-900: #f5e3ff;
 
+  /* Pink Palette */
   --color-pink-50: #22141a;
   --color-pink-100: #331f28;
   --color-pink-200: #553243;
@@ -140,9 +166,31 @@ html.dark {
   --color-pink-700: #f0a5cb;
   --color-pink-800: #fac3dd;
   --color-pink-900: #ffdfea;
+
+  /* Blue Palette (Added for Notable state) */
+  --color-blue-50: #172554;
+  --color-blue-100: #1e3a8a;
+  --color-blue-200: #1d4ed8;
+  --color-blue-400: #3b82f6;
+  --color-blue-600: #60a5fa;
+  --color-blue-700: #93c5fd;
+  --color-blue-800: #bfdbfe;
+  --color-blue-900: #dbeafe;
+
+  /* Gray Palette (Added for Normal state) */
+  --color-gray-50: #18181b;
+  --color-gray-100: #27272a;
+  --color-gray-200: #3f3f46;
+  --color-gray-400: #71717a;
+  --color-gray-600: #a1a1aa;
+  --color-gray-700: #d4d4d8;
+  --color-gray-800: #e4e4e7;
+  --color-gray-900: #f4f4f5;
 }
 
-/* Apply a smooth transition to background and text colors */
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
 body {
   background-color: var(--color-background);
   color: var(--color-text-main);
@@ -151,40 +199,33 @@ body {
     color 0.3s ease;
 }
 
-/* Custom Scrollbar for Webkit Browsers */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #f0f4f9; /* Light mode track */
+  background: #f0f4f9;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #c2c8d0; /* Light mode thumb */
+  background: #c2c8d0;
   border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #a3acb9; /* Light mode thumb hover */
+  background: #a3acb9;
 }
 
-/* Dark mode scrollbar styles */
 html.dark ::-webkit-scrollbar-track {
-  background: #000000; /* Black track */
+  background: #000000;
 }
-
 html.dark ::-webkit-scrollbar-thumb {
-  background: #2a2a2a; /* Darker gray thumb */
+  background: #2a2a2a;
   border-radius: 10px;
 }
-
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3a; /* Slightly lighter gray on hover */
+  background: #3a3a3a;
 }
 
-/* Firefox scrollbar support */
 * {
   scrollbar-width: thin;
   scrollbar-color: #c2c8d0 #f0f4f9;
@@ -193,33 +234,22 @@ html.dark * {
   scrollbar-color: #2a2a2a #000000;
 }
 
-/* Custom hover utilities */
-.hover-bg-hover:hover {
-  background-color: var(--color-hover) !important;
-}
-
-/* Separator text background - matches surface exactly */
 .bg-separator {
   background-color: #f8f9fa;
 }
-
 html.dark .bg-separator {
   background-color: #000000;
 }
 
-/* ============================================
-   ENHANCED SHADOWS FOR DARK MODE
-   ============================================ */
+/* Shadows */
 .shadow-sm {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
-
 .shadow-md {
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 0.1),
     0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
-
 .shadow-lg {
   box-shadow:
     0 10px 15px -3px rgb(0 0 0 / 0.1),
@@ -231,14 +261,12 @@ html.dark .shadow-sm {
     0 1px 2px 0 rgb(0 0 0 / 0.3),
     0 0 0 1px rgb(255 255 255 / 0.05);
 }
-
 html.dark .shadow-md {
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 0.3),
     0 2px 4px -2px rgb(0 0 0 / 0.2),
     0 0 0 1px rgb(255 255 255 / 0.05);
 }
-
 html.dark .shadow-lg {
   box-shadow:
     0 10px 15px -3px rgb(0 0 0 / 0.4),

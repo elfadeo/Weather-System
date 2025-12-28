@@ -5,19 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Main semantic colors (CSS variables controlled by main.css)
+        // Main semantic colors
         background: 'var(--color-background)',
         surface: 'var(--color-surface)',
         primary: 'var(--color-primary)',
         'text-main': 'var(--color-text-main)',
         'text-light': 'var(--color-text-light)',
-        'primary-text': 'var(--color-primary-text)', // ADD THIS LINE
-
-        // UI element colors (ADDED THESE TWO)
+        'primary-text': 'var(--color-primary-text)',
         hover: 'var(--color-hover)',
         border: 'var(--color-border)',
 
-        // Extended red palette
+        // Red
         'red-50': 'var(--color-red-50)',
         'red-100': 'var(--color-red-100)',
         'red-200': 'var(--color-red-200)',
@@ -27,7 +25,7 @@ export default {
         'red-800': 'var(--color-red-800)',
         'red-900': 'var(--color-red-900)',
 
-        // Extended orange palette
+        // Orange
         'orange-50': 'var(--color-orange-50)',
         'orange-100': 'var(--color-orange-100)',
         'orange-200': 'var(--color-orange-200)',
@@ -37,7 +35,7 @@ export default {
         'orange-800': 'var(--color-orange-800)',
         'orange-900': 'var(--color-orange-900)',
 
-        // Extended green palette
+        // Green
         'green-50': 'var(--color-green-50)',
         'green-100': 'var(--color-green-100)',
         'green-200': 'var(--color-green-200)',
@@ -47,7 +45,7 @@ export default {
         'green-800': 'var(--color-green-800)',
         'green-900': 'var(--color-green-900)',
 
-        // Extended purple palette
+        // Purple
         'purple-50': 'var(--color-purple-50)',
         'purple-100': 'var(--color-purple-100)',
         'purple-200': 'var(--color-purple-200)',
@@ -57,7 +55,7 @@ export default {
         'purple-800': 'var(--color-purple-800)',
         'purple-900': 'var(--color-purple-900)',
 
-        // Extended pink palette
+        // Pink
         'pink-50': 'var(--color-pink-50)',
         'pink-100': 'var(--color-pink-100)',
         'pink-200': 'var(--color-pink-200)',
@@ -66,6 +64,26 @@ export default {
         'pink-700': 'var(--color-pink-700)',
         'pink-800': 'var(--color-pink-800)',
         'pink-900': 'var(--color-pink-900)',
+
+        // Blue (Added)
+        'blue-50': 'var(--color-blue-50)',
+        'blue-100': 'var(--color-blue-100)',
+        'blue-200': 'var(--color-blue-200)',
+        'blue-400': 'var(--color-blue-400)',
+        'blue-600': 'var(--color-blue-600)',
+        'blue-700': 'var(--color-blue-700)',
+        'blue-800': 'var(--color-blue-800)',
+        'blue-900': 'var(--color-blue-900)',
+
+        // Gray (Added)
+        'gray-50': 'var(--color-gray-50)',
+        'gray-100': 'var(--color-gray-100)',
+        'gray-200': 'var(--color-gray-200)',
+        'gray-400': 'var(--color-gray-400)',
+        'gray-600': 'var(--color-gray-600)',
+        'gray-700': 'var(--color-gray-700)',
+        'gray-800': 'var(--color-gray-800)',
+        'gray-900': 'var(--color-gray-900)',
       },
       animation: {
         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',

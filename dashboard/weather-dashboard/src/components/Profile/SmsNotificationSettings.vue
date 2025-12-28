@@ -1,7 +1,9 @@
 <template>
-  <div class="group transition-colors duration-300 hover:bg-hover/40">
-    <div class="flex items-center justify-between p-5 min-h-[5rem]">
-      <div class="flex items-center gap-5 mr-4">
+  <div
+    class="group transition-colors duration-300 hover:bg-hover/40 border border-transparent hover:border-border/30 rounded-xl"
+  >
+    <div class="flex items-center justify-between p-4 sm:p-5 min-h-[4rem] sm:min-h-[5rem]">
+      <div class="flex items-center gap-3 sm:gap-5 mr-4">
         <div
           class="flex-shrink-0 transition-colors duration-300"
           :class="
@@ -10,7 +12,7 @@
               : 'text-text-light group-hover:text-emerald-500'
           "
         >
-          <Icon icon="ph:device-mobile" class="w-6 h-6" />
+          <Icon icon="ph:device-mobile" class="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
 
         <div>
@@ -36,16 +38,16 @@
     </div>
 
     <Transition name="slide-fade">
-      <div v-if="enabled" class="pb-6 pl-[4.5rem] pr-6">
-        <div class="pl-4 border-l-2 border-emerald-500/30 space-y-4">
-          <div class="flex items-center justify-between">
+      <div v-if="enabled" class="pb-5 pl-4 pr-4 sm:pb-6 sm:pl-[4.5rem] sm:pr-6">
+        <div class="pl-3 sm:pl-4 border-l-2 border-emerald-500/30 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <p class="text-xs font-medium text-text-light uppercase tracking-wider">
               Phone Numbers ({{ phoneNumbers?.length || 0 }}/5)
             </p>
             <button
               @click="$emit('add-number')"
               :disabled="(phoneNumbers?.length || 0) >= 5"
-              class="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+              class="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-1 py-1"
             >
               <Icon icon="ph:plus-bold" class="w-3 h-3" />
               Add Number
@@ -69,15 +71,15 @@
 
             <div
               v-if="!phoneNumbers || phoneNumbers.length === 0"
-              class="text-center py-6 text-text-light"
+              class="text-center py-6 text-text-light bg-gray-50/50 dark:bg-white/5 rounded-lg border border-dashed border-gray-200 dark:border-white/10"
             >
               <Icon icon="ph:phone-plus-bold" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p class="text-sm">No phone numbers added yet</p>
-              <p class="text-xs mt-1 opacity-70">Click "Add Number" to get started</p>
+              <p class="text-sm font-medium">No phone numbers</p>
+              <p class="text-xs mt-1 opacity-70">Tap "Add Number" above</p>
             </div>
           </div>
 
-          <p class="text-[10px] text-text-light opacity-60">
+          <p class="text-[10px] sm:text-xs text-text-light opacity-60 leading-relaxed">
             Format: 09171234567 or +639171234567 • Maximum 5 numbers
           </p>
         </div>
@@ -103,11 +105,8 @@ const emit = defineEmits([
   'update:phone-field',
 ])
 
-// Handle phone field updates and emit to parent
 const handlePhoneUpdate = (index, field, value) => {
-  // Emit event to parent so it can update the actual data
   emit('update:phone-field', { index, field, value })
-  // Also trigger validation after update
   emit('validate-number', index)
 }
 </script>

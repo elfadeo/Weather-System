@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex bg-[var(--color-background)] font-sans text-[var(--color-text-main)] overflow-x-hidden transition-colors duration-500 selection:bg-[var(--color-primary)] selection:text-white"
+    class="min-h-screen flex bg-background font-sans text-text-main overflow-x-hidden transition-colors duration-500 selection:bg-primary selection:text-white"
   >
     <Sidebar
       ref="sidebarRef"
@@ -13,32 +13,28 @@
       :class="isSidebarExpanded ? 'lg:ml-[260px]' : 'lg:ml-[80px]'"
     >
       <header
-        class="sticky top-0 z-30 w-full bg-[var(--color-surface)]/80 backdrop-blur-xl border-b border-[var(--color-border)]/40 transition-all duration-300 safe-top"
+        class="sticky top-0 z-30 w-full bg-surface/80 backdrop-blur-xl border-b border-border/40 transition-all duration-300 safe-top"
       >
         <div class="px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
           <div class="flex items-center gap-4 flex-1 min-w-0">
             <button
               @click="toggleMobileSidebar"
-              class="lg:hidden p-2 -ml-2 text-[var(--color-text-light)] hover:text-[var(--color-primary)] hover:bg-[var(--color-hover)] rounded-full active:scale-95 transition-all focus:outline-none"
+              class="lg:hidden p-2 -ml-2 text-text-light hover:text-primary hover:bg-hover rounded-full active:scale-95 transition-all focus:outline-none"
               :aria-label="isSidebarMobileOpen ? 'Close menu' : 'Open menu'"
             >
               <Icon :icon="sidebarOpenIcon" class="h-6 w-6" />
             </button>
 
             <div class="flex items-center gap-3 lg:hidden">
-              <span class="text-[var(--color-primary)]">
+              <span class="text-primary">
                 <Icon icon="ph:cloud-sun-duotone" class="h-6 w-6" />
               </span>
-              <h1
-                class="text-sm font-semibold tracking-wide uppercase text-[var(--color-text-main)] truncate"
-              >
+              <h1 class="text-sm font-semibold tracking-wide uppercase text-text-main truncate">
                 Climate Monitoring
               </h1>
             </div>
 
-            <h2
-              class="hidden lg:block text-lg font-medium tracking-tight text-[var(--color-text-main)]"
-            >
+            <h2 class="hidden lg:block text-lg font-medium tracking-tight text-text-main">
               Dashboard Overview
             </h2>
           </div>
@@ -46,7 +42,7 @@
           <div class="flex items-center gap-3 shrink-0">
             <button
               @click="toggleTheme"
-              class="group relative p-2.5 rounded-full text-[var(--color-text-light)] hover:bg-[var(--color-hover)] hover:text-[var(--color-text-main)] transition-all focus:outline-none"
+              class="group relative p-2.5 rounded-full text-text-light hover:bg-hover hover:text-text-main transition-all focus:outline-none"
               :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
             >
               <Icon
@@ -87,21 +83,19 @@
         role="alert"
       >
         <div
-          class="flex items-center gap-3 px-4 py-3 bg-[var(--color-surface)]/95 backdrop-blur-md border border-[var(--color-border)] shadow-xl rounded-full ring-1 ring-black/5 dark:ring-white/10"
+          class="flex items-center gap-3 px-4 py-3 bg-surface/95 backdrop-blur-md border border-border shadow-xl rounded-full ring-1 ring-black/5 dark:ring-white/10"
         >
-          <div
-            class="flex items-center justify-center bg-[var(--color-red-500)]/10 rounded-full p-1.5"
-          >
-            <Icon icon="ph:warning-circle-bold" class="w-4 h-4 text-[var(--color-red-500)]" />
+          <div class="flex items-center justify-center bg-red-50 rounded-full p-1.5">
+            <Icon icon="ph:warning-circle-bold" class="w-4 h-4 text-red-600" />
           </div>
 
-          <span class="text-sm font-medium text-[var(--color-text-main)] pr-2">
+          <span class="text-sm font-medium text-text-main pr-2">
             {{ errorMessage }}
           </span>
 
           <button
             @click="clearError"
-            class="p-1 -mr-1 text-[var(--color-text-light)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-hover)] rounded-full transition-colors"
+            class="p-1 -mr-1 text-text-light hover:text-text-main hover:bg-hover rounded-full transition-colors"
           >
             <Icon icon="ph:x-bold" class="w-3.5 h-3.5" />
           </button>
