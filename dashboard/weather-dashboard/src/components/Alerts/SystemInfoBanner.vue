@@ -1,21 +1,29 @@
 <template>
   <div
-    class="bg-blue-50 dark:bg-blue-900/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-blue-200 dark:border-blue-800"
+    class="bg-blue-50 rounded-xl sm:rounded-2xl p-5 sm:p-6 mb-6 sm:mb-8 border border-blue-200 transition-colors duration-300"
   >
-    <div class="flex items-start space-x-3 sm:space-x-4">
-      <Icon
-        icon="ph:info-bold"
-        class="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-1"
-      />
+    <div class="flex items-start gap-4">
+      <div class="p-2 bg-blue-100 rounded-lg shrink-0 border border-blue-200">
+        <Icon icon="ph:info-bold" class="h-6 w-6 text-blue-700" />
+      </div>
+
       <div class="flex-1 min-w-0">
-        <h3 class="font-bold text-text-main mb-2 text-base sm:text-lg">
+        <h3 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">
           How the Alert System Works
         </h3>
-        <div class="text-xs sm:text-sm text-text-main space-y-2 sm:space-y-3">
-          <p v-for="(info, index) in systemInfo" :key="index" class="leading-relaxed">
-            <strong class="block sm:inline">{{ info.icon }} {{ info.title }}:</strong>
-            <span class="block sm:inline sm:ml-1">{{ info.description }}</span>
-          </p>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div v-for="(info, index) in systemInfo" :key="index" class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-2 mb-1">
+              <Icon :icon="info.icon" class="h-4 w-4 text-blue-600" />
+              <span class="font-bold text-sm text-blue-900">
+                {{ info.title }}
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-blue-800 leading-relaxed opacity-90">
+              {{ info.description }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -27,16 +35,16 @@ import { Icon } from '@iconify/vue'
 
 const systemInfo = [
   {
-    icon: '🚨',
+    icon: 'ph:siren-fill',
     title: 'Real-Time Email Alerts',
     description:
-      'Automated monitoring runs every 15 minutes via GitHub Actions. When sensor readings exceed critical thresholds (based on IRRI & PAGASA research), emails are sent automatically.',
+      'Automated monitoring runs every 15 minutes via GitHub Actions. If sensor readings exceed critical thresholds (defined by IRRI & PAGASA), emails are sent instantly.',
   },
   {
-    icon: '📊',
-    title: 'Dashboard History',
+    icon: 'ph:chart-bar-fill',
+    title: 'Data-Driven Thresholds',
     description:
-      'This page displays the history of triggered alerts. Thresholds are pre-configured based on scientific research for rice agriculture.',
+      'Alerts are triggered based on peer-reviewed scientific data for rice agriculture. This history log tracks every incident for long-term analysis.',
   },
 ]
 </script>

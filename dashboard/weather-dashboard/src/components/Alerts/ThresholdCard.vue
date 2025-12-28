@@ -1,117 +1,139 @@
 <template>
-  <div class="bg-surface rounded-2xl shadow-sm p-6 sticky top-8 space-y-6 border border-border">
-    <!-- Header -->
+  <div
+    class="bg-surface rounded-2xl shadow-sm p-5 sm:p-6 sticky top-8 space-y-6 border border-border transition-colors duration-300"
+  >
     <div>
-      <h2 class="text-xl font-bold text-text-main mb-2 flex items-center">
-        <Icon icon="ph:shield-check-bold" class="h-6 w-6 mr-2 text-blue-600 dark:text-blue-400" />
+      <h2 class="text-lg sm:text-xl font-bold text-text-main mb-2 flex items-center">
+        <Icon icon="ph:shield-check-bold" class="h-6 w-6 mr-2 text-blue-600" />
         Active Thresholds
       </h2>
-      <p class="text-xs text-text-light">Scientific thresholds from IRRI & PAGASA research</p>
+      <p class="text-xs text-text-light leading-relaxed">
+        Scientific thresholds based on IRRI & PAGASA research standards.
+      </p>
     </div>
 
-    <!-- Rice Agriculture Thresholds (IRRI) -->
     <div
-      class="border-l-4 border-green-500 dark:border-green-600 pl-4 bg-green-50 dark:bg-green-900/20 p-4 rounded-r-lg"
+      class="rounded-r-lg border-l-4 border-green-600 bg-green-50 p-4 transition-colors duration-300"
     >
-      <h3 class="text-sm font-bold text-text-main mb-3 flex items-center">
-        <Icon icon="ph:plant-bold" class="h-5 w-5 mr-2" />
+      <h3 class="text-sm font-bold text-green-900 mb-4 flex items-center">
+        <Icon icon="ph:plant-bold" class="h-5 w-5 mr-2 text-green-700" />
         Rice Agriculture (IRRI)
       </h3>
 
-      <!-- Temperature Thresholds -->
-      <div
-        v-for="threshold in riceThresholds"
-        :key="threshold.label"
-        class="mb-3 pb-3 border-b border-green-200 dark:border-green-800 last:border-b-0 last:mb-0 last:pb-0"
-      >
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-text-main">
-            {{ threshold.icon }} {{ threshold.label }}
-          </span>
-          <span class="text-xs font-mono px-2 py-0.5 rounded" :class="threshold.badgeClass">
-            {{ threshold.value }}
-          </span>
+      <div class="space-y-3">
+        <div
+          v-for="threshold in riceThresholds"
+          :key="threshold.label"
+          class="pb-3 border-b border-green-200 last:border-0 last:pb-0"
+        >
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-bold text-green-900 flex items-center gap-1.5">
+              <Icon :icon="threshold.icon" class="h-4 w-4" :class="threshold.iconClass" />
+              {{ threshold.label }}
+            </span>
+            <span
+              class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full"
+              :class="threshold.badgeClass"
+            >
+              {{ threshold.value }}
+            </span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-green-800 opacity-90 leading-snug">
+            {{ threshold.description }}
+          </p>
         </div>
-        <p class="text-xs text-text-light">{{ threshold.description }}</p>
       </div>
 
-      <!-- Disease Monitoring -->
-      <div>
-        <p class="text-xs font-semibold text-text-main mb-2">🦠 Disease Detection</p>
-        <ul class="text-xs text-text-light space-y-1">
-          <li v-for="disease in diseases" :key="disease.name">
-            • {{ disease.name }}: {{ disease.condition }}
+      <div class="mt-4 pt-3 border-t border-green-200">
+        <p class="text-xs font-bold text-green-900 mb-2 flex items-center gap-1.5">
+          <Icon icon="ph:virus-bold" class="h-4 w-4 text-green-700" />
+          Disease Detection
+        </p>
+        <ul class="space-y-1.5">
+          <li
+            v-for="disease in diseases"
+            :key="disease.name"
+            class="text-[11px] sm:text-xs text-green-800 flex items-start gap-2"
+          >
+            <span class="mt-1.5 h-1 w-1 rounded-full bg-green-700 shrink-0"></span>
+            <span>
+              <span class="font-semibold">{{ disease.name }}:</span>
+              <span class="opacity-80 ml-1">{{ disease.condition }}</span>
+            </span>
           </li>
         </ul>
       </div>
     </div>
 
-    <!-- PAGASA Rainfall System -->
     <div
-      class="border-l-4 border-blue-500 dark:border-blue-600 pl-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-r-lg"
+      class="rounded-r-lg border-l-4 border-blue-600 bg-blue-50 p-4 transition-colors duration-300"
     >
-      <h3 class="text-sm font-bold text-text-main mb-3 flex items-center">
-        <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 mr-2" />
+      <h3 class="text-sm font-bold text-blue-900 mb-3 flex items-center">
+        <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 mr-2 text-blue-700" />
         PAGASA Rainfall System
       </h3>
 
       <div class="space-y-2">
-        <!-- Yellow Alert -->
         <div
-          class="flex items-center justify-between p-2 rounded bg-yellow-50 dark:bg-yellow-900/20"
+          class="flex items-center justify-between p-2.5 rounded bg-orange-50 border border-orange-200"
         >
-          <span class="text-xs font-semibold text-yellow-900 dark:text-yellow-100">
-            🟡 Yellow Alert
+          <span class="text-xs font-bold text-orange-800 flex items-center gap-1.5">
+            <Icon icon="ph:warning-circle-fill" class="h-3.5 w-3.5 text-orange-600" />
+            Yellow Alert
           </span>
-          <span class="text-xs font-mono text-yellow-900 dark:text-yellow-100"> ≥7.5 mm/hr </span>
+          <span class="text-[10px] font-mono font-semibold text-orange-900"> ≥7.5 mm/hr </span>
         </div>
 
-        <!-- Orange Alert -->
         <div
-          class="flex items-center justify-between p-2 rounded bg-orange-50 dark:bg-orange-900/20"
+          class="flex items-center justify-between p-2.5 rounded bg-orange-100 border border-orange-200"
         >
-          <span class="text-xs font-semibold text-orange-900 dark:text-orange-100">
-            🟠 Orange Alert
+          <span class="text-xs font-bold text-orange-900 flex items-center gap-1.5">
+            <Icon icon="ph:warning-fill" class="h-3.5 w-3.5 text-orange-700" />
+            Orange Alert
           </span>
-          <span class="text-xs font-mono text-orange-900 dark:text-orange-100"> ≥15 mm/hr </span>
+          <span class="text-[10px] font-mono font-semibold text-orange-900"> ≥15 mm/hr </span>
         </div>
 
-        <!-- Red Alert -->
-        <div class="flex items-center justify-between p-2 rounded bg-red-50 dark:bg-red-900/30">
-          <span class="text-xs font-semibold text-red-900 dark:text-red-100"> 🔴 Red Alert </span>
-          <span class="text-xs font-mono text-red-900 dark:text-red-100"> ≥30 mm/hr </span>
+        <div
+          class="flex items-center justify-between p-2.5 rounded bg-red-50 border border-red-200"
+        >
+          <span class="text-xs font-bold text-red-900 flex items-center gap-1.5">
+            <Icon icon="ph:siren-fill" class="h-3.5 w-3.5 text-red-600" />
+            Red Alert
+          </span>
+          <span class="text-[10px] font-mono font-semibold text-red-900"> ≥30 mm/hr </span>
         </div>
       </div>
 
-      <p class="text-xs text-text-light mt-3">Color-coded flood risk assessment system</p>
+      <p class="text-[10px] text-blue-800 mt-3 opacity-80">
+        Automatic classification based on hourly rainfall volume.
+      </p>
     </div>
 
-    <!-- Email Status -->
-    <div class="border-t border-border pt-4">
-      <div class="flex items-center justify-between p-3 bg-background rounded-lg">
+    <div class="border-t border-border pt-5">
+      <div
+        class="flex items-center justify-between p-3 bg-background rounded-lg border border-border"
+      >
         <div class="flex items-center space-x-2">
           <Icon icon="ph:envelope-simple-bold" class="h-5 w-5 text-text-light" />
           <span class="text-sm font-medium text-text-main">Email Alerts</span>
         </div>
         <span
-          class="px-2 py-1 text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100 rounded-full"
+          class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-800 rounded-full border border-green-200"
         >
           Active
         </span>
       </div>
-      <p class="text-xs text-text-light mt-2 text-center">
-        Automated via GitHub Actions (every 15 min)
+      <p class="text-[10px] text-text-light mt-2 text-center opacity-70">
+        Automated monitoring runs every 15 minutes via GitHub Actions
       </p>
     </div>
 
-    <!-- Info Note -->
-    <div
-      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3"
-    >
-      <p class="text-xs text-text-main">
-        <Icon icon="ph:info-bold" class="inline h-3 w-3 mr-1" />
-        <strong>Note:</strong> These thresholds are based on peer-reviewed research and cannot be
-        changed from the dashboard. They are configured in the backend monitoring system.
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+      <Icon icon="ph:info-bold" class="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+      <p class="text-xs text-blue-900 leading-relaxed">
+        <strong>System Note:</strong> These thresholds are locked to ensure compliance with national
+        agricultural standards.
       </p>
     </div>
   </div>
@@ -123,18 +145,22 @@ import { Icon } from '@iconify/vue'
 // Rice agriculture thresholds
 const riceThresholds = [
   {
-    icon: '🔥',
+    icon: 'ph:thermometer-hot-bold',
+    // Uses Red variables for critical items
+    iconClass: 'text-red-600',
     label: 'Heat Stress',
     value: '>35°C',
     description: 'Causes spikelet sterility during flowering',
-    badgeClass: 'bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-100',
+    badgeClass: 'bg-red-50 text-red-900 border border-red-200',
   },
   {
-    icon: '✅',
+    icon: 'ph:check-circle-bold',
+    // Uses Green variables for good items
+    iconClass: 'text-green-600',
     label: 'Optimal Range',
     value: '25-33°C',
     description: 'Ideal temperature for rice growth',
-    badgeClass: 'bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-100',
+    badgeClass: 'bg-green-100 text-green-800 border border-green-200',
   },
 ]
 

@@ -6,14 +6,14 @@ export function buildPrompt({
   historicalSummary,
 }) {
   const currentDate = new Date()
-  const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' })
 
-  // --- 1. PRE-CALCULATE RISKS ---
+  // --- 1. PRE-CALCULATE RISKS (IRRI & PAGASA Standards) ---
+  // Use safe defaults to prevent crashes
   const temp = latestData.temperature || 0
   const humidity = latestData.humidity || 0
-  const rain = rainfallRate || 0
+  const rain = parseFloat(rainfallRate) || 0
 
-  // Extract historical data (Fixes the "unused var" error)
+  // Historical context (Safe navigation ?. checks if summary exists)
   const avgTemp24h = historicalSummary?.avgTemp24h ? historicalSummary.avgTemp24h.toFixed(1) : 'N/A'
   const avgHum24h = historicalSummary?.avgHumidity24h
     ? historicalSummary.avgHumidity24h.toFixed(0)
@@ -21,22 +21,26 @@ export function buildPrompt({
 
   const activeAlerts = []
 
-  // A. PAGASA Rainfall Alerts
+  // A. PAGASA Rainfall Alerts (Check highest severity first)
   let rainStatus = 'Normal'
   if (rain >= 30) {
     rainStatus = 'RED WARNING (Torrential)'
-    activeAlerts.push('CRITICAL: EVACUATION ALERT (Red Rainfall Warning)')
+    activeAlerts.push(
+      'FLOOD WATCH: RED Rainfall Warning (Torrential >30mm/hr). Serious flood risk.',
+    )
   } else if (rain >= 15) {
     rainStatus = 'ORANGE WARNING (Intense)'
-    activeAlerts.push('ALERT: Prepare for possible flooding (Orange Rainfall Warning)')
+    activeAlerts.push(
+      'FLOOD WATCH: ORANGE Rainfall Warning (Intense >15mm/hr). Prepare for flooding.',
+    )
   } else if (rain >= 7.5) {
     rainStatus = 'YELLOW WARNING (Heavy)'
-    activeAlerts.push('MONITOR: Flood risk designated (Yellow Rainfall Warning)')
+    activeAlerts.push('FLOOD WATCH: YELLOW Rainfall Warning (Heavy >7.5mm/hr). Monitor conditions.')
   }
 
   // B. IRRI Temperature Thresholds
   if (temp > 35) {
-    activeAlerts.push('CROP STRESS: Heat Stress Detected (>35°C). High risk of spikelet sterility.')
+    activeAlerts.push('HEAT STRESS: Critical Temp >35°C detected. Risk of spikelet sterility.')
   }
 
   // C. IRRI Disease Thresholds
@@ -47,47 +51,35 @@ export function buildPrompt({
     activeAlerts.push('DISEASE RISK: High Probability of Bacterial Blight (High RH + Warm Temp).')
   }
 
+  // Define Risk Context string
   const riskContext =
     activeAlerts.length > 0
-      ? activeAlerts.join('\n- ')
-      : 'Conditions are within normal ranges. Focus on routine maintenance.'
+      ? `CRITICAL ALERTS DETECTED:\n- ${activeAlerts.join('\n- ')}`
+      : 'STATUS: Normal conditions. No critical thresholds exceeded.'
 
   // --- 2. BUILD THE PROMPT ---
   return `
-You are an expert Agricultural Advisor and Disaster Risk specialist for Rice Farmers in Brgy. Angayen, Balo-i, Lanao del Norte.
-Use the following OFFICIAL IRRI and PAGASA thresholds to generate advice.
+    You are an expert Agricultural Advisor for Rice Farmers in ${deviceAddress || 'Philippines'}.
 
-CURRENT SENSOR DATA:
-- Location: ${deviceAddress}
-- Date: ${currentDate.toDateString()} (${currentMonth})
-- Rainfall Rate: ${rain} mm/hr [Status: ${rainStatus}]
-- Cumulative Rain (24h): ${totalRainfall} mm
-- Temperature: ${temp.toFixed(1)}°C
-- Humidity: ${humidity.toFixed(0)}%
+    CURRENT METRICS:
+    - Date: ${currentDate.toDateString()}
+    - Rain Rate: ${rain.toFixed(1)} mm/hr [${rainStatus}]
+    - Total Rain (24h): ${totalRainfall} mm
+    - Temp: ${temp.toFixed(1)}°C (Avg 24h: ${avgTemp24h}°C)
+    - Humidity: ${humidity.toFixed(0)}% (Avg 24h: ${avgHum24h}%)
 
-24-HOUR TRENDS:
-- Avg Temperature: ${avgTemp24h}°C
-- Avg Humidity: ${avgHum24h}%
+    ${riskContext}
 
-DETECTED RISK EVENTS (Must Address):
-- ${riskContext}
+    STRICT INSTRUCTIONS:
+    1. If "CRITICAL ALERTS DETECTED" are listed above, you MUST prioritize them as the first recommendations.
+    2. If status is "Normal", focus on maintenance (Fertilizer, Weeding, Water Level).
+    3. KEEP RECOMMENDATIONS SHORT (Max 20 words each).
+    4. CATEGORIES MUST BE ONE OF: "Disease Risk", "Heat Stress", "Irrigation", "Fertilizer", "Flood Watch", "Pest Control".
 
-SCIENTIFIC REFERENCE TABLE:
-1. Heat Stress: >35°C (Causes spikelet sterility)
-2. Rice Blast: >90% RH AND 24-28°C
-3. Bacterial Blight: >85% RH AND 30-34°C
-4. PAGASA Alerts: Yellow (7.5+), Orange (15+), Red (30+)
-
-TASK:
-Generate exactly THREE (3) recommendations.
-IF any "DETECTED RISK EVENTS" are listed above, you MUST prioritize them.
-
-OUTPUT FORMAT (JSON ARRAY ONLY):
-[
-  {
-    "category": "Category Name",
-    "recommendation": "Actionable advice."
-  }
-]
-`
+    OUTPUT FORMAT:
+    Return a valid JSON array of objects. Do not include markdown formatting.
+    [
+      { "category": "Disease Risk", "recommendation": "Monitor leaf tips..." }
+    ]
+  `
 }

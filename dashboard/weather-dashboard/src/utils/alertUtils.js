@@ -2,6 +2,7 @@
 
 /**
  * Get alert styling configuration based on severity and status
+ * Uses CSS Variable Theme Architecture (bg-[color]-50 auto-adapts to Dark Mode)
  */
 export function getAlertStyle(alert) {
   const severity = alert.severity?.toLowerCase()
@@ -11,8 +12,10 @@ export function getAlertStyle(alert) {
   if (alert.alerts?.length > 0) {
     const hasCritical = alert.alerts.some((a) => a.severity === 'critical')
     return {
-      bg: hasCritical ? 'bg-red-100 dark:bg-red-900/30' : 'bg-orange-100 dark:bg-orange-900/30',
-      text: hasCritical ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400',
+      // bg-red-50: Light Pink (Light Mode) -> Deep Maroon (Dark Mode)
+      bg: hasCritical ? 'bg-red-50' : 'bg-orange-50',
+      // text-red-600: Vibrant Red (Light Mode) -> Soft Red (Dark Mode)
+      text: hasCritical ? 'text-red-600' : 'text-orange-600',
       icon: hasCritical ? 'ph:warning-octagon-bold' : 'ph:warning-bold',
       title: hasCritical
         ? 'Multiple Critical Alerts'
@@ -23,14 +26,14 @@ export function getAlertStyle(alert) {
   // Single alert severity levels
   const severityMap = {
     critical: {
-      bg: 'bg-red-100 dark:bg-red-900/30',
-      text: 'text-red-600 dark:text-red-400',
+      bg: 'bg-red-50',
+      text: 'text-red-600',
       icon: 'ph:fire-bold',
       title: 'Critical Alert',
     },
     warning: {
-      bg: 'bg-orange-100 dark:bg-orange-900/30',
-      text: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-50',
+      text: 'text-orange-600',
       icon: 'ph:warning-bold',
       title: 'Warning',
     },
@@ -43,17 +46,17 @@ export function getAlertStyle(alert) {
   // Status-based styling
   if (status === 'normal') {
     return {
-      bg: 'bg-green-100 dark:bg-green-900/30',
-      text: 'text-green-600 dark:text-green-400',
+      bg: 'bg-green-50',
+      text: 'text-green-600',
       icon: 'ph:check-circle-bold',
       title: 'System Check',
     }
   }
 
-  // Default
+  // Default (Blue)
   return {
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
-    text: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-50',
+    text: 'text-blue-600',
     icon: 'ph:bell-bold',
     title: 'Alert Notification',
   }
@@ -61,16 +64,20 @@ export function getAlertStyle(alert) {
 
 /**
  * Get CSS classes for severity badges
+ * Uses the 50/900/200 variable pattern for consistent contrast
  */
 export function getSeverityBadge(severity) {
+  const s = severity?.toLowerCase()
+
   const severityMap = {
-    critical: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
-    warning: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200',
-    advisory: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
+    critical: 'bg-red-50 text-red-900 border border-red-200',
+    warning: 'bg-orange-50 text-orange-900 border border-orange-200',
+    advisory: 'bg-blue-50 text-blue-900 border border-blue-200',
+    normal: 'bg-green-50 text-green-900 border border-green-200',
   }
-  return (
-    severityMap[severity?.toLowerCase()] || 'bg-background border border-border text-text-light'
-  )
+
+  // Default to Gray palette if unknown
+  return severityMap[s] || 'bg-gray-50 text-gray-900 border border-gray-200'
 }
 
 /**
