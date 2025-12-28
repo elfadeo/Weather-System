@@ -1,6 +1,0 @@
-“Make this component/page fully responsive for mobile, tablet, and desktop.
-Prioritize a clean layout for small screens (360–480px).
-Convert fixed sizes into responsive units, stack columns vertically on mobile,
-and ensure text, buttons, and spacing scale properly.
-If needed, adjust padding, font-size, and flex/grid behavior.
-Provide me the updated code.”
