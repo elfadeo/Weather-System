@@ -8,7 +8,7 @@ import {
   get,
   limitToLast,
   onValue,
-  off
+  off,
 } from 'firebase/database'
 
 const DEBUG = true
@@ -31,10 +31,12 @@ const isMobile = () => {
 const isSlowConnection = () => {
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
   if (connection) {
-    return connection.effectiveType === 'slow-2g' ||
-           connection.effectiveType === '2g' ||
-           connection.effectiveType === '3g' ||
-           connection.saveData === true
+    return (
+      connection.effectiveType === 'slow-2g' ||
+      connection.effectiveType === '2g' ||
+      connection.effectiveType === '3g' ||
+      connection.saveData === true
+    )
   }
   return isMobile()
 }
@@ -61,29 +63,35 @@ export function useChartsData() {
     const mobile = isMobile()
 
     if (slow) {
-      return {
-        [TIME_RANGES.LAST_7]: 500,
-        [TIME_RANGES.WEEKLY]: 5000,
-        [TIME_RANGES.MONTHLY]: 10000,
-        [TIME_RANGES.YEARLY]: 15000,
-      }[range] || 10000
+      return (
+        {
+          [TIME_RANGES.LAST_7]: 500,
+          [TIME_RANGES.WEEKLY]: 5000,
+          [TIME_RANGES.MONTHLY]: 10000,
+          [TIME_RANGES.YEARLY]: 15000,
+        }[range] || 10000
+      )
     }
 
     if (mobile) {
-      return {
-        [TIME_RANGES.LAST_7]: 1000,
-        [TIME_RANGES.WEEKLY]: 8000,
-        [TIME_RANGES.MONTHLY]: 20000,
-        [TIME_RANGES.YEARLY]: 30000,
-      }[range] || 15000
+      return (
+        {
+          [TIME_RANGES.LAST_7]: 1000,
+          [TIME_RANGES.WEEKLY]: 8000,
+          [TIME_RANGES.MONTHLY]: 20000,
+          [TIME_RANGES.YEARLY]: 30000,
+        }[range] || 15000
+      )
     }
 
-    return {
-      [TIME_RANGES.LAST_7]: 2000,
-      [TIME_RANGES.WEEKLY]: 15000,
-      [TIME_RANGES.MONTHLY]: 40000,
-      [TIME_RANGES.YEARLY]: 60000,
-    }[range] || 30000
+    return (
+      {
+        [TIME_RANGES.LAST_7]: 2000,
+        [TIME_RANGES.WEEKLY]: 15000,
+        [TIME_RANGES.MONTHLY]: 40000,
+        [TIME_RANGES.YEARLY]: 60000,
+      }[range] || 30000
+    )
   }
 
   const getSamplingRate = (totalDays, timeRange) => {
@@ -126,18 +134,33 @@ export function useChartsData() {
     if (slow || mobile) {
       log('Using reduced time ranges for mobile/slow connection')
       return {
-        [TIME_RANGES.LAST_7]: { start: now - (7 * DAY_MS), end: now, label: '7 days', days: 7 },
-        [TIME_RANGES.WEEKLY]: { start: now - (4 * 7 * DAY_MS), end: now, label: '4 weeks', days: 28 },
-        [TIME_RANGES.MONTHLY]: { start: now - (180 * DAY_MS), end: now, label: '6 months', days: 180 },
-        [TIME_RANGES.YEARLY]: { start: now - (2 * 365 * DAY_MS), end: now, label: '2 years', days: 730 },
+        [TIME_RANGES.LAST_7]: { start: now - 7 * DAY_MS, end: now, label: '7 days', days: 7 },
+        [TIME_RANGES.WEEKLY]: { start: now - 4 * 7 * DAY_MS, end: now, label: '4 weeks', days: 28 },
+        [TIME_RANGES.MONTHLY]: {
+          start: now - 180 * DAY_MS,
+          end: now,
+          label: '6 months',
+          days: 180,
+        },
+        [TIME_RANGES.YEARLY]: {
+          start: now - 2 * 365 * DAY_MS,
+          end: now,
+          label: '2 years',
+          days: 730,
+        },
       }[range]
     }
 
     return {
-      [TIME_RANGES.LAST_7]: { start: now - (7 * DAY_MS), end: now, label: '7 days', days: 7 },
-      [TIME_RANGES.WEEKLY]: { start: now - (8 * 7 * DAY_MS), end: now, label: '8 weeks', days: 56 },
-      [TIME_RANGES.MONTHLY]: { start: now - (365 * DAY_MS), end: now, label: '12 months', days: 365 },
-      [TIME_RANGES.YEARLY]: { start: now - (5 * 365 * DAY_MS), end: now, label: '5 years', days: 1825 },
+      [TIME_RANGES.LAST_7]: { start: now - 7 * DAY_MS, end: now, label: '7 days', days: 7 },
+      [TIME_RANGES.WEEKLY]: { start: now - 8 * 7 * DAY_MS, end: now, label: '8 weeks', days: 56 },
+      [TIME_RANGES.MONTHLY]: { start: now - 365 * DAY_MS, end: now, label: '12 months', days: 365 },
+      [TIME_RANGES.YEARLY]: {
+        start: now - 5 * 365 * DAY_MS,
+        end: now,
+        label: '5 years',
+        days: 1825,
+      },
     }[range]
   }
 
@@ -166,8 +189,8 @@ export function useChartsData() {
       log(`Fetched ${allRecords.length} records`)
 
       // Filter to time range
-      const filtered = allRecords.filter(r =>
-        r.timestamp >= bounds.start && r.timestamp <= bounds.end
+      const filtered = allRecords.filter(
+        (r) => r.timestamp >= bounds.start && r.timestamp <= bounds.end,
       )
 
       log(`Filtered to ${filtered.length} records in range`)
@@ -203,9 +226,8 @@ export function useChartsData() {
     const bounds = getTimeRangeBounds(range)
     const samplingRate = getSamplingRate(bounds.days, range)
 
-    const sampled = samplingRate > 1
-      ? records.filter((_, idx) => idx % samplingRate === 0)
-      : records
+    const sampled =
+      samplingRate > 1 ? records.filter((_, idx) => idx % samplingRate === 0) : records
 
     if (samplingRate > 1) {
       log(`Sampled ${records.length} → ${sampled.length} records (rate: ${samplingRate})`)
@@ -216,18 +238,18 @@ export function useChartsData() {
 
   const processLast7 = (records) => {
     return {
-      labels: records.map(r => formatTimestamp(new Date(r.timestamp), TIME_RANGES.LAST_7)),
-      temperature: records.map(r => Number(r.temperature) || 0),
-      humidity: records.map(r => Number(r.humidity) || 0),
-      rainfall: records.map(r => Number(r.rainRateEstimated_mm_hr_bucket) || 0),
-      rainfallTotals: records.map(r => Number(r.rainfall_total_estimated_mm_bucket) || 0),
+      labels: records.map((r) => formatTimestamp(new Date(r.timestamp), TIME_RANGES.LAST_7)),
+      temperature: records.map((r) => Number(r.temperature) || 0),
+      humidity: records.map((r) => Number(r.humidity) || 0),
+      rainfall: records.map((r) => Number(r.rainRateEstimated_mm_hr_bucket) || 0),
+      rainfallTotals: records.map((r) => Number(r.rainfall_total_estimated_mm_bucket) || 0),
     }
   }
 
   const processAggregated = (records, range) => {
     const grouped = {}
 
-    records.forEach(record => {
+    records.forEach((record) => {
       const date = new Date(record.timestamp)
       const key = getGroupKey(date, range)
 
@@ -255,11 +277,17 @@ export function useChartsData() {
     const sorted = Object.values(grouped).sort((a, b) => a.timestamp - b.timestamp)
 
     return {
-      labels: sorted.map(g => formatTimestamp(g.timestamp, range)),
-      temperature: sorted.map(g => g.temps.length ? g.temps.reduce((a, b) => a + b) / g.temps.length : 0),
-      humidity: sorted.map(g => g.hums.length ? g.hums.reduce((a, b) => a + b) / g.hums.length : 0),
-      rainfall: sorted.map(g => g.rains.length ? g.rains.reduce((a, b) => a + b) / g.rains.length : 0),
-      rainfallTotals: sorted.map(g => g.rainTotals.length ? Math.max(...g.rainTotals) : 0),
+      labels: sorted.map((g) => formatTimestamp(g.timestamp, range)),
+      temperature: sorted.map((g) =>
+        g.temps.length ? g.temps.reduce((a, b) => a + b) / g.temps.length : 0,
+      ),
+      humidity: sorted.map((g) =>
+        g.hums.length ? g.hums.reduce((a, b) => a + b) / g.hums.length : 0,
+      ),
+      rainfall: sorted.map((g) =>
+        g.rains.length ? g.rains.reduce((a, b) => a + b) / g.rains.length : 0,
+      ),
+      rainfallTotals: sorted.map((g) => (g.rainTotals.length ? Math.max(...g.rainTotals) : 0)),
     }
   }
 
@@ -316,8 +344,8 @@ export function useChartsData() {
       return
     }
 
-    const oldestTs = Math.min(...records.map(r => r.timestamp))
-    const newestTs = Math.max(...records.map(r => r.timestamp))
+    const oldestTs = Math.min(...records.map((r) => r.timestamp))
+    const newestTs = Math.max(...records.map((r) => r.timestamp))
     const spanDays = Math.floor((newestTs - oldestTs) / (24 * 60 * 60 * 1000))
 
     if (spanDays === 0) {
@@ -363,7 +391,7 @@ export function useChartsData() {
           temperature: [],
           humidity: [],
           rainfall: [],
-          rainfallTotals: []
+          rainfallTotals: [],
         }
         dataAvailabilityInfo.value = 'No data available'
       } else {
@@ -371,8 +399,8 @@ export function useChartsData() {
         const bounds = getTimeRangeBounds(TIME_RANGES.LAST_7)
 
         // Filter to last 7 days
-        const filtered = records.filter(r =>
-          r.timestamp >= bounds.start && r.timestamp <= bounds.end
+        const filtered = records.filter(
+          (r) => r.timestamp >= bounds.start && r.timestamp <= bounds.end,
         )
 
         chartData.value = processRecords(filtered, TIME_RANGES.LAST_7)
@@ -413,7 +441,7 @@ export function useChartsData() {
           temperature: [],
           humidity: [],
           rainfall: [],
-          rainfallTotals: []
+          rainfallTotals: [],
         }
         dataAvailabilityInfo.value = 'No data found in this time range'
       } else {
@@ -428,7 +456,7 @@ export function useChartsData() {
           temperature: [],
           humidity: [],
           rainfall: [],
-          rainfallTotals: []
+          rainfallTotals: [],
         }
         dataAvailabilityInfo.value = 'Error loading data. Please try again.'
       }
@@ -444,7 +472,12 @@ export function useChartsData() {
   // Main fetch function
   const fetchData = async (range = TIME_RANGES.LAST_7) => {
     log(`\n========== Fetching Chart Data: ${range} ==========`)
-    log('Device:', isMobile() ? 'Mobile' : 'Desktop', '| Connection:', isSlowConnection() ? 'Slow' : 'Fast')
+    log(
+      'Device:',
+      isMobile() ? 'Mobile' : 'Desktop',
+      '| Connection:',
+      isSlowConnection() ? 'Slow' : 'Fast',
+    )
 
     // Cleanup any existing listeners/operations
     cleanup()
@@ -473,7 +506,7 @@ export function useChartsData() {
           temperature: [],
           humidity: [],
           rainfall: [],
-          rainfallTotals: []
+          rainfallTotals: [],
         }
         dataAvailabilityInfo.value = 'Error loading data. Please try again.'
         isLoading.value = false

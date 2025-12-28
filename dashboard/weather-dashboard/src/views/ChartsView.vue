@@ -43,9 +43,9 @@ const totalRainfallChartData = computed(() => ({
 }))
 
 const summaryStats = computed(() => {
-  const temps = chartData.value.temperature.filter(v => v > 0)
-  const hums = chartData.value.humidity.filter(v => v > 0)
-  const totals = chartData.value.rainfallTotals.filter(v => v >= 0)
+  const temps = chartData.value.temperature.filter((v) => v > 0)
+  const hums = chartData.value.humidity.filter((v) => v > 0)
+  const totals = chartData.value.rainfallTotals.filter((v) => v >= 0)
 
   const calcStats = (arr) => {
     if (!arr.length) return { avg: '0.0', min: '0.0', max: '0.0' }
@@ -55,9 +55,8 @@ const summaryStats = computed(() => {
     return { avg, min, max }
   }
 
-  const rainfall = totals.length >= 2
-    ? Math.max(0, totals[totals.length - 1] - totals[0]).toFixed(1)
-    : '0.0'
+  const rainfall =
+    totals.length >= 2 ? Math.max(0, totals[totals.length - 1] - totals[0]).toFixed(1) : '0.0'
 
   let rainfallNote = 'Accumulated'
   if (chartData.value.labels.length > 0) {
@@ -67,7 +66,7 @@ const summaryStats = computed(() => {
     if (first === last) {
       rainfallNote = 'Single reading'
     } else {
-      const shorten = (s) => s.length > 15 ? s.substring(0, 12) + '...' : s
+      const shorten = (s) => (s.length > 15 ? s.substring(0, 12) + '...' : s)
       rainfallNote = `${shorten(first)} to ${shorten(last)}`
     }
   }
@@ -82,14 +81,16 @@ const summaryStats = computed(() => {
 
 // Dynamic time range labels based on device
 const timeRangeOptions = computed(() => {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
-  const isSlowConnection = connection && (
-    connection.effectiveType === 'slow-2g' ||
-    connection.effectiveType === '2g' ||
-    connection.effectiveType === '3g' ||
-    connection.saveData === true
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent,
   )
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
+  const isSlowConnection =
+    connection &&
+    (connection.effectiveType === 'slow-2g' ||
+      connection.effectiveType === '2g' ||
+      connection.effectiveType === '3g' ||
+      connection.saveData === true)
 
   if (isSlowConnection || isMobile) {
     return [
@@ -110,17 +111,21 @@ const timeRangeOptions = computed(() => {
 
 // Watch with debouncing to prevent rapid switches
 let fetchTimeout = null
-watch(selectedTimeRange, (newRange) => {
-  // Clear any pending fetch
-  if (fetchTimeout) {
-    clearTimeout(fetchTimeout)
-  }
+watch(
+  selectedTimeRange,
+  (newRange) => {
+    // Clear any pending fetch
+    if (fetchTimeout) {
+      clearTimeout(fetchTimeout)
+    }
 
-  // Debounce to prevent rapid API calls
-  fetchTimeout = setTimeout(() => {
-    fetchData(newRange)
-  }, 100)
-}, { immediate: true })
+    // Debounce to prevent rapid API calls
+    fetchTimeout = setTimeout(() => {
+      fetchData(newRange)
+    }, 100)
+  },
+  { immediate: true },
+)
 
 // Cleanup
 onBeforeUnmount(() => {
@@ -160,11 +165,7 @@ onBeforeUnmount(() => {
             :disabled="isLoading"
             class="appearance-none w-full rounded-lg border-0 bg-[var(--color-surface)] py-2.5 pl-4 pr-10 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] text-sm font-medium shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <option
-              v-for="option in timeRangeOptions"
-              :key="option.value"
-              :value="option.value"
-            >
+            <option v-for="option in timeRangeOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
           </select>
@@ -182,7 +183,10 @@ onBeforeUnmount(() => {
         class="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-4 shadow-sm"
       >
         <div class="flex items-center gap-3 mb-2">
-          <Icon icon="ph:circle-notch-bold" class="h-5 w-5 text-[var(--color-primary)] animate-spin" />
+          <Icon
+            icon="ph:circle-notch-bold"
+            class="h-5 w-5 text-[var(--color-primary)] animate-spin"
+          />
           <span class="text-sm font-medium text-[var(--color-text-main)]">
             {{ loadingMessage }}
           </span>
@@ -193,9 +197,7 @@ onBeforeUnmount(() => {
             :style="{ width: `${loadingProgress}%` }"
           ></div>
         </div>
-        <p class="text-xs text-[var(--color-text-light)] mt-1 text-right">
-          {{ loadingProgress }}%
-        </p>
+        <p class="text-xs text-[var(--color-text-light)] mt-1 text-right">{{ loadingProgress }}%</p>
       </div>
 
       <!-- No Data -->
@@ -204,7 +206,10 @@ onBeforeUnmount(() => {
         class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center"
       >
         <div class="mb-4 rounded-full bg-[var(--color-background)] p-4 inline-flex">
-          <Icon icon="ph:clock-countdown-duotone" class="h-10 w-10 text-[var(--color-text-light)] opacity-50" />
+          <Icon
+            icon="ph:clock-countdown-duotone"
+            class="h-10 w-10 text-[var(--color-text-light)] opacity-50"
+          />
         </div>
         <h3 class="text-lg font-semibold text-[var(--color-text-main)] mb-2">
           No Data for This Time Range
@@ -233,12 +238,19 @@ onBeforeUnmount(() => {
 
         <template v-else>
           <!-- Temperature Card -->
-          <div class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300">
+          <div
+            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+          >
             <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-red-500)]"></div>
             <div class="pl-4">
               <div class="flex items-center gap-2 mb-2">
-                <Icon icon="ph:thermometer-simple-duotone" class="h-4 w-4 text-[var(--color-red-500)]" />
-                <span class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider">
+                <Icon
+                  icon="ph:thermometer-simple-duotone"
+                  class="h-4 w-4 text-[var(--color-red-500)]"
+                />
+                <span
+                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Temperature
                 </span>
               </div>
@@ -252,12 +264,16 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Humidity Card -->
-          <div class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300">
+          <div
+            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+          >
             <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]"></div>
             <div class="pl-4">
               <div class="flex items-center gap-2 mb-2">
                 <Icon icon="ph:drop-duotone" class="h-4 w-4 text-[var(--color-primary)]" />
-                <span class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider">
+                <span
+                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Humidity
                 </span>
               </div>
@@ -271,17 +287,22 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Rainfall Card -->
-          <div class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300">
+          <div
+            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+          >
             <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-purple-500)]"></div>
             <div class="pl-4">
               <div class="flex items-center gap-2 mb-2">
                 <Icon icon="ph:cloud-rain-duotone" class="h-4 w-4 text-[var(--color-purple-500)]" />
-                <span class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider">
+                <span
+                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+                >
                   Total Rainfall
                 </span>
               </div>
               <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
-                {{ summaryStats.rainfall }}<span class="text-lg font-normal text-[var(--color-text-light)] ml-1">mm</span>
+                {{ summaryStats.rainfall
+                }}<span class="text-lg font-normal text-[var(--color-text-light)] ml-1">mm</span>
               </p>
               <p class="text-xs text-[var(--color-text-light)]">
                 {{ summaryStats.rainfallNote }}
@@ -294,15 +315,21 @@ onBeforeUnmount(() => {
       <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Temperature Chart -->
-        <div class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6">
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
               <span class="flex h-3 w-3 rounded-full bg-[var(--color-red-500)]"></span>
-              <h3 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+              <h3
+                class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+              >
                 Temperature
               </h3>
             </div>
-            <span class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded">
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+            >
               °Celsius
             </span>
           </div>
@@ -320,15 +347,21 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Humidity Chart -->
-        <div class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6">
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
               <span class="flex h-3 w-3 rounded-full bg-[var(--color-primary)]"></span>
-              <h3 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+              <h3
+                class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+              >
                 Humidity
               </h3>
             </div>
-            <span class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded">
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+            >
               % Percent
             </span>
           </div>
@@ -346,15 +379,21 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Rain Rate Chart -->
-        <div class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6">
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
               <span class="flex h-3 w-3 rounded-full bg-[var(--color-purple-500)]"></span>
-              <h3 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+              <h3
+                class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+              >
                 Rain Rate
               </h3>
             </div>
-            <span class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded">
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+            >
               mm/hr
             </span>
           </div>
@@ -372,15 +411,21 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Total Rainfall Chart -->
-        <div class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6">
+        <div
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] shadow-sm p-6"
+        >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
               <span class="flex h-3 w-3 rounded-full bg-[var(--color-teal-500)]"></span>
-              <h3 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide">
+              <h3
+                class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
+              >
                 Total Rainfall
               </h3>
             </div>
-            <span class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded">
+            <span
+              class="text-xs font-medium text-[var(--color-text-light)] bg-[var(--color-background)] px-2 py-1 rounded"
+            >
               mm Total
             </span>
           </div>

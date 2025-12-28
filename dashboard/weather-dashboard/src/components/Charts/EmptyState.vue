@@ -27,7 +27,7 @@
 defineProps({
   message: {
     type: String,
-    default: 'No data available'
-  }
+    default: 'No data available',
+  },
 })
 </script>
