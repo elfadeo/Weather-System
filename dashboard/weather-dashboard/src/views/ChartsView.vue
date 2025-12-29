@@ -79,35 +79,13 @@ const summaryStats = computed(() => {
   }
 })
 
-// Dynamic time range labels based on device
-const timeRangeOptions = computed(() => {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent,
-  )
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection
-  const isSlowConnection =
-    connection &&
-    (connection.effectiveType === 'slow-2g' ||
-      connection.effectiveType === '2g' ||
-      connection.effectiveType === '3g' ||
-      connection.saveData === true)
-
-  if (isSlowConnection || isMobile) {
-    return [
-      { value: 'last7', label: 'Last 7 Readings' },
-      { value: 'weekly', label: 'Last 4 Weeks' },
-      { value: 'monthly', label: 'Last 6 Months' },
-      { value: 'yearly', label: 'Last 2 Years' },
-    ]
-  }
-
-  return [
-    { value: 'last7', label: 'Last 7 Readings' },
-    { value: 'weekly', label: 'Last 8 Weeks' },
-    { value: 'monthly', label: 'Last 12 Months' },
-    { value: 'yearly', label: 'Last 5 Years' },
-  ]
-})
+// Time range options - FIXED: Labels now match actual data fetched
+const timeRangeOptions = [
+  { value: 'last7', label: 'Last 7 Readings' },
+  { value: 'weekly', label: 'Last 4 Weeks' },
+  { value: 'monthly', label: 'Last 6 Months' },
+  { value: 'yearly', label: 'Last 2 Years' },
+]
 
 // Watch with debouncing to prevent rapid switches
 let fetchTimeout = null

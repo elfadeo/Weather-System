@@ -277,13 +277,19 @@ export function useChartsData() {
 
   const getGroupKey = (date, range) => {
     if (range === TIME_RANGES.WEEKLY) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      // Group by WEEK (Monday start) - matches Reports
+      const dayOfWeek = date.getDay()
+      const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+      const monday = new Date(date)
+      monday.setDate(date.getDate() - daysSinceMonday)
+      return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`
     }
     if (range === TIME_RANGES.MONTHLY) {
-      return `${date.getFullYear()}-W${getWeekNumber(date)}`
+      // Group by MONTH - matches Reports
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`
     }
     if (range === TIME_RANGES.YEARLY) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      return `${date.getFullYear()}-01-01`
     }
     return date.toISOString()
   }
@@ -302,32 +308,29 @@ export function useChartsData() {
       })
     }
     if (range === TIME_RANGES.WEEKLY) {
-      return pht.toLocaleString('en-US', {
-        timeZone: 'Asia/Manila',
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
+      // Show week range: "Dec 23 - Dec 29"
+      const dayOfWeek = pht.getDay()
+      const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+      const monday = new Date(pht)
+      monday.setDate(pht.getDate() - daysSinceMonday)
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+
+      return `${monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
     }
     if (range === TIME_RANGES.MONTHLY) {
-      return `Week ${getWeekNumber(pht)}, ${pht.getFullYear()}`
-    }
-    if (range === TIME_RANGES.YEARLY) {
+      // Show month: "Dec 2024"
       return pht.toLocaleString('en-US', {
         timeZone: 'Asia/Manila',
         month: 'short',
         year: 'numeric',
       })
     }
+    if (range === TIME_RANGES.YEARLY) {
+      // Show year: "2024"
+      return pht.getFullYear().toString()
+    }
     return pht.getFullYear().toString()
-  }
-
-  const getWeekNumber = (date) => {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-    const dayNum = d.getUTCDay() || 7
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-    return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
   }
 
   const updateAvailabilityInfo = (records, range) => {
