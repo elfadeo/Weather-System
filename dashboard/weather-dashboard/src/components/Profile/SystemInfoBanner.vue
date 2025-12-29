@@ -1,15 +1,15 @@
 <template>
   <div
-    class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl shadow-md p-6 border border-blue-200 dark:border-blue-800 ring-1 ring-border"
+    class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl shadow-md p-4 sm:p-6 border border-blue-200 dark:border-blue-800 ring-1 ring-border"
   >
-    <div class="flex items-start space-x-3">
+    <div class="flex items-start space-x-2 sm:space-x-3">
       <Icon
         icon="ph:info-bold"
-        class="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+        class="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
       />
-      <div class="flex-1">
-        <h3 class="font-bold text-text-main mb-2">About Alert System</h3>
-        <div class="text-sm text-text-light space-y-2">
+      <div class="flex-1 min-w-0">
+        <h3 class="font-bold text-text-main mb-2 text-sm sm:text-base">About Alert System</h3>
+        <div class="text-xs sm:text-sm text-text-light space-y-2 sm:space-y-2.5">
           <p>
             <strong class="text-text-main">📧 Email Alerts:</strong> Automated via GitHub Actions
             every 15 minutes. Emails are sent when sensor readings exceed scientifically validated

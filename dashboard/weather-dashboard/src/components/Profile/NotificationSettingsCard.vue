@@ -2,8 +2,10 @@
   <div
     class="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden transition-all hover:shadow-md duration-500"
   >
-    <div class="px-6 py-5 border-b border-border/60 bg-background/50 backdrop-blur-sm">
-      <h2 class="text-lg font-semibold text-text-main">Notifications</h2>
+    <div
+      class="px-4 sm:px-6 py-4 sm:py-5 border-b border-border/60 bg-background/50 backdrop-blur-sm"
+    >
+      <h2 class="text-base sm:text-lg font-semibold text-text-main">Notifications</h2>
       <p class="text-xs text-text-light mt-1">Manage how you receive alerts and updates.</p>
     </div>
 

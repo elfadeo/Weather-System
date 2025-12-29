@@ -1,6 +1,8 @@
 <template>
-  <div class="bg-surface rounded-2xl shadow-sm border border-border p-6">
-    <h2 class="text-lg font-semibold text-text-main mb-6">Profile Information</h2>
+  <div class="bg-surface rounded-2xl shadow-sm border border-border p-4 sm:p-6">
+    <h2 class="text-base sm:text-lg font-semibold text-text-main mb-4 sm:mb-6">
+      Profile Information
+    </h2>
 
     <ProfileAvatar
       :display-name="profile.displayName"
@@ -9,7 +11,7 @@
       :email="email"
     />
 
-    <div class="space-y-4">
+    <div class="space-y-3 sm:space-y-4">
       <FormInput
         label="Email Address"
         type="email"

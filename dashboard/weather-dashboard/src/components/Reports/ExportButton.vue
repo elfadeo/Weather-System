@@ -1,12 +1,13 @@
 <template>
   <button @click="$emit('click')" :disabled="isDisabled" :class="buttonClasses">
-    <span v-if="isActive" class="flex items-center">
-      <Icon icon="ph:circle-notch-bold" class="h-5 w-5 mr-2 animate-spin" />
-      Exporting...
+    <span v-if="isActive" class="flex items-center justify-center">
+      <Icon icon="ph:circle-notch-bold" class="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2 animate-spin" />
+      <span class="hidden sm:inline">Exporting...</span>
     </span>
-    <span v-else class="flex items-center">
-      <Icon :icon="iconName" class="h-5 w-5 mr-2" />
-      {{ buttonText }}
+    <span v-else class="flex items-center justify-center">
+      <Icon :icon="iconName" class="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+      <span class="hidden sm:inline">{{ buttonText }}</span>
+      <span class="sm:hidden">{{ shortButtonText }}</span>
     </span>
   </button>
 </template>
@@ -37,13 +38,17 @@ const buttonText = computed(() => {
   return props.type === 'csv' ? 'Export CSV' : 'Export PDF'
 })
 
+const shortButtonText = computed(() => {
+  return props.type === 'csv' ? 'CSV' : 'PDF'
+})
+
 const iconName = computed(() => {
   return props.type === 'csv' ? 'ph:file-csv-bold' : 'ph:file-pdf-bold'
 })
 
 const buttonClasses = computed(() => {
   const baseClasses =
-    'flex items-center justify-center px-4 py-2 min-w-[140px] rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+    'flex items-center justify-center px-3 sm:px-4 py-2 min-w-[80px] sm:min-w-[140px] rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium'
 
   const colorClasses =
     props.type === 'csv'

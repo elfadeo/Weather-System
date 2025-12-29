@@ -1,8 +1,10 @@
 <template>
   <div
-    class="bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] p-6 mb-8"
+    class="bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] p-4 sm:p-6 mb-6 sm:mb-8"
   >
-    <h3 class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider mb-4">
+    <h3
+      class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider mb-3 sm:mb-4"
+    >
       Quick Range
     </h3>
 
@@ -24,12 +26,12 @@
       </div>
     </div>
 
-    <div class="hidden sm:flex flex-wrap gap-3">
+    <div class="hidden sm:flex flex-wrap gap-2 sm:gap-3">
       <button
         v-for="preset in timePresets"
         :key="preset.value"
         @click="$emit('presetSelected', preset.value)"
-        class="group relative inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 select-none ring-1 ring-inset"
+        class="group relative inline-flex items-center justify-center px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 select-none ring-1 ring-inset"
         :class="[
           activePreset === preset.value
             ? 'bg-[var(--color-primary)] ring-[var(--color-primary)] text-[var(--color-primary-text)] shadow-sm'
@@ -38,12 +40,12 @@
       >
         <Icon
           :icon="preset.icon"
-          class="h-4 w-4 mr-2 transition-opacity duration-200"
+          class="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 transition-opacity duration-200 flex-shrink-0"
           :class="
             activePreset === preset.value ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'
           "
         />
-        <span>{{ preset.label }}</span>
+        <span class="whitespace-nowrap">{{ preset.label }}</span>
       </button>
     </div>
   </div>

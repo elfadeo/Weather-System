@@ -1,10 +1,12 @@
 <template>
   <div
-    class="bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden transition-all duration-300 hover:shadow-md mb-8"
+    class="bg-[var(--color-surface)] rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden transition-all duration-300 hover:shadow-md mb-6 sm:mb-8"
   >
-    <div class="p-6">
-      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 w-full xl:w-auto flex-grow max-w-4xl">
+    <div class="p-4 sm:p-6">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 sm:gap-6">
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 w-full xl:w-auto flex-grow max-w-4xl"
+        >
           <div class="relative group">
             <label
               for="startDate"
@@ -18,7 +20,7 @@
               :value="startDateTime"
               @input="handleStartDateChange"
               :disabled="isDisabled"
-              class="block w-full rounded-lg border-0 bg-[var(--color-background)] py-2.5 px-4 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] sm:text-sm sm:leading-6 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed placeholder-[var(--color-text-light)]"
+              class="block w-full rounded-lg border-0 bg-[var(--color-background)] py-2 sm:py-2.5 px-3 sm:px-4 text-sm text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed placeholder-[var(--color-text-light)]"
             />
           </div>
 
@@ -35,11 +37,11 @@
               :value="endDateTime"
               @input="handleEndDateChange"
               :disabled="isDisabled"
-              class="block w-full rounded-lg border-0 bg-[var(--color-background)] py-2.5 px-4 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] sm:text-sm sm:leading-6 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="block w-full rounded-lg border-0 bg-[var(--color-background)] py-2 sm:py-2.5 px-3 sm:px-4 text-sm text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
-          <div class="relative group">
+          <div class="relative group sm:col-span-2 md:col-span-1">
             <label
               for="groupBy"
               class="block text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider mb-2 ml-1"
@@ -52,7 +54,7 @@
                 :value="groupBy"
                 @change="$emit('update:groupBy', $event.target.value)"
                 :disabled="isDisabled"
-                class="block w-full appearance-none rounded-lg border-0 bg-[var(--color-background)] py-2.5 pl-4 pr-10 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] sm:text-sm sm:leading-6 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                class="block w-full appearance-none rounded-lg border-0 bg-[var(--color-background)] py-2 sm:py-2.5 pl-3 sm:pl-4 pr-10 text-sm text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="hourly">Hourly</option>
                 <option value="daily">Daily</option>
@@ -70,19 +72,21 @@
         </div>
 
         <div
-          class="flex items-center gap-3 border-t xl:border-0 border-[var(--color-border)] pt-4 xl:pt-0"
+          class="flex items-center gap-2 sm:gap-3 border-t xl:border-0 border-[var(--color-border)] pt-4 xl:pt-0"
         >
           <ExportButton
             type="csv"
             :is-active="isExporting === 'csv'"
             :is-disabled="isExportDisabled"
             @click="$emit('exportCsv')"
+            class="flex-1 sm:flex-none"
           />
           <ExportButton
             type="pdf"
             :is-active="isExporting === 'pdf'"
             :is-disabled="isExportDisabled"
             @click="$emit('exportPdf')"
+            class="flex-1 sm:flex-none"
           />
         </div>
       </div>
@@ -90,12 +94,12 @@
 
     <div
       v-if="aggregatedData.length"
-      class="bg-[var(--color-background)] border-t border-[var(--color-border)] px-6 py-3"
+      class="bg-[var(--color-background)] border-t border-[var(--color-border)] px-4 sm:px-6 py-3"
     >
       <div
         class="flex flex-col sm:flex-row sm:items-center justify-between gap-y-2 text-xs font-medium text-[var(--color-text-light)]"
       >
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4">
           <span class="flex items-center" title="Aggregated Data Points">
             <Icon icon="ph:chart-bar-duotone" class="h-4 w-4 mr-1.5 text-[var(--color-primary)]" />
             <span class="text-[var(--color-text-main)]">{{ aggregatedData.length }}</span>
@@ -112,8 +116,8 @@
         </div>
 
         <div class="flex items-center opacity-80">
-          <Icon icon="ph:calendar-blank-duotone" class="h-4 w-4 mr-1.5" />
-          {{ dataTimeRange }}
+          <Icon icon="ph:calendar-blank-duotone" class="h-4 w-4 mr-1.5 flex-shrink-0" />
+          <span class="truncate">{{ dataTimeRange }}</span>
         </div>
       </div>
     </div>

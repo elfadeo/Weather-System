@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen flex bg-background font-sans text-text-main overflow-x-hidden transition-colors duration-500 selection:bg-primary selection:text-white"
+    class="min-h-screen flex bg-background font-sans text-text-main overflow-x-hidden selection:bg-primary selection:text-white theme-transition"
   >
     <Sidebar
       ref="sidebarRef"
@@ -172,6 +172,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Smooth Theme Transition */
+.theme-transition,
+.theme-transition * {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Smooth Page Transition */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
