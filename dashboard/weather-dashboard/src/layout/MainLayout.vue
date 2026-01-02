@@ -134,14 +134,18 @@ import AppFooter from '@/components/AppFooter.vue'
 import { Icon } from '@iconify/vue'
 import { useTheme } from '@/composables/useTheme.js'
 import { auth } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import { ADMIN_EMAIL } from '@/router'
 
 // --- Theme Logic ---
 const { isDarkMode, toggleTheme } = useTheme()
 
-// --- Admin Check ---
+// --- Admin Check (FIXED: Reactive to auth state) ---
+const currentUser = ref(null)
+const authUnsubscribe = ref(null)
+
 const isAdmin = computed(() => {
-  return auth.currentUser?.email === ADMIN_EMAIL
+  return currentUser.value?.email === ADMIN_EMAIL
 })
 
 // --- Sidebar Logic ---
@@ -192,11 +196,22 @@ const handleResize = () => {
 onMounted(() => {
   handleResize()
   window.addEventListener('resize', handleResize)
+
+  // Set up auth state listener to track current user
+  authUnsubscribe.value = onAuthStateChanged(auth, (user) => {
+    currentUser.value = user
+    console.log('Auth state changed in MainLayout:', user ? user.email : 'No user')
+  })
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   clearTimeout(errorTimeout)
+
+  // Clean up auth listener
+  if (authUnsubscribe.value) {
+    authUnsubscribe.value()
+  }
 })
 </script>
 

@@ -587,62 +587,160 @@ async function getEmailRecipients() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET SMS SETTINGS FROM FIRESTORE (UPDATED FOR APPROVAL SYSTEM)
+// GET SMS SETTINGS FROM FIRESTORE (IMPROVED VERSION)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function getSmsSettings() {
   try {
     console.log('📱 Fetching SMS recipients from Firestore...');
+    console.log('   Collection: sms_recipients');
+    console.log('   Filter: enabled == true');
     
     // Get ONLY approved and enabled recipients from sms_recipients collection
     const recipientsSnapshot = await firestore.collection('sms_recipients')
       .where('enabled', '==', true)
       .get();
     
+    console.log(`   Found ${recipientsSnapshot.size} document(s) in query`);
+    
     if (recipientsSnapshot.empty) {
-      console.log('⚠️  No active SMS recipients found');
-      console.log('   → Check if any requests have been approved in admin panel');
-      console.log('   → Approved requests should create entries in sms_recipients collection');
-      return { enabled: false, phoneNumbers: [] };
+      console.log('\n⚠️  No active SMS recipients found');
+      console.log('   Possible reasons:');
+      console.log('   → No requests have been approved in admin panel');
+      console.log('   → All approved recipients have been disabled');
+      console.log('   → Check sms_recipients collection in Firestore\n');
+      
+      // Log this state for monitoring
+      await firestore.collection('sms_monitoring').add({
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'no_recipients',
+        message: 'SMS alerts skipped - no active recipients',
+        recipientCount: 0
+      });
+      
+      return { enabled: false, phoneNumbers: [], reason: 'no_recipients' };
     }
     
-    // Extract phone numbers with validation
+    // Extract and validate phone numbers
     const phoneNumbers = [];
+    const invalidRecipients = [];
     
-    recipientsSnapshot.docs.forEach(doc => {
+    recipientsSnapshot.docs.forEach((doc) => {
       const data = doc.data();
+      const docId = doc.id;
       
-      // Validate that we have required fields
-      if (data.phone && data.enabled === true) {
-        phoneNumbers.push({
-          number: data.phone,
-          label: data.label || 'No label',
-          userEmail: data.userEmail || 'unknown',
-          addedBy: data.addedBy || 'unknown',
-          approvedBy: data.approvedBy || 'unknown'
-        });
+      // Validate required fields
+      if (!data.phone) {
+        console.log(`   ⚠️  Document ${docId} missing phone number - skipping`);
+        invalidRecipients.push({ id: docId, reason: 'missing_phone' });
+        return;
       }
+      
+      if (data.enabled !== true) {
+        console.log(`   ⚠️  Document ${docId} has enabled=${data.enabled} - skipping`);
+        invalidRecipients.push({ id: docId, reason: 'not_enabled' });
+        return;
+      }
+      
+      // Validate phone format (should be +63XXXXXXXXXX)
+      const phone = data.phone.trim();
+      if (!phone.startsWith('+63') || phone.length < 13) {
+        console.log(`   ⚠️  Document ${docId} has invalid phone format: ${phone} - skipping`);
+        invalidRecipients.push({ id: docId, reason: 'invalid_format', phone });
+        return;
+      }
+      
+      // Add to valid recipients
+      phoneNumbers.push({
+        id: docId,
+        number: phone,
+        label: data.label || 'No label',
+        userEmail: data.userEmail || 'unknown',
+        userId: data.userId || 'unknown',
+        addedBy: data.addedBy || 'unknown',
+        approvedBy: data.approvedBy || 'unknown',
+        approvedAt: data.approvedAt ? data.approvedAt.toDate().toISOString() : 'unknown'
+      });
     });
     
-    if (phoneNumbers.length === 0) {
-      console.log('⚠️  Found recipient documents but none are valid/enabled');
-      return { enabled: false, phoneNumbers: [] };
+    // Log invalid recipients
+    if (invalidRecipients.length > 0) {
+      console.log(`\n⚠️  Found ${invalidRecipients.length} invalid recipient(s):`);
+      invalidRecipients.forEach((inv, index) => {
+        console.log(`   ${index + 1}. ID: ${inv.id} - Reason: ${inv.reason}`);
+      });
     }
     
-    console.log(`✅ Found ${phoneNumbers.length} approved & active SMS recipient(s):`);
+    // Check if we have valid recipients
+    if (phoneNumbers.length === 0) {
+      console.log('\n⚠️  All recipients are invalid or disabled');
+      console.log('   Total documents: ' + recipientsSnapshot.size);
+      console.log('   Valid recipients: 0');
+      console.log('   Invalid/disabled: ' + invalidRecipients.length);
+      
+      // Log this state
+      await firestore.collection('sms_monitoring').add({
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'no_valid_recipients',
+        message: 'SMS alerts skipped - all recipients invalid',
+        totalDocuments: recipientsSnapshot.size,
+        invalidCount: invalidRecipients.length,
+        invalidRecipients: invalidRecipients
+      });
+      
+      return { enabled: false, phoneNumbers: [], reason: 'all_invalid' };
+    }
+    
+    // Success - we have valid recipients
+    console.log(`\n✅ Found ${phoneNumbers.length} valid SMS recipient(s):`);
     phoneNumbers.forEach((phone, index) => {
-      console.log(`   ${index + 1}. ${phone.number} (${phone.label}) - User: ${phone.userEmail}`);
+      console.log(`   ${index + 1}. ${phone.number}`);
+      console.log(`      Label: ${phone.label}`);
+      console.log(`      User: ${phone.userEmail}`);
+      console.log(`      Approved by: ${phone.approvedBy}`);
+      console.log(`      Document ID: ${phone.id}`);
+    });
+    console.log(''); // Empty line for readability
+    
+    // Log successful fetch
+    await firestore.collection('sms_monitoring').add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'recipients_loaded',
+      message: `Successfully loaded ${phoneNumbers.length} SMS recipients`,
+      recipientCount: phoneNumbers.length,
+      recipients: phoneNumbers.map(p => ({
+        number: p.number,
+        label: p.label,
+        userEmail: p.userEmail
+      }))
     });
     
     return {
       enabled: true,
-      phoneNumbers: phoneNumbers
+      phoneNumbers: phoneNumbers,
+      reason: 'success'
     };
     
   } catch (error) {
-    console.error('⚠️  Error fetching SMS settings:', error.message);
+    console.error('\n❌ Error fetching SMS settings:', error.message);
+    console.error('   Error code:', error.code || 'unknown');
     console.error('   Stack trace:', error.stack);
-    return { enabled: false, phoneNumbers: [] };
+    
+    // Log error for monitoring
+    try {
+      await firestore.collection('sms_monitoring').add({
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'error',
+        message: 'Failed to fetch SMS recipients',
+        error: error.message,
+        errorCode: error.code || 'unknown',
+        errorStack: error.stack
+      });
+    } catch (logError) {
+      console.error('   ⚠️  Could not log error to Firestore:', logError.message);
+    }
+    
+    return { enabled: false, phoneNumbers: [], reason: 'error', error: error.message };
   }
 }
 

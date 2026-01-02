@@ -5,19 +5,21 @@
         <div class="flex justify-between h-16 items-center">
           <div class="flex items-center gap-3">
             <div
-              class="w-9 h-9 bg-primary rounded-lg flex items-center justify-center shadow-md shadow-primary/20"
+              class="w-8 h-8 sm:w-9 sm:h-9 bg-primary rounded-lg flex items-center justify-center shadow-md shadow-primary/20"
             >
-              <Icon icon="ph:shield-check-fill" class="w-5 h-5 text-primary-text" />
+              <Icon icon="ph:shield-check-fill" class="w-4 h-4 sm:w-5 sm:h-5 text-primary-text" />
             </div>
             <div>
-              <h1 class="text-base font-bold text-text-main leading-none">SMS Admin</h1>
-              <p class="text-[10px] font-bold text-text-light uppercase tracking-widest mt-0.5">
+              <h1 class="text-sm sm:text-base font-bold text-text-main leading-none">SMS Admin</h1>
+              <p
+                class="text-[9px] sm:text-[10px] font-bold text-text-light uppercase tracking-widest mt-0.5"
+              >
                 Admin Console
               </p>
             </div>
           </div>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3 sm:gap-4">
             <div class="hidden sm:flex flex-col items-end">
               <span class="text-xs font-bold text-text-main">System Admin</span>
               <span class="text-[10px] text-text-light font-mono">{{ currentUserEmail }}</span>
@@ -28,7 +30,7 @@
             <button
               @click="loadAllData"
               :disabled="loading"
-              class="group relative inline-flex items-center justify-center w-9 h-9 rounded-lg border border-border bg-surface hover:bg-hover text-text-light hover:text-primary transition-all active:scale-95"
+              class="group relative inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-border bg-surface hover:bg-hover text-text-light hover:text-primary transition-all active:scale-95"
               title="Sync Data"
             >
               <Icon
@@ -42,14 +44,16 @@
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <nav class="flex space-x-1 bg-surface p-1.5 rounded-xl border border-border shadow-sm">
+        <nav
+          class="flex overflow-x-auto no-scrollbar space-x-1 bg-surface p-1.5 rounded-xl border border-border shadow-sm w-full sm:w-auto"
+        >
           <button
             v-for="tab in tabs"
             :key="tab.key"
             @click="activeTab = tab.key"
-            class="relative px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-3"
+            class="relative flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 whitespace-nowrap"
             :class="[
               activeTab === tab.key
                 ? 'bg-hover text-primary shadow-sm ring-1 ring-border'
@@ -61,7 +65,7 @@
 
             <span
               v-if="tab.count > 0"
-              class="flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-extrabold leading-none transition-colors"
+              class="flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-extrabold leading-none transition-colors"
               :class="
                 activeTab === tab.key
                   ? 'bg-primary text-primary-text'
@@ -160,13 +164,13 @@
             >
               <button
                 @click="openRejectModal(request)"
-                class="px-4 py-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 transition-colors"
+                class="px-4 py-4 sm:py-3 text-xs font-bold text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20 transition-colors active:bg-red-100"
               >
                 Reject
               </button>
               <button
                 @click="approveRequest(request)"
-                class="px-4 py-3 text-xs font-bold text-primary hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 transition-colors"
+                class="px-4 py-4 sm:py-3 text-xs font-bold text-primary hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 transition-colors active:bg-blue-100"
               >
                 Approve
               </button>
@@ -176,7 +180,96 @@
       </div>
 
       <div v-else-if="activeTab === 'active'">
-        <div class="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+        <div
+          v-if="filteredRecipients.length === 0"
+          class="py-12 text-center bg-surface rounded-xl border border-border border-dashed"
+        >
+          <div class="flex flex-col items-center justify-center opacity-60">
+            <Icon icon="ph:users-three" class="w-8 h-8 text-text-light mb-2" />
+            <span class="text-xs font-medium text-text-light">No recipients found</span>
+          </div>
+        </div>
+
+        <div v-else class="md:hidden space-y-4">
+          <div
+            v-for="recipient in filteredRecipients"
+            :key="recipient.id"
+            class="bg-surface rounded-xl border border-border p-4 shadow-sm"
+          >
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-bold text-white shadow-sm ring-1 ring-white/10"
+                >
+                  {{ recipient.userEmail.charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-text-main">{{
+                    recipient.userEmail.split('@')[0]
+                  }}</span>
+                  <span class="text-[10px] font-medium text-text-light truncate max-w-[150px]">{{
+                    recipient.userEmail
+                  }}</span>
+                </div>
+              </div>
+
+              <button
+                @click="toggleRecipient(recipient.id, !recipient.enabled)"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+                :class="recipient.enabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out"
+                  :class="recipient.enabled ? 'translate-x-6' : 'translate-x-1'"
+                />
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="text-[10px] text-text-light uppercase tracking-wider font-bold"
+                  >Phone</label
+                >
+                <p class="text-sm font-bold font-mono text-text-main">
+                  {{ formatPhoneDisplay(recipient.phone) }}
+                </p>
+              </div>
+              <div v-if="recipient.label">
+                <label class="text-[10px] text-text-light uppercase tracking-wider font-bold"
+                  >Label</label
+                >
+                <div class="flex items-center gap-1 mt-0.5">
+                  <Icon icon="ph:tag-simple-fill" class="w-3 h-3 text-text-light" />
+                  <span class="text-xs text-text-main font-medium">{{ recipient.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-border">
+              <span
+                class="text-[10px] font-bold uppercase tracking-wider"
+                :class="
+                  recipient.enabled ? 'text-green-700 dark:text-green-400' : 'text-text-light'
+                "
+              >
+                {{ recipient.enabled ? 'Active' : 'Paused' }}
+              </span>
+
+              <button
+                @click="deleteRecipient(recipient)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-widest hover:bg-red-100 transition-colors"
+              >
+                <Icon icon="ph:trash-simple-bold" class="w-3.5 h-3.5" />
+                Revoke
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-if="filteredRecipients.length > 0"
+          class="hidden md:block bg-surface rounded-xl border border-border shadow-sm overflow-hidden"
+        >
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
@@ -204,15 +297,6 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-border">
-                <tr v-if="filteredRecipients.length === 0">
-                  <td colspan="4" class="py-12 text-center">
-                    <div class="flex flex-col items-center justify-center opacity-60">
-                      <Icon icon="ph:users-three" class="w-8 h-8 text-text-light mb-2" />
-                      <span class="text-xs font-medium text-text-light">No recipients found</span>
-                    </div>
-                  </td>
-                </tr>
-
                 <tr
                   v-for="recipient in filteredRecipients"
                   :key="recipient.id"
@@ -296,10 +380,16 @@
             </p>
           </div>
         </div>
+
+        <div v-if="filteredRecipients.length > 0" class="md:hidden mt-4 text-center">
+          <p class="text-[10px] font-bold text-text-light uppercase tracking-widest">
+            Total Active: <span class="text-text-main">{{ filteredRecipients.length }}</span>
+          </p>
+        </div>
       </div>
 
       <div v-else-if="activeTab === 'history'">
-        <div class="bg-surface rounded-xl border border-border shadow-sm p-6">
+        <div class="bg-surface rounded-xl border border-border shadow-sm p-4 sm:p-6">
           <div class="flex items-center gap-2 mb-6">
             <Icon icon="ph:scroll-bold" class="w-5 h-5 text-text-light" />
             <h3 class="text-sm font-bold text-text-main uppercase tracking-wider">
@@ -333,7 +423,7 @@
                 class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 -mt-2 rounded-lg hover:bg-hover transition-colors border border-transparent hover:border-border"
               >
                 <div>
-                  <p class="text-sm font-bold text-text-main">
+                  <p class="text-sm font-bold text-text-main break-all sm:break-normal">
                     <span
                       class="capitalize"
                       :class="
@@ -375,7 +465,7 @@
         @click.self="closeRejectModal"
       >
         <div
-          class="bg-surface rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 ring-1 ring-border"
+          class="bg-surface rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 ring-1 ring-border mx-4 sm:mx-0"
         >
           <div class="p-6">
             <div class="flex items-center gap-3 mb-4">
@@ -428,7 +518,7 @@
     <Transition name="slide-up">
       <div
         v-if="toast.show"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900 dark:bg-gray-100 px-5 py-3 rounded-lg shadow-xl border border-gray-800 dark:border-gray-200"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900 dark:bg-gray-100 px-5 py-3 rounded-lg shadow-xl border border-gray-800 dark:border-gray-200 w-[90%] sm:w-auto justify-center"
       >
         <Icon
           :icon="toast.type === 'error' ? 'ph:warning-circle-fill' : 'ph:check-circle-fill'"
@@ -437,18 +527,19 @@
               ? 'text-red-400 dark:text-red-600'
               : 'text-green-400 dark:text-green-600'
           "
-          class="w-5 h-5"
+          class="w-5 h-5 shrink-0"
         />
-        <p class="text-xs font-bold text-white dark:text-gray-900">{{ toast.message }}</p>
+        <p class="text-xs font-bold text-white dark:text-gray-900 truncate">{{ toast.message }}</p>
       </div>
     </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { db, auth } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import {
   collection,
   addDoc,
@@ -468,6 +559,8 @@ const loading = ref(true)
 const searchQuery = ref('')
 const allRequests = ref([])
 const activeRecipients = ref([])
+const currentUser = ref(null)
+const authUnsubscribe = ref(null)
 
 // --- UI State ---
 const showRejectModal = ref(false)
@@ -476,7 +569,7 @@ const rejectionReason = ref('')
 const toast = ref({ show: false, message: '', type: 'success' })
 
 // --- Computed Properties ---
-const currentUserEmail = computed(() => auth.currentUser?.email || 'Unknown User')
+const currentUserEmail = computed(() => currentUser.value?.email || 'Unknown User')
 
 const pendingRequests = computed(() => {
   return allRequests.value.filter((r) => r.status === 'pending')
@@ -528,7 +621,6 @@ function showToast(message, type = 'success') {
 
 function formatPhoneDisplay(phone) {
   if (!phone) return 'N/A'
-  // Format +639123456789 -> 0912 345 6789
   if (phone.startsWith('+63')) {
     const digits = phone.substring(3)
     if (digits.length === 10) {
@@ -554,8 +646,6 @@ function formatDateShort(timestamp) {
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000)
   const now = new Date()
   const diff = now - date
-
-  // If less than 24 hours, show time
   if (diff < 86400000) {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   }
@@ -563,25 +653,24 @@ function formatDateShort(timestamp) {
 }
 
 // --- Firebase Operations ---
-
-/**
- * Loads both Request History and Active Recipients
- */
 async function loadAllData() {
+  if (!currentUser.value) {
+    console.log('No user authenticated, skipping data load')
+    loading.value = false
+    return
+  }
+
   loading.value = true
   try {
-    // 1. Fetch Requests (Pending & History)
     const reqQ = query(collection(db, 'sms_requests'), orderBy('requestedAt', 'desc'))
     const reqSnap = await getDocs(reqQ)
     allRequests.value = reqSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
 
-    // 2. Fetch Active Recipients
     const recQ = query(collection(db, 'sms_recipients'), orderBy('approvedAt', 'desc'))
     const recSnap = await getDocs(recQ)
     activeRecipients.value = recSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
 
     if (!loading.value) {
-      // Only show toast on manual refresh
       showToast('System data synchronized')
     }
   } catch (error) {
@@ -592,19 +681,14 @@ async function loadAllData() {
   }
 }
 
-/**
- * Approve a pending request
- */
 async function approveRequest(request) {
   try {
-    // 1. Update Request Status
     await updateDoc(doc(db, 'sms_requests', request.id), {
       status: 'approved',
       approvedAt: serverTimestamp(),
       approvedBy: currentUserEmail.value,
     })
 
-    // 2. Create Recipient Record
     await addDoc(collection(db, 'sms_recipients'), {
       userId: request.userId,
       userEmail: request.userEmail,
@@ -623,9 +707,6 @@ async function approveRequest(request) {
   }
 }
 
-/**
- * Modal Logic for Rejection
- */
 function openRejectModal(request) {
   rejectingRequest.value = request
   rejectionReason.value = ''
@@ -636,7 +717,7 @@ function closeRejectModal() {
   showRejectModal.value = false
   setTimeout(() => {
     rejectingRequest.value = null
-  }, 200) // Wait for fade out
+  }, 200)
 }
 
 async function confirmReject() {
@@ -657,11 +738,7 @@ async function confirmReject() {
   }
 }
 
-/**
- * Toggle Recipient Status (Active/Paused)
- */
 async function toggleRecipient(id, currentState) {
-  // Optimistic UI update
   const recipient = activeRecipients.value.find((r) => r.id === id)
   const originalState = !currentState
 
@@ -672,25 +749,18 @@ async function toggleRecipient(id, currentState) {
     showToast(currentState ? 'Recipient activated' : 'Recipient paused')
   } catch (error) {
     console.error('Toggle failed:', error)
-    // Revert on failure
     if (recipient) recipient.enabled = originalState
     showToast('Update failed: ' + error.message, 'error')
   }
 }
 
-/**
- * Permanently Delete Recipient
- */
 async function deleteRecipient(recipient) {
   const confirmMsg = `Are you sure you want to remove ${recipient.userEmail}? \n\nThis will immediately revoke their SMS access.`
   if (!confirm(confirmMsg)) return
 
   try {
-    // 1. Delete from Registry
     await deleteDoc(doc(db, 'sms_recipients', recipient.id))
 
-    // 2. Optional: Clean up associated requests to keep history clean
-    // (Or keep them for audit - here we delete for full cleanup)
     const q = query(collection(db, 'sms_requests'), where('userId', '==', recipient.userId))
     const snap = await getDocs(q)
     const deletions = snap.docs.map((d) => deleteDoc(doc(db, 'sms_requests', d.id)))
@@ -703,16 +773,39 @@ async function deleteRecipient(recipient) {
   }
 }
 
-// Initial Load
 onMounted(() => {
-  if (auth.currentUser) {
-    loadAllData()
+  // Wait for auth to initialize before loading data
+  authUnsubscribe.value = onAuthStateChanged(auth, (user) => {
+    currentUser.value = user
+    console.log('Auth state changed in AdminSMS:', user ? user.email : 'No user')
+
+    if (user) {
+      loadAllData()
+    } else {
+      loading.value = false
+    }
+  })
+})
+
+onUnmounted(() => {
+  // Clean up auth listener
+  if (authUnsubscribe.value) {
+    authUnsubscribe.value()
   }
 })
 </script>
 
 <style scoped>
-/* Smooth Fades for Modals */
+/* Standardize Scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Animations */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -722,7 +815,6 @@ onMounted(() => {
   opacity: 0;
 }
 
-/* Toast Slide Up Animation */
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);

@@ -264,9 +264,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { db, auth } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 import {
   collection,
   addDoc,
@@ -278,26 +279,19 @@ import {
   where,
 } from 'firebase/firestore'
 
-// --- Props & Emits (Optional if you are using internal logic) ---
-// Note: If you want to use the internal Firebase logic I wrote, you don't strictly need the props
-// from the parent, but I will leave them defined to avoid warnings if your parent passes them.
-defineProps({
-  enabled: Boolean,
-  phoneNumbers: Array,
-})
-
 // --- State ---
 const showModal = ref(false)
 const loading = ref(false)
 const submitting = ref(false)
 const userRequest = ref(null)
+const authUnsubscribe = ref(null)
 
 // Form Input
 const phoneInputModel = ref('')
 const requestLabel = ref('')
 const phoneError = ref('')
 
-// --- Computed Visuals (Minimalist Palette) ---
+// --- Computed Visuals ---
 const statusColors = computed(() => {
   if (!userRequest.value)
     return { bgSoft: 'bg-gray-100 dark:bg-white/5', text: 'text-text-light', dot: 'bg-gray-300' }
@@ -387,7 +381,11 @@ async function loadUserRequest() {
   loading.value = true
   try {
     const userId = auth.currentUser?.uid
-    if (!userId) return
+    if (!userId) {
+      console.log('No user logged in')
+      userRequest.value = null
+      return
+    }
 
     const q = query(collection(db, 'sms_requests'), where('userId', '==', userId))
     const querySnapshot = await getDocs(q)
@@ -395,7 +393,9 @@ async function loadUserRequest() {
     if (!querySnapshot.empty) {
       const data = querySnapshot.docs[0].data()
       userRequest.value = { id: querySnapshot.docs[0].id, ...data }
+      console.log('User request loaded:', userRequest.value)
     } else {
+      console.log('No request found for user')
       userRequest.value = null
     }
   } catch (error) {
@@ -465,7 +465,10 @@ async function deleteRequest(checkRecipients = false) {
 
 function openModal() {
   showModal.value = true
-  if (auth.currentUser) loadUserRequest()
+  // Only load if user is already authenticated
+  if (auth.currentUser) {
+    loadUserRequest()
+  }
 }
 
 function closeModal() {
@@ -473,8 +476,26 @@ function closeModal() {
   phoneError.value = ''
 }
 
+// --- Lifecycle (FIXED: Wait for Auth) ---
 onMounted(() => {
-  if (auth.currentUser) loadUserRequest()
+  // Set up auth state listener
+  authUnsubscribe.value = onAuthStateChanged(auth, (user) => {
+    console.log('Auth state changed:', user ? user.email : 'No user')
+    if (user) {
+      // User is signed in, load their request
+      loadUserRequest()
+    } else {
+      // User is signed out
+      userRequest.value = null
+    }
+  })
+})
+
+onUnmounted(() => {
+  // Clean up auth listener
+  if (authUnsubscribe.value) {
+    authUnsubscribe.value()
+  }
 })
 </script>
 
