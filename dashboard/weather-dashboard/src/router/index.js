@@ -18,6 +18,10 @@ import RecommendationsView from '@/views/RecommendationsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue'
 import TermsOfServiceView from '@/views/TermsOfServiceView.vue'
+import AdminSMSView from '@/views/AdminSMSView.vue'
+
+// ⚠️ CHANGE THIS TO YOUR ADMIN EMAIL
+const ADMIN_EMAIL = 'ponce.rn952@s.msumain.edu.ph'
 
 const getCurrentUser = () => {
   return new Promise((resolve, reject) => {
@@ -104,6 +108,12 @@ const router = createRouter({
           name: 'profile',
           component: ProfileView,
         },
+        {
+          path: 'admin/sms',
+          name: 'admin-sms',
+          component: AdminSMSView,
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
       ],
     },
   ],
@@ -112,12 +122,18 @@ const router = createRouter({
 // Navigation guard
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
-  const isAuthenticated = await getCurrentUser()
+  const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin)
+  const user = await getCurrentUser()
 
-  if (requiresAuth && !isAuthenticated) {
+  if (requiresAuth && !user) {
+    // Not logged in, redirect to login
     next({ name: 'login' })
+  } else if (requiresAdmin && user?.email !== ADMIN_EMAIL) {
+    // Not admin, redirect to dashboard with error
+    alert('⚠️ Access Denied: Admin privileges required')
+    next({ name: 'dashboard' })
   } else if (
-    isAuthenticated &&
+    user &&
     (to.name === 'login' ||
       to.name === 'signup' ||
       to.name === 'phone-login' ||
@@ -129,4 +145,6 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
+// Export admin email for use in other components
+export { ADMIN_EMAIL }
 export default router

@@ -544,75 +544,105 @@ async function sendSmsViaApi(cleanPhone, message) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET SMS SETTINGS FROM FIRESTORE
+// GET EMAIL RECIPIENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function getSmsSettings() {
-  try {
-    const settingsDoc = await firestore.collection('settings').doc('thresholds').get();
-    
-    if (!settingsDoc.exists) {
-      console.log('⚠️  Settings document not found');
-      return { enabled: false, phoneNumbers: [] };
-    }
-    
-    const data = settingsDoc.data();
-    
-    console.log('📄 SMS Settings from Firestore:');
-    console.log(`   sms_notifications_enabled: ${data.sms_notifications_enabled}`);
-    
-    // Support both new (array) and old (single) format
-    let phoneNumbers = [];
-    
-    if (data.recipient_phone_numbers && Array.isArray(data.recipient_phone_numbers)) {
-      // NEW FORMAT: Array of phone objects
-      phoneNumbers = data.recipient_phone_numbers;
-      console.log(`   recipient_phone_numbers: ${phoneNumbers.length} number(s)`);
-      phoneNumbers.forEach((phone, index) => {
-        console.log(`      ${index + 1}. ${phone.number} ${phone.label ? `(${phone.label})` : ''}`);
-      });
-    } else if (data.recipient_phone_number) {
-      // OLD FORMAT: Single phone number (backward compatibility)
-      phoneNumbers = [{ number: data.recipient_phone_number, label: 'Primary' }];
-      console.log(`   recipient_phone_number: ${data.recipient_phone_number} (legacy format)`);
-    }
-    
-    return {
-      enabled: data.sms_notifications_enabled || false,
-      phoneNumbers: phoneNumbers // Array of {number, label}
-    };
-  } catch (error) {
-    console.error('⚠️  Error fetching SMS settings:', error.message);
-    return { enabled: false, phoneNumbers: [] };
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET EMAIL RECIPIENTS FROM FIRESTORE
-// ═══════════════════════════════════════════════════════════════════════════════
 async function getEmailRecipients() {
   try {
+    console.log('📧 Fetching email recipients from Firestore...');
+    
+    // Get all users who have email notifications enabled
     const usersSnapshot = await firestore.collection('users')
       .where('emailNotifications', '==', true)
       .get();
     
-    if (usersSnapshot.empty) {
-      console.log('📧 No users with email notifications enabled - using default');
-      return [gmailEmail];
+    const recipients = [];
+    
+    if (!usersSnapshot.empty) {
+      usersSnapshot.docs.forEach(doc => {
+        const userData = doc.data();
+        if (userData.email) {
+          recipients.push(userData.email);
+        }
+      });
     }
     
-    const emails = usersSnapshot.docs.map(doc => doc.data().email).filter(Boolean);
+    // Always include the system admin email as fallback
+    if (!recipients.includes(gmailEmail)) {
+      recipients.push(gmailEmail);
+    }
     
-    console.log('📧 Email Recipients from Firestore:');
-    console.log(`   Total recipients: ${emails.length}`);  // ✅ Fixed
-    emails.forEach((email, index) => {
-      console.log(`   ${index + 1}. ${email}`);  // ✅ Fixed
+    console.log(`   Found ${recipients.length} email recipient(s)`);
+    recipients.forEach((email, index) => {
+      console.log(`   ${index + 1}. ${email}`);
     });
     
-    return emails.length > 0 ? emails : [gmailEmail];
+    return recipients;
+    
   } catch (error) {
     console.error('⚠️  Error fetching email recipients:', error.message);
+    // Fallback to admin email
     return [gmailEmail];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET SMS SETTINGS FROM FIRESTORE (UPDATED FOR APPROVAL SYSTEM)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function getSmsSettings() {
+  try {
+    console.log('📱 Fetching SMS recipients from Firestore...');
+    
+    // Get ONLY approved and enabled recipients from sms_recipients collection
+    const recipientsSnapshot = await firestore.collection('sms_recipients')
+      .where('enabled', '==', true)
+      .get();
+    
+    if (recipientsSnapshot.empty) {
+      console.log('⚠️  No active SMS recipients found');
+      console.log('   → Check if any requests have been approved in admin panel');
+      console.log('   → Approved requests should create entries in sms_recipients collection');
+      return { enabled: false, phoneNumbers: [] };
+    }
+    
+    // Extract phone numbers with validation
+    const phoneNumbers = [];
+    
+    recipientsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      
+      // Validate that we have required fields
+      if (data.phone && data.enabled === true) {
+        phoneNumbers.push({
+          number: data.phone,
+          label: data.label || 'No label',
+          userEmail: data.userEmail || 'unknown',
+          addedBy: data.addedBy || 'unknown',
+          approvedBy: data.approvedBy || 'unknown'
+        });
+      }
+    });
+    
+    if (phoneNumbers.length === 0) {
+      console.log('⚠️  Found recipient documents but none are valid/enabled');
+      return { enabled: false, phoneNumbers: [] };
+    }
+    
+    console.log(`✅ Found ${phoneNumbers.length} approved & active SMS recipient(s):`);
+    phoneNumbers.forEach((phone, index) => {
+      console.log(`   ${index + 1}. ${phone.number} (${phone.label}) - User: ${phone.userEmail}`);
+    });
+    
+    return {
+      enabled: true,
+      phoneNumbers: phoneNumbers
+    };
+    
+  } catch (error) {
+    console.error('⚠️  Error fetching SMS settings:', error.message);
+    console.error('   Stack trace:', error.stack);
+    return { enabled: false, phoneNumbers: [] };
   }
 }
 

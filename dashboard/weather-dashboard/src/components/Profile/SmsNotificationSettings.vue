@@ -1,135 +1,524 @@
 <template>
   <div
-    class="group transition-colors duration-300 hover:bg-hover/40 border border-transparent hover:border-border/30 rounded-xl"
+    class="group relative p-4 sm:p-5 transition-colors duration-300 hover:bg-gray-50 dark:hover:bg-white/5"
   >
-    <div class="flex items-center justify-between p-4 sm:p-5 min-h-[4rem] sm:min-h-[5rem]">
-      <div class="flex items-center gap-3 sm:gap-5 mr-4">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
         <div
-          class="flex-shrink-0 transition-colors duration-300"
-          :class="
-            enabled
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-text-light group-hover:text-emerald-500'
-          "
+          class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-500"
+          :class="[userRequest ? statusColors.bgSoft : 'bg-gray-100 dark:bg-white/10']"
         >
-          <Icon icon="ph:device-mobile" class="w-5 h-5 sm:w-6 sm:h-6" />
+          <Icon
+            :icon="statusIcon"
+            class="w-5 h-5 transition-colors duration-300"
+            :class="statusColors.text"
+          />
         </div>
 
-        <div>
-          <p class="text-sm font-medium text-text-main leading-none">SMS Notifications</p>
-          <p class="text-xs text-text-light mt-1.5 leading-tight">
-            {{ phoneNumbers?.length || 0 }} number{{ (phoneNumbers?.length || 0) !== 1 ? 's' : '' }}
-            configured
-          </p>
+        <div class="space-y-0.5">
+          <h3 class="text-sm font-semibold text-text-main tracking-tight">SMS Notifications</h3>
+
+          <div class="flex items-center gap-2">
+            <div class="relative flex h-1.5 w-1.5" v-if="userRequest?.status === 'approved'">
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                :class="statusColors.dot"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-1.5 w-1.5"
+                :class="statusColors.dot"
+              ></span>
+            </div>
+            <span
+              v-else
+              class="relative inline-flex rounded-full h-1.5 w-1.5"
+              :class="statusColors.dot"
+            ></span>
+
+            <p class="text-xs font-medium text-text-light opacity-80">
+              {{ statusText }}
+            </p>
+          </div>
         </div>
       </div>
 
       <button
-        @click="$emit('update:enabled', !enabled)"
-        :class="enabled ? 'bg-emerald-600' : 'bg-gray-200 dark:bg-gray-700'"
-        class="flex-shrink-0 ml-auto relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+        @click="openModal"
+        class="shrink-0 px-4 py-1.5 bg-transparent border border-border text-text-main text-[11px] font-semibold uppercase tracking-wider rounded-full hover:bg-text-main hover:text-background transition-all duration-300"
       >
-        <span class="sr-only">Enable SMS</span>
-        <span
-          :class="enabled ? 'translate-x-6 bg-white' : 'translate-x-1 bg-white shadow-sm'"
-          class="inline-block h-4 w-4 transform rounded-full transition-transform duration-300"
-        />
+        {{ userRequest ? 'Manage' : 'Enable' }}
       </button>
     </div>
+  </div>
 
-    <Transition name="slide-fade">
-      <div v-if="enabled" class="pb-5 pl-4 pr-4 sm:pb-6 sm:pl-[4.5rem] sm:pr-6">
-        <div class="pl-3 sm:pl-4 border-l-2 border-emerald-500/30 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="text-xs font-medium text-text-light uppercase tracking-wider">
-              Phone Numbers ({{ phoneNumbers?.length || 0 }}/5)
-            </p>
-            <button
-              @click="$emit('add-number')"
-              :disabled="(phoneNumbers?.length || 0) >= 5"
-              class="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-1 py-1"
+  <Transition name="modal">
+    <div
+      v-if="showModal"
+      class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/20 backdrop-blur-md"
+      @click.self="closeModal"
+    >
+      <div
+        class="bg-surface border border-border/50 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh] transition-all transform duration-500"
+      >
+        <div class="px-8 pt-8 pb-2 flex items-start justify-between bg-surface shrink-0">
+          <div>
+            <h2 class="text-xl font-bold text-text-main tracking-tight">SMS Setup</h2>
+            <p class="text-xs text-text-light mt-1 font-medium">Emergency weather alerts</p>
+          </div>
+          <button
+            @click="closeModal"
+            class="p-2 -mr-2 -mt-2 text-text-light/50 hover:text-text-main transition-colors rounded-full"
+          >
+            <Icon icon="ph:x" class="w-5 h-5" />
+          </button>
+        </div>
+
+        <div class="px-8 py-6 overflow-y-auto custom-scrollbar">
+          <div v-if="loading" class="py-12 flex flex-col items-center justify-center opacity-50">
+            <Icon icon="ph:spinner-gap" class="animate-spin w-6 h-6 text-text-main mb-2" />
+            <p class="text-[10px] font-bold uppercase tracking-widest text-text-light">Syncing</p>
+          </div>
+
+          <div v-else-if="!userRequest" class="space-y-8">
+            <div
+              class="text-xs text-text-light leading-relaxed opacity-80 pl-3 border-l-2 border-primary/30"
             >
-              <Icon icon="ph:plus-bold" class="w-3 h-3" />
-              Add Number
+              Receive critical alerts directly to your mobile device. Strictly emergency use only.
+            </div>
+
+            <div class="space-y-5">
+              <div class="group">
+                <label
+                  class="block text-[10px] font-bold text-text-light uppercase tracking-widest mb-2 ml-1"
+                >
+                  Mobile Number
+                </label>
+                <div class="relative flex items-center">
+                  <span
+                    class="absolute left-4 text-text-light text-sm font-mono select-none pointer-events-none transition-colors group-focus-within:text-primary"
+                    >+63</span
+                  >
+                  <input
+                    v-model="phoneInputModel"
+                    type="tel"
+                    maxlength="10"
+                    placeholder="917 000 0000"
+                    class="w-full pl-12 pr-10 py-3.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-text-main placeholder:text-text-light/30 text-sm font-mono focus:ring-1 focus:ring-primary/50 transition-all"
+                    @input="validatePhoneInput"
+                  />
+                  <div
+                    class="absolute right-4 transition-all duration-300"
+                    :class="isValidPhone ? 'scale-100 opacity-100' : 'scale-50 opacity-0'"
+                  >
+                    <Icon icon="ph:check-circle-fill" class="w-5 h-5 text-green-500" />
+                  </div>
+                </div>
+                <div
+                  v-if="phoneError"
+                  class="mt-2 ml-1 text-[10px] text-red-500 font-medium flex items-center gap-1 animate-pulse"
+                >
+                  {{ phoneError }}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  class="block text-[10px] font-bold text-text-light uppercase tracking-widest mb-2 ml-1"
+                >
+                  Label <span class="opacity-50 font-normal normal-case">(Optional)</span>
+                </label>
+                <input
+                  v-model="requestLabel"
+                  type="text"
+                  placeholder="e.g. My iPhone"
+                  class="w-full px-4 py-3.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-text-main placeholder:text-text-light/30 text-sm focus:ring-1 focus:ring-primary/50 transition-all"
+                />
+              </div>
+            </div>
+
+            <button
+              @click="submitRequest"
+              :disabled="!isValidPhone || submitting"
+              class="w-full py-4 bg-text-main text-background font-bold rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-xl shadow-text-main/10"
+            >
+              <Icon v-if="submitting" icon="ph:spinner-gap-bold" class="animate-spin w-4 h-4" />
+              <span>{{ submitting ? 'Processing' : 'Register Device' }}</span>
             </button>
           </div>
 
-          <div class="space-y-3">
-            <TransitionGroup name="list">
-              <PhoneNumberInput
-                v-for="(phone, index) in phoneNumbers"
-                :key="phone.id || index"
-                :number="phone.number"
-                :label="phone.label"
-                :error="phone.error"
-                @update:number="handlePhoneUpdate(index, 'number', $event)"
-                @update:label="handlePhoneUpdate(index, 'label', $event)"
-                @remove="$emit('remove-number', index)"
-                @validate="$emit('validate-number', index)"
-              />
-            </TransitionGroup>
-
-            <div
-              v-if="!phoneNumbers || phoneNumbers.length === 0"
-              class="text-center py-6 text-text-light bg-gray-50/50 dark:bg-white/5 rounded-lg border border-dashed border-gray-200 dark:border-white/10"
-            >
-              <Icon icon="ph:phone-plus-bold" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p class="text-sm font-medium">No phone numbers</p>
-              <p class="text-xs mt-1 opacity-70">Tap "Add Number" above</p>
+          <div v-else-if="userRequest.status === 'pending'" class="space-y-8 py-4">
+            <div class="flex flex-col items-center text-center space-y-4">
+              <div class="relative">
+                <div class="absolute inset-0 bg-orange-400 blur-xl opacity-20 rounded-full"></div>
+                <Icon
+                  icon="ph:hourglass-simple-medium"
+                  class="relative w-12 h-12 text-orange-500"
+                />
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-text-main">Reviewing</h3>
+                <p class="text-xs text-text-light mt-1 max-w-[200px] mx-auto leading-relaxed">
+                  Admin approval is required for new devices.
+                </p>
+              </div>
             </div>
+
+            <div class="bg-gray-50 dark:bg-white/5 rounded-2xl p-5 space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] uppercase tracking-widest text-text-light">Number</span>
+                <span class="font-mono text-sm font-semibold text-text-main">{{
+                  formatPhoneDisplay(userRequest.phone)
+                }}</span>
+              </div>
+              <div class="h-px bg-border/50 w-full"></div>
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] uppercase tracking-widest text-text-light">Requested</span>
+                <span class="text-xs font-medium text-text-main">{{
+                  formatDate(userRequest.requestedAt)
+                }}</span>
+              </div>
+            </div>
+
+            <button
+              @click="cancelRequest"
+              class="w-full py-3.5 border border-border rounded-2xl text-xs font-semibold text-text-light hover:text-red-500 hover:border-red-200 hover:bg-red-50/10 transition-all"
+            >
+              Cancel Request
+            </button>
           </div>
 
-          <p class="text-[10px] sm:text-xs text-text-light opacity-60 leading-relaxed">
-            Format: 09171234567 or +639171234567 • Maximum 5 numbers
-          </p>
+          <div v-else-if="userRequest.status === 'approved'" class="space-y-8">
+            <div
+              class="relative overflow-hidden bg-gradient-to-br from-green-500/10 to-green-500/5 dark:from-green-400/10 dark:to-transparent border border-green-500/20 rounded-2xl p-6"
+            >
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                  <span
+                    class="text-[10px] font-bold uppercase tracking-widest text-green-600 dark:text-green-400"
+                    >Active</span
+                  >
+                </div>
+                <Icon icon="ph:shield-check-fill" class="w-5 h-5 text-green-500" />
+              </div>
+
+              <div class="space-y-1">
+                <h3 class="text-2xl font-mono font-bold text-text-main tracking-tight">
+                  {{ formatPhoneDisplay(userRequest.phone) }}
+                </h3>
+                <p class="text-sm text-text-light">{{ userRequest.label || 'Primary Device' }}</p>
+              </div>
+            </div>
+
+            <div class="flex gap-3 px-2">
+              <Icon icon="ph:check" class="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+              <p class="text-xs text-text-light leading-relaxed">
+                System connected. You will receive high-priority SMS alerts on this number.
+              </p>
+            </div>
+
+            <button
+              @click="removeNumber"
+              class="w-full py-3.5 text-red-500 text-xs font-bold hover:bg-red-50/50 dark:hover:bg-red-900/10 rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <Icon icon="ph:trash-simple" />
+              Disconnect
+            </button>
+          </div>
+
+          <div v-else-if="userRequest.status === 'rejected'" class="space-y-6">
+            <div class="flex flex-col items-center text-center pt-4 space-y-2">
+              <div
+                class="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-2"
+              >
+                <Icon icon="ph:x" class="w-6 h-6 text-red-500" />
+              </div>
+              <h3 class="text-lg font-bold text-text-main">Request Declined</h3>
+              <p class="text-xs text-red-500/80 max-w-[200px] leading-relaxed">
+                {{ userRequest.rejectionReason || 'No reason provided.' }}
+              </p>
+            </div>
+
+            <div
+              class="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 flex justify-between items-center"
+            >
+              <span class="text-xs text-text-light font-mono">{{
+                formatPhoneDisplay(userRequest.phone)
+              }}</span>
+              <span class="text-[10px] font-bold uppercase tracking-widest text-red-400"
+                >Rejected</span
+              >
+            </div>
+
+            <button
+              @click="deleteAndRetry"
+              class="w-full py-4 bg-text-main text-background font-bold rounded-2xl hover:opacity-90 transition-all text-sm shadow-xl shadow-text-main/10"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </div>
-    </Transition>
-  </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
-import PhoneNumberInput from './PhoneNumberInput.vue'
+import { db, auth } from '@/firebase'
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  query,
+  where,
+} from 'firebase/firestore'
 
+// --- Props & Emits (Optional if you are using internal logic) ---
+// Note: If you want to use the internal Firebase logic I wrote, you don't strictly need the props
+// from the parent, but I will leave them defined to avoid warnings if your parent passes them.
 defineProps({
-  enabled: { type: Boolean, default: false },
-  phoneNumbers: { type: Array, default: () => [] },
+  enabled: Boolean,
+  phoneNumbers: Array,
 })
 
-const emit = defineEmits([
-  'update:enabled',
-  'add-number',
-  'remove-number',
-  'validate-number',
-  'update:phone-field',
-])
+// --- State ---
+const showModal = ref(false)
+const loading = ref(false)
+const submitting = ref(false)
+const userRequest = ref(null)
 
-const handlePhoneUpdate = (index, field, value) => {
-  emit('update:phone-field', { index, field, value })
-  emit('validate-number', index)
+// Form Input
+const phoneInputModel = ref('')
+const requestLabel = ref('')
+const phoneError = ref('')
+
+// --- Computed Visuals (Minimalist Palette) ---
+const statusColors = computed(() => {
+  if (!userRequest.value)
+    return { bgSoft: 'bg-gray-100 dark:bg-white/5', text: 'text-text-light', dot: 'bg-gray-300' }
+  switch (userRequest.value.status) {
+    case 'approved':
+      return {
+        bgSoft: 'bg-green-50 dark:bg-green-900/20',
+        text: 'text-green-600 dark:text-green-400',
+        dot: 'bg-green-500',
+      }
+    case 'pending':
+      return {
+        bgSoft: 'bg-orange-50 dark:bg-orange-900/20',
+        text: 'text-orange-600 dark:text-orange-400',
+        dot: 'bg-orange-500',
+      }
+    case 'rejected':
+      return {
+        bgSoft: 'bg-red-50 dark:bg-red-900/20',
+        text: 'text-red-600 dark:text-red-400',
+        dot: 'bg-red-500',
+      }
+    default:
+      return { bgSoft: 'bg-gray-100 dark:bg-white/5', text: 'text-text-light', dot: 'bg-gray-300' }
+  }
+})
+
+const statusIcon = computed(() => {
+  if (!userRequest.value) return 'ph:device-mobile-camera'
+  switch (userRequest.value.status) {
+    case 'approved':
+      return 'ph:check'
+    case 'pending':
+      return 'ph:hourglass'
+    case 'rejected':
+      return 'ph:warning-circle'
+    default:
+      return 'ph:device-mobile'
+  }
+})
+
+const statusText = computed(() => {
+  if (!userRequest.value) return 'Not Configured'
+  switch (userRequest.value.status) {
+    case 'approved':
+      return 'Active'
+    case 'pending':
+      return 'Pending Approval'
+    case 'rejected':
+      return 'Action Required'
+    default:
+      return 'Unknown'
+  }
+})
+
+const isValidPhone = computed(() => {
+  return /^\d{10}$/.test(phoneInputModel.value)
+})
+
+// --- Validation & Formatting ---
+function validatePhoneInput() {
+  phoneInputModel.value = phoneInputModel.value.replace(/\D/g, '')
+  if (phoneInputModel.value.length > 0 && !/^9\d+/.test(phoneInputModel.value)) {
+    phoneError.value = 'Start with 9 (e.g. 917...)'
+  } else {
+    phoneError.value = ''
+  }
 }
+
+function formatPhoneDisplay(phone) {
+  if (!phone) return ''
+  if (phone.startsWith('+63')) {
+    const digits = phone.substring(3)
+    return `0${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6)}`
+  }
+  return phone
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return 'Just now'
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000)
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// --- Firebase Actions ---
+async function loadUserRequest() {
+  loading.value = true
+  try {
+    const userId = auth.currentUser?.uid
+    if (!userId) return
+
+    const q = query(collection(db, 'sms_requests'), where('userId', '==', userId))
+    const querySnapshot = await getDocs(q)
+
+    if (!querySnapshot.empty) {
+      const data = querySnapshot.docs[0].data()
+      userRequest.value = { id: querySnapshot.docs[0].id, ...data }
+    } else {
+      userRequest.value = null
+    }
+  } catch (error) {
+    console.error('Fetch error:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function submitRequest() {
+  if (!isValidPhone.value) return
+  submitting.value = true
+
+  try {
+    const formattedPhone = `+63${phoneInputModel.value}`
+    await addDoc(collection(db, 'sms_requests'), {
+      userId: auth.currentUser?.uid,
+      userEmail: auth.currentUser?.email,
+      phone: formattedPhone,
+      label: requestLabel.value || 'Primary Mobile',
+      status: 'pending',
+      requestedAt: serverTimestamp(),
+    })
+    phoneInputModel.value = ''
+    requestLabel.value = ''
+    await loadUserRequest()
+  } catch (error) {
+    alert('Submission failed: ' + error.message)
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function cancelRequest() {
+  if (!confirm('Cancel this pending request?')) return
+  await deleteRequest()
+}
+
+async function removeNumber() {
+  if (!confirm('Stop receiving SMS alerts?')) return
+  await deleteRequest(true)
+}
+
+async function deleteAndRetry() {
+  await deleteRequest()
+}
+
+async function deleteRequest(checkRecipients = false) {
+  try {
+    if (userRequest.value?.id) {
+      await deleteDoc(doc(db, 'sms_requests', userRequest.value.id))
+    }
+    if (checkRecipients) {
+      const q = query(
+        collection(db, 'sms_recipients'),
+        where('userId', '==', auth.currentUser?.uid),
+      )
+      const snap = await getDocs(q)
+      const deletions = snap.docs.map((d) => deleteDoc(doc(db, 'sms_recipients', d.id)))
+      await Promise.all(deletions)
+    }
+    userRequest.value = null
+  } catch (error) {
+    console.error('Delete error:', error)
+  }
+}
+
+function openModal() {
+  showModal.value = true
+  if (auth.currentUser) loadUserRequest()
+}
+
+function closeModal() {
+  showModal.value = false
+  phoneError.value = ''
+}
+
+onMounted(() => {
+  if (auth.currentUser) loadUserRequest()
+})
 </script>
 
 <style scoped>
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
 }
-.slide-fade-enter-from,
-.slide-fade-leave-to {
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 20px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-light);
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-enter-from,
+.modal-leave-to {
   opacity: 0;
-  max-height: 0;
-  padding-bottom: 0;
 }
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.3s ease;
+
+.modal-enter-active .bg-surface {
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s ease;
 }
-.list-enter-from,
-.list-leave-to {
+.modal-leave-active .bg-surface {
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.modal-enter-from .bg-surface {
   opacity: 0;
-  transform: translateX(-10px);
+  transform: scale(0.95) translateY(15px);
+}
+.modal-leave-to .bg-surface {
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
 }
 </style>

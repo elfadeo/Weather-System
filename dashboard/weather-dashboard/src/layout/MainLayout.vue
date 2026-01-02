@@ -40,6 +40,28 @@
           </div>
 
           <div class="flex items-center gap-3 shrink-0">
+            <!-- Admin SMS Button (Only visible to admin) -->
+            <router-link
+              v-if="isAdmin"
+              to="/dashboard/admin/sms"
+              class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all hover:scale-105 active:scale-95"
+              title="Manage SMS Recipients"
+            >
+              <Icon icon="ph:shield-check-bold" class="w-4 h-4" />
+              <span class="hidden md:inline">SMS Admin</span>
+            </router-link>
+
+            <!-- Mobile Admin Button (Icon Only) -->
+            <router-link
+              v-if="isAdmin"
+              to="/dashboard/admin/sms"
+              class="sm:hidden p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-all"
+              title="SMS Admin"
+            >
+              <Icon icon="ph:shield-check-bold" class="w-5 h-5" />
+            </router-link>
+
+            <!-- Theme Toggle -->
             <button
               @click="toggleTheme"
               class="group relative p-2.5 rounded-full text-text-light hover:bg-hover hover:text-text-main transition-all focus:outline-none"
@@ -111,9 +133,16 @@ import Sidebar from '@/components/AppSidebar.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { Icon } from '@iconify/vue'
 import { useTheme } from '@/composables/useTheme.js'
+import { auth } from '@/firebase'
+import { ADMIN_EMAIL } from '@/router'
 
 // --- Theme Logic ---
 const { isDarkMode, toggleTheme } = useTheme()
+
+// --- Admin Check ---
+const isAdmin = computed(() => {
+  return auth.currentUser?.email === ADMIN_EMAIL
+})
 
 // --- Sidebar Logic ---
 const sidebarRef = ref(null)
