@@ -15,68 +15,79 @@
       <header
         class="sticky top-0 z-30 w-full bg-surface/80 backdrop-blur-xl border-b border-border/40 transition-all duration-300 safe-top"
       >
-        <div class="px-4 sm:px-8 h-16 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4 flex-1 min-w-0">
+        <!-- Mobile-Optimized Header: Reduced padding, better spacing -->
+        <div
+          class="px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4"
+        >
+          <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+            <!-- Mobile Menu Button: Larger touch target -->
             <button
               @click="toggleMobileSidebar"
-              class="lg:hidden p-2 -ml-2 text-text-light hover:text-primary hover:bg-hover rounded-full active:scale-95 transition-all focus:outline-none"
+              class="lg:hidden p-2.5 -ml-1 text-text-light hover:text-primary hover:bg-hover rounded-lg active:scale-95 transition-all focus:outline-none touch-manipulation"
               :aria-label="isSidebarMobileOpen ? 'Close menu' : 'Open menu'"
             >
-              <Icon :icon="sidebarOpenIcon" class="h-6 w-6" />
+              <Icon :icon="sidebarOpenIcon" class="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
-            <div class="flex items-center gap-3 lg:hidden">
-              <span class="text-primary">
-                <Icon icon="ph:cloud-sun-duotone" class="h-6 w-6" />
+            <!-- Mobile Logo/Title: Optimized for small screens -->
+            <div class="flex items-center gap-2 sm:gap-3 lg:hidden min-w-0">
+              <span class="text-primary shrink-0">
+                <Icon icon="ph:cloud-sun-duotone" class="h-5 w-5 sm:h-6 sm:w-6" />
               </span>
-              <h1 class="text-sm font-semibold tracking-wide uppercase text-text-main truncate">
+              <h1
+                class="text-xs sm:text-sm font-semibold tracking-wide uppercase text-text-main truncate"
+              >
                 Climate Monitoring
               </h1>
             </div>
 
+            <!-- Desktop Title -->
             <h2 class="hidden lg:block text-lg font-medium tracking-tight text-text-main">
               Dashboard Overview
             </h2>
           </div>
 
-          <div class="flex items-center gap-3 shrink-0">
-            <!-- Admin SMS Button (Only visible to admin) -->
+          <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <!-- Admin SMS Button (Desktop) -->
             <router-link
               v-if="isAdmin"
               to="/dashboard/admin/sms"
-              class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all hover:scale-105 active:scale-95"
+              class="hidden sm:flex items-center gap-2 px-2.5 sm:px-3 py-1.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all hover:scale-105 active:scale-95 touch-manipulation"
               title="Manage SMS Recipients"
             >
-              <Icon icon="ph:shield-check-bold" class="w-4 h-4" />
+              <Icon icon="ph:shield-check-bold" class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span class="hidden md:inline">SMS Admin</span>
             </router-link>
 
-            <!-- Mobile Admin Button (Icon Only) -->
+            <!-- Mobile Admin Button: Larger touch target -->
             <router-link
               v-if="isAdmin"
               to="/dashboard/admin/sms"
-              class="sm:hidden p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-all"
+              class="sm:hidden p-2.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all touch-manipulation"
               title="SMS Admin"
             >
               <Icon icon="ph:shield-check-bold" class="w-5 h-5" />
             </router-link>
 
-            <!-- Theme Toggle -->
+            <!-- Theme Toggle: Enhanced mobile touch target -->
             <button
               @click="toggleTheme"
-              class="group relative p-2.5 rounded-full text-text-light hover:bg-hover hover:text-text-main transition-all focus:outline-none"
+              class="group relative p-2.5 rounded-lg text-text-light hover:bg-hover hover:text-text-main transition-all focus:outline-none touch-manipulation"
               :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
             >
               <Icon
                 :icon="isDarkMode ? 'ph:sun-bold' : 'ph:moon-bold'"
-                class="h-5 w-5 transition-transform duration-500 group-hover:rotate-12"
+                class="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-500 group-hover:rotate-12"
               />
             </button>
           </div>
         </div>
       </header>
 
-      <main class="flex-grow p-4 sm:p-8 lg:p-10 safe-bottom overflow-x-hidden">
+      <!-- Main Content: Improved mobile padding -->
+      <main
+        class="flex-grow px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-10 safe-bottom overflow-x-hidden"
+      >
         <div class="max-w-7xl mx-auto w-full h-full">
           <router-view v-slot="{ Component }">
             <transition name="fade-slide" mode="out-in">
@@ -91,6 +102,7 @@
       />
     </div>
 
+    <!-- Mobile-Optimized Error Toast -->
     <transition
       enter-active-class="transform ease-out duration-300 transition"
       enter-from-class="translate-y-8 opacity-0 scale-95"
@@ -101,23 +113,24 @@
     >
       <div
         v-if="errorMessage"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-8 z-[100] safe-bottom-toast"
+        class="fixed bottom-4 left-3 right-3 sm:left-1/2 sm:-translate-x-1/2 sm:right-auto sm:w-auto lg:left-auto lg:translate-x-0 lg:right-8 z-[100] safe-bottom-toast"
         role="alert"
       >
         <div
-          class="flex items-center gap-3 px-4 py-3 bg-surface/95 backdrop-blur-md border border-border shadow-xl rounded-full ring-1 ring-black/5 dark:ring-white/10"
+          class="flex items-start sm:items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 bg-surface/95 backdrop-blur-md border border-border shadow-xl rounded-2xl sm:rounded-full ring-1 ring-black/5 dark:ring-white/10"
         >
-          <div class="flex items-center justify-center bg-red-50 rounded-full p-1.5">
+          <div class="flex items-center justify-center bg-red-50 rounded-full p-1.5 shrink-0">
             <Icon icon="ph:warning-circle-bold" class="w-4 h-4 text-red-600" />
           </div>
 
-          <span class="text-sm font-medium text-text-main pr-2">
+          <span class="text-xs sm:text-sm font-medium text-text-main flex-1 leading-snug">
             {{ errorMessage }}
           </span>
 
           <button
             @click="clearError"
-            class="p-1 -mr-1 text-text-light hover:text-text-main hover:bg-hover rounded-full transition-colors"
+            class="p-1.5 sm:p-1 -mr-1 text-text-light hover:text-text-main hover:bg-hover rounded-full transition-colors shrink-0 touch-manipulation"
+            aria-label="Close notification"
           >
             <Icon icon="ph:x-bold" class="w-3.5 h-3.5" />
           </button>
@@ -140,7 +153,7 @@ import { ADMIN_EMAIL } from '@/router'
 // --- Theme Logic ---
 const { isDarkMode, toggleTheme } = useTheme()
 
-// --- Admin Check (FIXED: Reactive to auth state) ---
+// --- Admin Check (Reactive to auth state) ---
 const currentUser = ref(null)
 const authUnsubscribe = ref(null)
 
@@ -216,12 +229,23 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Smooth Theme Transition */
-.theme-transition,
-.theme-transition * {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-duration: 300ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+/* Optimized Theme Transition - Only target specific elements */
+.theme-transition {
+  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Apply transitions only to interactive/visible elements */
+.theme-transition button,
+.theme-transition a,
+.theme-transition header,
+.theme-transition main,
+.theme-transition [class*='bg-'],
+.theme-transition [class*='border-'],
+.theme-transition [class*='text-'] {
+  transition:
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Smooth Page Transition */
@@ -252,7 +276,13 @@ onUnmounted(() => {
 }
 
 .safe-bottom-toast {
-  bottom: max(2rem, calc(env(safe-area-inset-bottom, 0) + 2rem));
+  bottom: max(1rem, calc(env(safe-area-inset-bottom, 0) + 1rem));
+}
+
+/* Mobile Touch Optimization */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Minimalist Scrollbar: Invisible until hover */
@@ -266,12 +296,11 @@ onUnmounted(() => {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: transparent; /* Hidden by default */
+  background-color: transparent;
   border-radius: 99px;
   transition: background-color 0.3s;
 }
 
-/* Show scrollbar when hovering over the scrollable area */
 :hover::-webkit-scrollbar-thumb {
   background-color: var(--color-border);
 }
@@ -289,5 +318,12 @@ onUnmounted(() => {
 
 *:hover {
   scrollbar-color: var(--color-border) transparent;
+}
+
+/* Prevent horizontal scroll on small screens */
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+  }
 }
 </style>

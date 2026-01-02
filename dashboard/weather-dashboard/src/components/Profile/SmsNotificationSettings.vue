@@ -74,11 +74,32 @@
         </div>
 
         <div class="px-8 py-6 overflow-y-auto custom-scrollbar">
+          <!-- Loading State -->
           <div v-if="loading" class="py-12 flex flex-col items-center justify-center opacity-50">
             <Icon icon="ph:spinner-gap" class="animate-spin w-6 h-6 text-text-main mb-2" />
             <p class="text-[10px] font-bold uppercase tracking-widest text-text-light">Syncing</p>
           </div>
 
+          <!-- Error State -->
+          <div v-else-if="error" class="py-8 space-y-4">
+            <div class="flex flex-col items-center text-center">
+              <div
+                class="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-3"
+              >
+                <Icon icon="ph:warning" class="w-6 h-6 text-red-500" />
+              </div>
+              <h3 class="text-sm font-bold text-text-main">Connection Error</h3>
+              <p class="text-xs text-text-light mt-1">{{ error }}</p>
+            </div>
+            <button
+              @click="retryLoad"
+              class="w-full py-3 bg-text-main text-background font-bold rounded-2xl hover:opacity-90 transition-all text-sm"
+            >
+              Retry
+            </button>
+          </div>
+
+          <!-- New Request Form -->
           <div v-else-if="!userRequest" class="space-y-8">
             <div
               class="text-xs text-text-light leading-relaxed opacity-80 pl-3 border-l-2 border-primary/30"
@@ -105,6 +126,7 @@
                     placeholder="917 000 0000"
                     class="w-full pl-12 pr-10 py-3.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-text-main placeholder:text-text-light/30 text-sm font-mono focus:ring-1 focus:ring-primary/50 transition-all"
                     @input="validatePhoneInput"
+                    :disabled="submitting"
                   />
                   <div
                     class="absolute right-4 transition-all duration-300"
@@ -115,8 +137,9 @@
                 </div>
                 <div
                   v-if="phoneError"
-                  class="mt-2 ml-1 text-[10px] text-red-500 font-medium flex items-center gap-1 animate-pulse"
+                  class="mt-2 ml-1 text-[10px] text-red-500 font-medium flex items-center gap-1"
                 >
+                  <Icon icon="ph:warning-circle" class="w-3 h-3" />
                   {{ phoneError }}
                 </div>
               </div>
@@ -131,7 +154,9 @@
                   v-model="requestLabel"
                   type="text"
                   placeholder="e.g. My iPhone"
+                  maxlength="30"
                   class="w-full px-4 py-3.5 bg-gray-50 dark:bg-white/5 border-none rounded-2xl text-text-main placeholder:text-text-light/30 text-sm focus:ring-1 focus:ring-primary/50 transition-all"
+                  :disabled="submitting"
                 />
               </div>
             </div>
@@ -146,6 +171,7 @@
             </button>
           </div>
 
+          <!-- Pending Status -->
           <div v-else-if="userRequest.status === 'pending'" class="space-y-8 py-4">
             <div class="flex flex-col items-center text-center space-y-4">
               <div class="relative">
@@ -181,12 +207,14 @@
 
             <button
               @click="cancelRequest"
-              class="w-full py-3.5 border border-border rounded-2xl text-xs font-semibold text-text-light hover:text-red-500 hover:border-red-200 hover:bg-red-50/10 transition-all"
+              :disabled="submitting"
+              class="w-full py-3.5 border border-border rounded-2xl text-xs font-semibold text-text-light hover:text-red-500 hover:border-red-200 hover:bg-red-50/10 transition-all disabled:opacity-50"
             >
-              Cancel Request
+              {{ submitting ? 'Canceling...' : 'Cancel Request' }}
             </button>
           </div>
 
+          <!-- Approved Status -->
           <div v-else-if="userRequest.status === 'approved'" class="space-y-8">
             <div
               class="relative overflow-hidden bg-gradient-to-br from-green-500/10 to-green-500/5 dark:from-green-400/10 dark:to-transparent border border-green-500/20 rounded-2xl p-6"
@@ -219,13 +247,15 @@
 
             <button
               @click="removeNumber"
-              class="w-full py-3.5 text-red-500 text-xs font-bold hover:bg-red-50/50 dark:hover:bg-red-900/10 rounded-xl transition-colors flex items-center justify-center gap-2"
+              :disabled="submitting"
+              class="w-full py-3.5 text-red-500 text-xs font-bold hover:bg-red-50/50 dark:hover:bg-red-900/10 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Icon icon="ph:trash-simple" />
-              Disconnect
+              {{ submitting ? 'Disconnecting...' : 'Disconnect' }}
             </button>
           </div>
 
+          <!-- Rejected Status -->
           <div v-else-if="userRequest.status === 'rejected'" class="space-y-6">
             <div class="flex flex-col items-center text-center pt-4 space-y-2">
               <div
@@ -252,9 +282,10 @@
 
             <button
               @click="deleteAndRetry"
-              class="w-full py-4 bg-text-main text-background font-bold rounded-2xl hover:opacity-90 transition-all text-sm shadow-xl shadow-text-main/10"
+              :disabled="submitting"
+              class="w-full py-4 bg-text-main text-background font-bold rounded-2xl hover:opacity-90 transition-all text-sm shadow-xl shadow-text-main/10 disabled:opacity-50"
             >
-              Try Again
+              {{ submitting ? 'Processing...' : 'Try Again' }}
             </button>
           </div>
         </div>
@@ -279,12 +310,69 @@ import {
   where,
 } from 'firebase/firestore'
 
+// Valid Philippine mobile prefixes
+const VALID_PREFIXES = [
+  '817',
+  '905',
+  '906',
+  '915',
+  '916',
+  '917',
+  '926',
+  '927',
+  '935',
+  '936',
+  '937',
+  '994',
+  '995',
+  '996',
+  '997',
+  '908',
+  '909',
+  '910',
+  '911',
+  '912',
+  '913',
+  '914',
+  '918',
+  '919',
+  '920',
+  '921',
+  '928',
+  '929',
+  '930',
+  '938',
+  '939',
+  '946',
+  '947',
+  '948',
+  '949',
+  '950',
+  '951',
+  '961',
+  '963',
+  '965',
+  '966',
+  '967',
+  '975',
+  '976',
+  '977',
+  '978',
+  '979',
+  '992',
+  '993',
+  '998',
+  '999',
+]
+
 // --- State ---
 const showModal = ref(false)
 const loading = ref(false)
 const submitting = ref(false)
+const error = ref(null)
 const userRequest = ref(null)
 const authUnsubscribe = ref(null)
+const isAuthReady = ref(false)
 
 // Form Input
 const phoneInputModel = ref('')
@@ -348,14 +436,26 @@ const statusText = computed(() => {
 })
 
 const isValidPhone = computed(() => {
-  return /^\d{10}$/.test(phoneInputModel.value)
+  if (phoneInputModel.value.length !== 10) return false
+  const prefix = phoneInputModel.value.substring(0, 3)
+  return VALID_PREFIXES.includes(prefix)
 })
 
 // --- Validation & Formatting ---
 function validatePhoneInput() {
   phoneInputModel.value = phoneInputModel.value.replace(/\D/g, '')
-  if (phoneInputModel.value.length > 0 && !/^9\d+/.test(phoneInputModel.value)) {
-    phoneError.value = 'Start with 9 (e.g. 917...)'
+
+  if (phoneInputModel.value.length === 0) {
+    phoneError.value = ''
+  } else if (!/^9/.test(phoneInputModel.value)) {
+    phoneError.value = 'Must start with 9'
+  } else if (phoneInputModel.value.length >= 3) {
+    const prefix = phoneInputModel.value.substring(0, 3)
+    if (!VALID_PREFIXES.includes(prefix)) {
+      phoneError.value = 'Invalid network prefix'
+    } else {
+      phoneError.value = ''
+    }
   } else {
     phoneError.value = ''
   }
@@ -372,101 +472,121 @@ function formatPhoneDisplay(phone) {
 
 function formatDate(timestamp) {
   if (!timestamp) return 'Just now'
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  try {
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch (err) {
+    console.error('Date formatting error:', err)
+    return 'Recently'
+  }
 }
 
 // --- Firebase Actions ---
 async function loadUserRequest() {
-  loading.value = true
-  try {
-    const userId = auth.currentUser?.uid
-    if (!userId) {
-      console.log('No user logged in')
-      userRequest.value = null
-      return
-    }
+  if (!isAuthReady.value || !auth.currentUser) {
+    console.log('Auth not ready or no user, skipping load')
+    return
+  }
 
+  loading.value = true
+  error.value = null
+
+  try {
+    const userId = auth.currentUser.uid
     const q = query(collection(db, 'sms_requests'), where('userId', '==', userId))
     const querySnapshot = await getDocs(q)
 
     if (!querySnapshot.empty) {
       const data = querySnapshot.docs[0].data()
       userRequest.value = { id: querySnapshot.docs[0].id, ...data }
-      console.log('User request loaded:', userRequest.value)
+      console.log('User request loaded:', userRequest.value.status)
     } else {
       console.log('No request found for user')
       userRequest.value = null
     }
-  } catch (error) {
-    console.error('Fetch error:', error)
+  } catch (err) {
+    console.error('Load error:', err)
+    error.value = 'Failed to load your SMS settings. Please try again.'
   } finally {
     loading.value = false
   }
 }
 
 async function submitRequest() {
-  if (!isValidPhone.value) return
+  if (!isValidPhone.value || submitting.value) return
+
   submitting.value = true
+  error.value = null
 
   try {
     const formattedPhone = `+63${phoneInputModel.value}`
+
     await addDoc(collection(db, 'sms_requests'), {
-      userId: auth.currentUser?.uid,
-      userEmail: auth.currentUser?.email,
+      userId: auth.currentUser.uid,
+      userEmail: auth.currentUser.email,
       phone: formattedPhone,
-      label: requestLabel.value || 'Primary Mobile',
+      label: requestLabel.value.trim() || 'Primary Mobile',
       status: 'pending',
       requestedAt: serverTimestamp(),
     })
+
     phoneInputModel.value = ''
     requestLabel.value = ''
+    phoneError.value = ''
+
     await loadUserRequest()
-  } catch (error) {
-    alert('Submission failed: ' + error.message)
+  } catch (err) {
+    console.error('Submit error:', err)
+    error.value = 'Failed to submit request: ' + err.message
   } finally {
     submitting.value = false
   }
 }
 
 async function cancelRequest() {
-  if (!confirm('Cancel this pending request?')) return
+  if (submitting.value) return
   await deleteRequest()
 }
 
 async function removeNumber() {
-  if (!confirm('Stop receiving SMS alerts?')) return
+  if (submitting.value) return
   await deleteRequest(true)
 }
 
 async function deleteAndRetry() {
+  if (submitting.value) return
   await deleteRequest()
 }
 
 async function deleteRequest(checkRecipients = false) {
+  submitting.value = true
+  error.value = null
+
   try {
     if (userRequest.value?.id) {
       await deleteDoc(doc(db, 'sms_requests', userRequest.value.id))
     }
+
     if (checkRecipients) {
-      const q = query(
-        collection(db, 'sms_recipients'),
-        where('userId', '==', auth.currentUser?.uid),
-      )
+      const q = query(collection(db, 'sms_recipients'), where('userId', '==', auth.currentUser.uid))
       const snap = await getDocs(q)
       const deletions = snap.docs.map((d) => deleteDoc(doc(db, 'sms_recipients', d.id)))
       await Promise.all(deletions)
     }
+
     userRequest.value = null
-  } catch (error) {
-    console.error('Delete error:', error)
+  } catch (err) {
+    console.error('Delete error:', err)
+    error.value = 'Failed to process request. Please try again.'
+  } finally {
+    submitting.value = false
   }
 }
 
 function openModal() {
   showModal.value = true
-  // Only load if user is already authenticated
-  if (auth.currentUser) {
+  // Refresh data when opening modal to ensure it's up-to-date
+  if (isAuthReady.value && auth.currentUser) {
     loadUserRequest()
   }
 }
@@ -474,27 +594,33 @@ function openModal() {
 function closeModal() {
   showModal.value = false
   phoneError.value = ''
+  error.value = null
 }
 
-// --- Lifecycle (FIXED: Wait for Auth) ---
+function retryLoad() {
+  error.value = null
+  loadUserRequest()
+}
+
+// --- Lifecycle ---
 onMounted(() => {
-  // Set up auth state listener
   authUnsubscribe.value = onAuthStateChanged(auth, (user) => {
     console.log('Auth state changed:', user ? user.email : 'No user')
+    isAuthReady.value = true
+
     if (user) {
-      // User is signed in, load their request
+      // Always load on auth, not just when modal is open
       loadUserRequest()
     } else {
-      // User is signed out
       userRequest.value = null
     }
   })
 })
 
 onUnmounted(() => {
-  // Clean up auth listener
   if (authUnsubscribe.value) {
     authUnsubscribe.value()
+    authUnsubscribe.value = null
   }
 })
 </script>
