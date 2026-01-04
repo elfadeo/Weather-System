@@ -15,13 +15,12 @@ const {
   loadingProgress,
   loadingMessage,
   dataAvailabilityInfo,
+  error,
   chartData,
   fetchData,
-  cleanup,
-  onUnmount,
 } = useChartsData()
 
-// Computed
+// Chart data computed properties
 const temperatureChartData = computed(() => ({
   labels: chartData.value.labels,
   data: chartData.value.temperature,
@@ -42,32 +41,109 @@ const totalRainfallChartData = computed(() => ({
   data: chartData.value.rainfallTotals,
 }))
 
-const summaryStats = computed(() => {
-  const temps = chartData.value.temperature.filter((v) => v > 0)
-  const hums = chartData.value.humidity.filter((v) => v > 0)
-  const totals = chartData.value.rainfallTotals.filter((v) => v >= 0)
+// Calculate accumulated rainfall with reset detection
+const calculateAccumulatedRainfall = (totals) => {
+  if (totals.length === 0) return 0
 
+  // For single reading, return the value
+  if (totals.length === 1) return totals[0]
+
+  let accumulated = 0
+  let lastValue = totals[0]
+
+  for (let i = 1; i < totals.length; i++) {
+    const current = totals[i]
+
+    // Check if sensor was reset (value decreased significantly)
+    if (current < lastValue * 0.9) {
+      // Reset detected - add the accumulated amount before reset
+      accumulated += lastValue
+      lastValue = current
+    } else {
+      lastValue = current
+    }
+  }
+
+  // Add final accumulated amount
+  accumulated += lastValue
+
+  // If no resets were detected, calculate the difference
+  if (accumulated === totals[totals.length - 1]) {
+    accumulated = Math.max(0, totals[totals.length - 1] - totals[0])
+  }
+
+  return accumulated
+}
+
+// Format date range for display
+const formatDateRange = (labels) => {
+  if (labels.length === 0) return ''
+  if (labels.length === 1) return 'Single reading'
+
+  const first = labels[0]
+  const last = labels[labels.length - 1]
+
+  if (first === last) return first
+
+  // Shorten long labels intelligently
+  const shorten = (str, maxLen = 25) => {
+    if (str.length <= maxLen) return str
+
+    // For week ranges (contains ' - '), preserve structure
+    if (str.includes(' - ')) {
+      const parts = str.split(' - ')
+      if (str.length <= 35) return str // Allow slightly longer for week ranges
+
+      // Truncate each part
+      const firstPart = parts[0].length > 12 ? parts[0].substring(0, 9) + '...' : parts[0]
+      const secondPart =
+        parts[1].length > 12 ? '...' + parts[1].substring(parts[1].length - 9) : parts[1]
+      return `${firstPart} - ${secondPart}`
+    }
+
+    // For regular strings, truncate with ellipsis
+    return str.substring(0, maxLen - 3) + '...'
+  }
+
+  return `${shorten(first)} to ${shorten(last)}`
+}
+
+// Summary statistics
+const summaryStats = computed(() => {
+  // Filter valid values
+  const temps = chartData.value.temperature.filter((v) => !isNaN(v) && isFinite(v))
+  const hums = chartData.value.humidity.filter((v) => !isNaN(v) && isFinite(v))
+  const totals = chartData.value.rainfallTotals.filter((v) => !isNaN(v) && isFinite(v) && v >= 0)
+
+  // Calculate statistics helper
   const calcStats = (arr) => {
-    if (!arr.length) return { avg: '0.0', min: '0.0', max: '0.0' }
+    if (arr.length === 0) return { avg: '0.0', min: '0.0', max: '0.0' }
     const avg = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1)
     const min = Math.min(...arr).toFixed(1)
     const max = Math.max(...arr).toFixed(1)
     return { avg, min, max }
   }
 
-  const rainfall =
-    totals.length >= 2 ? Math.max(0, totals[totals.length - 1] - totals[0]).toFixed(1) : '0.0'
+  // Calculate rainfall based on time range
+  let rainfall = '0.0'
+  let rainfallNote = 'No data'
 
-  let rainfallNote = 'Accumulated'
-  if (chartData.value.labels.length > 0) {
-    const first = chartData.value.labels[0]
-    const last = chartData.value.labels[chartData.value.labels.length - 1]
-
-    if (first === last) {
-      rainfallNote = 'Single reading'
+  if (totals.length > 0) {
+    if (selectedTimeRange.value === 'last7') {
+      // Calculate accumulated rainfall with reset detection
+      const accumulated = calculateAccumulatedRainfall(totals)
+      rainfall = accumulated.toFixed(1)
+      rainfallNote = totals.length >= 2 ? 'Accumulated over readings' : 'Single reading'
     } else {
-      const shorten = (s) => (s.length > 15 ? s.substring(0, 12) + '...' : s)
-      rainfallNote = `${shorten(first)} to ${shorten(last)}`
+      // For aggregated views, show the maximum total
+      rainfall = Math.max(...totals).toFixed(1)
+      rainfallNote = 'Peak in period'
+    }
+
+    // Add date range if available
+    const dateRange = formatDateRange(chartData.value.labels)
+    if (dateRange && dateRange !== 'Single reading') {
+      rainfallNote = dateRange
     }
   }
 
@@ -79,7 +155,7 @@ const summaryStats = computed(() => {
   }
 })
 
-// Time range options - FIXED: Labels now match actual data fetched
+// Time range options
 const timeRangeOptions = [
   { value: 'last7', label: 'Last 7 Readings' },
   { value: 'weekly', label: 'Last 4 Weeks' },
@@ -87,31 +163,55 @@ const timeRangeOptions = [
   { value: 'yearly', label: 'Last 2 Years' },
 ]
 
-// Watch with debouncing to prevent rapid switches
+// State checks
+const hasError = computed(() => {
+  return (
+    !isLoading.value &&
+    (error.value !== null ||
+      (dataAvailabilityInfo.value &&
+        (dataAvailabilityInfo.value.toLowerCase().includes('error') ||
+          dataAvailabilityInfo.value.toLowerCase().includes('failed'))))
+  )
+})
+
+const hasData = computed(() => {
+  return !isLoading.value && !hasError.value && chartData.value.labels.length > 0
+})
+
+// Watch time range changes with debouncing
 let fetchTimeout = null
+let lastFetchedRange = null
+
 watch(
   selectedTimeRange,
   (newRange) => {
+    // Prevent duplicate fetches
+    if (newRange === lastFetchedRange && !hasError.value) {
+      return
+    }
+
     // Clear any pending fetch
     if (fetchTimeout) {
       clearTimeout(fetchTimeout)
+      fetchTimeout = null
     }
 
-    // Debounce to prevent rapid API calls
+    // Debounce the fetch to prevent rapid requests
     fetchTimeout = setTimeout(() => {
+      lastFetchedRange = newRange
       fetchData(newRange)
-    }, 100)
+      fetchTimeout = null
+    }, 300)
   },
   { immediate: true },
 )
 
-// Cleanup
+// Cleanup on unmount
 onBeforeUnmount(() => {
   if (fetchTimeout) {
     clearTimeout(fetchTimeout)
+    fetchTimeout = null
   }
-  onUnmount()
-  cleanup()
 })
 </script>
 
@@ -128,7 +228,7 @@ onBeforeUnmount(() => {
             Historical analysis of weather parameters
           </p>
           <p
-            v-if="dataAvailabilityInfo"
+            v-if="dataAvailabilityInfo && !hasError"
             class="text-xs text-[var(--color-text-light)] mt-2 flex items-center gap-2"
           >
             <Icon icon="ph:info-duotone" class="h-4 w-4" />
@@ -137,8 +237,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="relative min-w-[200px]">
-          <label class="sr-only">Select Time Range</label>
+          <label for="time-range-select" class="sr-only">Select Time Range</label>
           <select
+            id="time-range-select"
             v-model="selectedTimeRange"
             :disabled="isLoading"
             class="appearance-none w-full rounded-lg border-0 bg-[var(--color-surface)] py-2.5 pl-4 pr-10 text-[var(--color-text-main)] ring-1 ring-inset ring-[var(--color-border)] focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] text-sm font-medium shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -166,7 +267,7 @@ onBeforeUnmount(() => {
             class="h-5 w-5 text-[var(--color-primary)] animate-spin"
           />
           <span class="text-sm font-medium text-[var(--color-text-main)]">
-            {{ loadingMessage }}
+            {{ loadingMessage || 'Loading...' }}
           </span>
         </div>
         <div class="w-full bg-[var(--color-background)] rounded-full h-2 overflow-hidden">
@@ -178,9 +279,33 @@ onBeforeUnmount(() => {
         <p class="text-xs text-[var(--color-text-light)] mt-1 text-right">{{ loadingProgress }}%</p>
       </div>
 
-      <!-- No Data -->
+      <!-- Error State -->
       <div
-        v-if="!isLoading && !chartData.labels.length"
+        v-if="hasError"
+        class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center"
+        role="alert"
+      >
+        <div class="mb-4 rounded-full bg-red-100 dark:bg-red-900/20 p-4 inline-flex">
+          <Icon icon="ph:warning-circle-duotone" class="h-10 w-10 text-red-600 dark:text-red-400" />
+        </div>
+        <h3 class="text-lg font-semibold text-red-900 dark:text-red-200 mb-2">
+          Error Loading Data
+        </h3>
+        <p class="text-sm text-red-700 dark:text-red-300 mb-4">
+          {{ error || dataAvailabilityInfo || 'An unexpected error occurred.' }}
+        </p>
+        <button
+          @click="fetchData(selectedTimeRange)"
+          class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          <Icon icon="ph:arrow-clockwise-bold" class="inline h-4 w-4 mr-2" />
+          Retry
+        </button>
+      </div>
+
+      <!-- No Data State -->
+      <div
+        v-if="!isLoading && !hasError && chartData.labels.length === 0"
         class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center"
       >
         <div class="mb-4 rounded-full bg-[var(--color-background)] p-4 inline-flex">
@@ -198,96 +323,99 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Summary Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6" v-else>
-        <template v-if="isLoading">
-          <div
-            v-for="i in 3"
-            :key="i"
-            class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-sm animate-pulse h-32 relative overflow-hidden"
-          >
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-border)]/50"></div>
-            <div class="pl-4 space-y-4">
-              <div class="h-3 w-20 bg-[var(--color-border)] rounded"></div>
-              <div class="h-8 w-24 bg-[var(--color-border)] rounded"></div>
-              <div class="h-3 w-32 bg-[var(--color-border)] rounded"></div>
+      <div v-if="hasData" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <!-- Temperature Card -->
+        <div
+          class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+        >
+          <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-red-500)]"></div>
+          <div class="pl-4">
+            <div class="flex items-center gap-2 mb-2">
+              <Icon
+                icon="ph:thermometer-simple-duotone"
+                class="h-4 w-4 text-[var(--color-red-500)]"
+              />
+              <span
+                class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+              >
+                Temperature
+              </span>
             </div>
+            <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
+              {{ summaryStats.temp.avg }}°C
+            </p>
+            <p class="text-xs text-[var(--color-text-light)]">
+              Range: {{ summaryStats.temp.min }}° / {{ summaryStats.temp.max }}°
+            </p>
           </div>
-        </template>
+        </div>
 
-        <template v-else>
-          <!-- Temperature Card -->
-          <div
-            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
-          >
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-red-500)]"></div>
-            <div class="pl-4">
-              <div class="flex items-center gap-2 mb-2">
-                <Icon
-                  icon="ph:thermometer-simple-duotone"
-                  class="h-4 w-4 text-[var(--color-red-500)]"
-                />
-                <span
-                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
-                >
-                  Temperature
-                </span>
-              </div>
-              <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
-                {{ summaryStats.temp.avg }}°C
-              </p>
-              <p class="text-xs text-[var(--color-text-light)]">
-                Range: {{ summaryStats.temp.min }}° / {{ summaryStats.temp.max }}°
-              </p>
+        <!-- Humidity Card -->
+        <div
+          class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+        >
+          <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]"></div>
+          <div class="pl-4">
+            <div class="flex items-center gap-2 mb-2">
+              <Icon icon="ph:drop-duotone" class="h-4 w-4 text-[var(--color-primary)]" />
+              <span
+                class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+              >
+                Humidity
+              </span>
             </div>
+            <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
+              {{ summaryStats.humidity.avg }}%
+            </p>
+            <p class="text-xs text-[var(--color-text-light)]">
+              Range: {{ summaryStats.humidity.min }}% / {{ summaryStats.humidity.max }}%
+            </p>
           </div>
+        </div>
 
-          <!-- Humidity Card -->
-          <div
-            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
-          >
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)]"></div>
-            <div class="pl-4">
-              <div class="flex items-center gap-2 mb-2">
-                <Icon icon="ph:drop-duotone" class="h-4 w-4 text-[var(--color-primary)]" />
-                <span
-                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
-                >
-                  Humidity
-                </span>
-              </div>
-              <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
-                {{ summaryStats.humidity.avg }}%
-              </p>
-              <p class="text-xs text-[var(--color-text-light)]">
-                Range: {{ summaryStats.humidity.min }}% / {{ summaryStats.humidity.max }}%
-              </p>
+        <!-- Rainfall Card -->
+        <div
+          class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
+        >
+          <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-purple-500)]"></div>
+          <div class="pl-4">
+            <div class="flex items-center gap-2 mb-2">
+              <Icon icon="ph:cloud-rain-duotone" class="h-4 w-4 text-[var(--color-purple-500)]" />
+              <span
+                class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
+              >
+                Total Rainfall
+              </span>
             </div>
+            <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
+              {{ summaryStats.rainfall
+              }}<span class="text-lg font-normal text-[var(--color-text-light)] ml-1">mm</span>
+            </p>
+            <p class="text-xs text-[var(--color-text-light)] break-words">
+              {{ summaryStats.rainfallNote }}
+            </p>
           </div>
+        </div>
+      </div>
 
-          <!-- Rainfall Card -->
-          <div
-            class="group relative overflow-hidden rounded-xl bg-[var(--color-surface)] p-5 shadow-sm border border-[var(--color-border)] hover:shadow-md transition-all duration-300"
-          >
-            <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-purple-500)]"></div>
-            <div class="pl-4">
-              <div class="flex items-center gap-2 mb-2">
-                <Icon icon="ph:cloud-rain-duotone" class="h-4 w-4 text-[var(--color-purple-500)]" />
-                <span
-                  class="text-xs font-semibold text-[var(--color-text-light)] uppercase tracking-wider"
-                >
-                  Total Rainfall
-                </span>
-              </div>
-              <p class="text-3xl font-bold text-[var(--color-text-main)] mb-1 tabular-nums">
-                {{ summaryStats.rainfall
-                }}<span class="text-lg font-normal text-[var(--color-text-light)] ml-1">mm</span>
-              </p>
-              <p class="text-xs text-[var(--color-text-light)]">
-                {{ summaryStats.rainfallNote }}
-              </p>
-            </div>
+      <!-- Loading Skeleton for Summary Cards -->
+      <div
+        v-if="isLoading"
+        class="grid grid-cols-1 sm:grid-cols-3 gap-6"
+        aria-label="Loading summary statistics"
+      >
+        <div
+          v-for="i in 3"
+          :key="i"
+          class="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 shadow-sm animate-pulse h-32 relative overflow-hidden"
+        >
+          <div class="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-border)]/50"></div>
+          <div class="pl-4 space-y-4">
+            <div class="h-3 w-20 bg-[var(--color-border)] rounded"></div>
+            <div class="h-8 w-24 bg-[var(--color-border)] rounded"></div>
+            <div class="h-3 w-32 bg-[var(--color-border)] rounded"></div>
           </div>
-        </template>
+        </div>
       </div>
 
       <!-- Charts -->
@@ -298,7 +426,10 @@ onBeforeUnmount(() => {
         >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-              <span class="flex h-3 w-3 rounded-full bg-[var(--color-red-500)]"></span>
+              <span
+                class="flex h-3 w-3 rounded-full bg-[var(--color-red-500)]"
+                aria-hidden="true"
+              ></span>
               <h3
                 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
               >
@@ -313,14 +444,14 @@ onBeforeUnmount(() => {
           </div>
           <div class="h-[280px] w-full">
             <SingleMetricChart
-              v-if="!isLoading && temperatureChartData.data.length > 0"
+              v-if="hasData && temperatureChartData.data.length > 0"
               :chart-data="temperatureChartData"
               color="#dc2626"
               label="Temperature (°C)"
               suffix="°C"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No data" />
+            <EmptyState v-else message="No temperature data" />
           </div>
         </div>
 
@@ -330,7 +461,10 @@ onBeforeUnmount(() => {
         >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-              <span class="flex h-3 w-3 rounded-full bg-[var(--color-primary)]"></span>
+              <span
+                class="flex h-3 w-3 rounded-full bg-[var(--color-primary)]"
+                aria-hidden="true"
+              ></span>
               <h3
                 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
               >
@@ -345,14 +479,14 @@ onBeforeUnmount(() => {
           </div>
           <div class="h-[280px] w-full">
             <SingleMetricChart
-              v-if="!isLoading && humidityChartData.data.length > 0"
+              v-if="hasData && humidityChartData.data.length > 0"
               :chart-data="humidityChartData"
               color="#1a73e8"
               label="Humidity (%)"
               suffix="%"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No data" />
+            <EmptyState v-else message="No humidity data" />
           </div>
         </div>
 
@@ -362,7 +496,10 @@ onBeforeUnmount(() => {
         >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-              <span class="flex h-3 w-3 rounded-full bg-[var(--color-purple-500)]"></span>
+              <span
+                class="flex h-3 w-3 rounded-full bg-[var(--color-purple-500)]"
+                aria-hidden="true"
+              ></span>
               <h3
                 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
               >
@@ -377,14 +514,14 @@ onBeforeUnmount(() => {
           </div>
           <div class="h-[280px] w-full">
             <SingleMetricChart
-              v-if="!isLoading && rainfallChartData.data.length > 0"
+              v-if="hasData && rainfallChartData.data.length > 0"
               :chart-data="rainfallChartData"
               color="#8b5cf6"
               label="Rain Rate"
               suffix=" mm/hr"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No data" />
+            <EmptyState v-else message="No rainfall data" />
           </div>
         </div>
 
@@ -394,7 +531,10 @@ onBeforeUnmount(() => {
         >
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-              <span class="flex h-3 w-3 rounded-full bg-[var(--color-teal-500)]"></span>
+              <span
+                class="flex h-3 w-3 rounded-full bg-[var(--color-teal-500)]"
+                aria-hidden="true"
+              ></span>
               <h3
                 class="text-sm font-semibold text-[var(--color-text-main)] uppercase tracking-wide"
               >
@@ -409,14 +549,14 @@ onBeforeUnmount(() => {
           </div>
           <div class="h-[280px] w-full">
             <SingleMetricChart
-              v-if="!isLoading && totalRainfallChartData.data.length > 0"
+              v-if="hasData && totalRainfallChartData.data.length > 0"
               :chart-data="totalRainfallChartData"
               color="#14b8a6"
               label="Accumulated Rain"
               suffix=" mm"
             />
             <LoadingState v-else-if="isLoading" />
-            <EmptyState v-else message="No data" />
+            <EmptyState v-else message="No rainfall data" />
           </div>
         </div>
       </div>
