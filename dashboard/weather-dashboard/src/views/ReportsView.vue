@@ -1,5 +1,5 @@
 <template>
-  <div class="reports-page p-4 sm:p-6 lg:p-8 font-sans">
+  <div class="min-h-screen bg-background text-text-main p-4 sm:p-6 lg:p-8 font-sans">
     <div class="max-w-7xl mx-auto">
       <PageHeader />
 
@@ -63,10 +63,6 @@ const { exportCSV, exportPDF } = useExport()
 // TIME RANGE HANDLING
 // ----------------------------------------------------------------------------
 
-/**
- * Applies a time preset and automatically selects the best grouping.
- * FIXED: Now allows Hourly view for up to 48h, and Daily view for up to 60 days.
- */
 const applyTimePreset = (presetValue) => {
   activePreset.value = presetValue
   const now = new Date()
@@ -78,15 +74,9 @@ const applyTimePreset = (presetValue) => {
 
   if (preset.hours) {
     start.setHours(now.getHours() - preset.hours)
-    // 👇 UPDATED LOGIC:
-    // If range is 48 hours or less, use Hourly. Otherwise Daily.
-    // This ensures "Last 24h" shows 24 hourly bars.
     groupBy.value = preset.hours <= 48 ? 'hourly' : 'daily'
   } else if (preset.days) {
     start.setDate(now.getDate() - preset.days)
-    // 👇 UPDATED LOGIC:
-    // If range is 60 days or less, use Daily. Otherwise Weekly.
-    // This ensures "Last 30 Days" shows 30 daily bars.
     groupBy.value = preset.days <= 60 ? 'daily' : 'weekly'
   }
 
@@ -125,7 +115,6 @@ const dataTimeRange = computed(() => {
 })
 
 const aggregatedData = computed(() => {
-  // Pass the raw data and the unified field getter to the aggregator
   return aggregateData(rawReportData.value, groupBy.value, getFieldValue)
 })
 
@@ -170,7 +159,6 @@ watch([startDateTime, endDateTime], () => {
 })
 
 onMounted(() => {
-  // Default to Last 24 Hours on load
   applyTimePreset('last24h')
 })
 
@@ -180,8 +168,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.reports-page {
-  min-height: 100vh;
-  background-color: #f8fafc; /* Light gray background for contrast */
-}
+/* Removed the .reports-page class.
+  The styling is now handled by Tailwind utility classes
+  in the template (bg-background, min-h-screen) to support
+  the theme toggling defined in your tailwind.config.js
+*/
 </style>
