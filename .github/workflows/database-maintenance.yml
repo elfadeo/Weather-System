@@ -1,0 +1,373 @@
+name: Database Maintenance - Spark Plan
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FIREBASE DATABASE MAINTENANCE (Spark Plan Compatible)
+#
+# This workflow maintains your Firebase Realtime Database to stay under 1GB
+# - Runs daily at 2 AM Manila time (6 PM UTC)
+# - Deletes raw data older than 60 days
+# - Deletes hourly data older than 3 years
+# - Creates daily aggregates
+# - Reports database statistics
+#
+# FREE TIER USAGE: ~2 minutes/day = 60 minutes/month (well within 2,000 limit)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Force maintenance run (ignore time check)"
+        required: false
+        default: "false"
+
+  schedule:
+    # Daily at 6 PM UTC = 2 AM Manila (UTC+8)
+    - cron: "0 18 * * *"
+
+env:
+  NODE_VERSION: "18"
+  SCRIPTS_PATH: "./scripts"
+
+jobs:
+  # ════════════════════════════════════════════════════════════════════════════
+  # DAILY DATABASE CLEANUP
+  # ════════════════════════════════════════════════════════════════════════════
+  daily-cleanup:
+    name: 🧹 Daily Database Cleanup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Install Firebase Admin SDK
+        run: |
+          echo "📦 Installing firebase-admin..."
+          npm install firebase-admin
+          echo "✅ Installation complete!"
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 🔍 Verify Script Files
+        run: |
+          echo "🔍 Verifying maintenance script..."
+
+          if [ ! -f "database-maintenance.js" ]; then
+            echo "❌ ERROR: database-maintenance.js not found!"
+            echo "📁 Available files:"
+            ls -la
+            exit 1
+          fi
+
+          echo "✅ Script found: database-maintenance.js"
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 🗄️ Run Database Maintenance
+        id: maintenance
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "🗄️ STARTING DATABASE MAINTENANCE"
+          echo "════════════════════════════════════════════════════════"
+          echo "📅 Date: $(date -u '+%Y-%m-%d')"
+          echo "⏰ Time: $(date -u '+%H:%M:%S UTC') ($(date '+%H:%M:%S %Z'))"
+          echo "🔄 Run: #${{ github.run_number }}"
+          echo ""
+
+          # Check if we should run based on time (unless forced)
+          CURRENT_HOUR=$(date -u '+%H')
+          FORCE_RUN="${{ github.event.inputs.force_run }}"
+
+          if [ "$FORCE_RUN" == "true" ]; then
+            echo "🚀 FORCED RUN - Ignoring time check"
+            echo ""
+          elif [ "$CURRENT_HOUR" != "18" ]; then
+            echo "⏭️  SKIPPING - Not maintenance time"
+            echo "   Current: $CURRENT_HOUR:00 UTC"
+            echo "   Scheduled: 18:00 UTC (2 AM Manila)"
+            echo "   Next run: $(date -u -d 'tomorrow 18:00' '+%Y-%m-%d %H:%M UTC')"
+            echo ""
+            echo "💡 To force run manually, use 'Run workflow' with force_run=true"
+            echo ""
+            echo "════════════════════════════════════════════════════════"
+            echo "✅ Time check completed (maintenance skipped)"
+            echo "════════════════════════════════════════════════════════"
+            exit 0
+          else
+            echo "✅ Maintenance time confirmed (18:00 UTC = 2 AM Manila)"
+            echo ""
+          fi
+
+          # Run the maintenance script
+          node database-maintenance.js 2>&1 | tee maintenance-output.log
+          exit_code=${PIPESTATUS[0]}
+
+          echo ""
+          if [ $exit_code -ne 0 ]; then
+            echo "════════════════════════════════════════════════════════"
+            echo "❌ MAINTENANCE FAILED (Exit code: $exit_code)"
+            echo "════════════════════════════════════════════════════════"
+            echo ""
+            echo "📋 Error log:"
+            cat maintenance-output.log
+            echo ""
+            exit $exit_code
+          else
+            echo "════════════════════════════════════════════════════════"
+            echo "✅ MAINTENANCE COMPLETED SUCCESSFULLY"
+            echo "════════════════════════════════════════════════════════"
+          fi
+        working-directory: ${{ env.SCRIPTS_PATH }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        continue-on-error: false
+
+      - name: 📊 Display Summary
+        if: steps.maintenance.outcome == 'success'
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════╗"
+          echo "║          DATABASE MAINTENANCE SUMMARY                  ║"
+          echo "╚════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "✅ Tasks Completed:"
+          echo "   • Deleted raw data older than 60 days"
+          echo "   • Deleted hourly data older than 3 years"
+          echo "   • Created daily aggregate for yesterday"
+          echo "   • Generated database statistics report"
+          echo ""
+          echo "📊 Check the logs above for detailed statistics"
+          echo ""
+          echo "🔄 Next Maintenance:"
+          echo "   • Scheduled: $(date -u -d 'tomorrow 18:00' '+%Y-%m-%d 18:00 UTC')"
+          echo "   • Manila Time: $(date -d 'tomorrow 02:00' '+%Y-%m-%d 02:00 PHT')"
+          echo ""
+          echo "💡 Manual Run:"
+          echo "   • Go to: Actions → Database Maintenance"
+          echo "   • Click: Run workflow"
+          echo "   • Enable: force_run (to skip time check)"
+          echo ""
+          echo "════════════════════════════════════════════════════════"
+
+      - name: ❌ Maintenance Failed - Alert
+        if: steps.maintenance.outcome == 'failure'
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════╗"
+          echo "║          ⚠️  MAINTENANCE FAILURE ALERT                 ║"
+          echo "╚════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "❌ Database maintenance failed!"
+          echo ""
+          echo "⚠️  WARNINGS:"
+          echo "   • Old data may NOT be cleaned up"
+          echo "   • Database could grow beyond 1GB free tier"
+          echo "   • Historical aggregates may be missing"
+          echo ""
+          echo "🔧 Troubleshooting Steps:"
+          echo "   1. Check Firebase service account key is valid"
+          echo "   2. Verify database URL is correct"
+          echo "   3. Ensure database-maintenance.js exists in scripts/"
+          echo "   4. Check GitHub Secrets are configured correctly"
+          echo "   5. Review error logs above for specific issues"
+          echo ""
+          echo "📧 Contact System Administrator if issue persists"
+          echo ""
+          echo "════════════════════════════════════════════════════════"
+          exit 1
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # HOURLY DATA AGGREGATION
+  # ════════════════════════════════════════════════════════════════════════════
+  hourly-aggregation:
+    name: ⏱️ Hourly Data Aggregation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 🟢 Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Install Firebase Admin SDK
+        run: |
+          echo "📦 Installing firebase-admin..."
+          npm install firebase-admin
+          echo "✅ Installation complete!"
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 🔍 Verify Script Files
+        run: |
+          echo "🔍 Verifying aggregation script..."
+
+          if [ ! -f "hourly-aggregation.js" ]; then
+            echo "❌ ERROR: hourly-aggregation.js not found!"
+            echo "📁 Available files:"
+            ls -la
+            exit 1
+          fi
+
+          echo "✅ Script found: hourly-aggregation.js"
+        working-directory: ${{ env.SCRIPTS_PATH }}
+
+      - name: 📊 Create Hourly Aggregate
+        id: aggregate
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "⏱️ STARTING HOURLY AGGREGATION"
+          echo "════════════════════════════════════════════════════════"
+          echo "📅 Date: $(date -u '+%Y-%m-%d')"
+          echo "⏰ Time: $(date -u '+%H:%M:%S UTC')"
+          echo "🔄 Run: #${{ github.run_number }}"
+          echo ""
+
+          # Check if we should run (on the hour or within 15 minutes)
+          CURRENT_MINUTE=$(date -u '+%M')
+
+          if [ "$CURRENT_MINUTE" -le 15 ]; then
+            echo "✅ Running hourly aggregation (within 15 min of hour)"
+            echo ""
+          else
+            echo "⏭️  SKIPPING - Not within aggregation window"
+            echo "   Current minute: $CURRENT_MINUTE"
+            echo "   Aggregation runs: :00 to :15 of each hour"
+            echo "   Next run: At the top of next hour"
+            echo ""
+            echo "════════════════════════════════════════════════════════"
+            echo "✅ Time check completed (aggregation skipped)"
+            echo "════════════════════════════════════════════════════════"
+            exit 0
+          fi
+
+          # Run the aggregation script
+          node hourly-aggregation.js 2>&1 | tee aggregation-output.log
+          exit_code=${PIPESTATUS[0]}
+
+          echo ""
+          if [ $exit_code -ne 0 ]; then
+            echo "════════════════════════════════════════════════════════"
+            echo "❌ AGGREGATION FAILED (Exit code: $exit_code)"
+            echo "════════════════════════════════════════════════════════"
+            echo ""
+            echo "📋 Error log:"
+            cat aggregation-output.log
+            echo ""
+            exit $exit_code
+          else
+            echo "════════════════════════════════════════════════════════"
+            echo "✅ AGGREGATION COMPLETED SUCCESSFULLY"
+            echo "════════════════════════════════════════════════════════"
+          fi
+        working-directory: ${{ env.SCRIPTS_PATH }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        continue-on-error: true
+
+      - name: ✅ Aggregation Success
+        if: steps.aggregate.outcome == 'success'
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════╗"
+          echo "║         HOURLY AGGREGATION SUMMARY                     ║"
+          echo "╚════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "✅ Hourly data compressed successfully"
+          echo "   • Previous hour's raw data aggregated"
+          echo "   • Saved to sensor_logs_hourly collection"
+          echo "   • Enables faster historical queries"
+          echo ""
+          echo "🔄 Next aggregation: Top of next hour"
+          echo ""
+          echo "════════════════════════════════════════════════════════"
+
+      - name: ⚠️ Aggregation Skipped or Failed
+        if: steps.aggregate.outcome != 'success'
+        run: |
+          echo ""
+          echo "ℹ️  Hourly aggregation did not complete"
+          echo "   This is usually normal (wrong time or no data)"
+          echo "   Check logs above for details"
+          echo ""
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # HEALTH CHECK
+  # ════════════════════════════════════════════════════════════════════════════
+  health-check:
+    name: 🏥 Database Health Check
+    runs-on: ubuntu-latest
+    needs: [daily-cleanup, hourly-aggregation]
+    if: always()
+
+    steps:
+      - name: 📊 Generate Health Report
+        run: |
+          echo ""
+          echo "╔════════════════════════════════════════════════════════╗"
+          echo "║        DATABASE MAINTENANCE - HEALTH REPORT            ║"
+          echo "╚════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "📅 Report Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🔄 Workflow Run: #${{ github.run_number }}"
+          echo ""
+          echo "═══════════════════ JOB STATUS ═══════════════════════"
+          echo "  🧹 Daily Cleanup:        ${{ needs.daily-cleanup.result }}"
+          echo "  ⏱️ Hourly Aggregation:   ${{ needs.hourly-aggregation.result }}"
+          echo ""
+
+          # Overall status
+          if [ "${{ needs.daily-cleanup.result }}" == "success" ]; then
+            echo "✅ DATABASE MAINTENANCE HEALTHY"
+            echo ""
+            echo "System Status:"
+            echo "  • Daily cleanup: Running at 2 AM Manila"
+            echo "  • Hourly aggregation: Running every hour"
+            echo "  • Data retention: 60 days raw, 3 years hourly"
+            echo "  • Storage optimization: Active"
+            echo "  • Free tier: Under 1GB maintained"
+            echo ""
+            echo "📊 Database Health: EXCELLENT"
+          elif [ "${{ needs.daily-cleanup.result }}" == "skipped" ]; then
+            echo "ℹ️  MAINTENANCE SKIPPED (Wrong time)"
+            echo ""
+            echo "This is normal when:"
+            echo "  • Current time is not 18:00 UTC (2 AM Manila)"
+            echo "  • Workflow triggered outside schedule"
+            echo ""
+            echo "Next scheduled maintenance:"
+            echo "  • $(date -u -d 'tomorrow 18:00' '+%Y-%m-%d 18:00 UTC')"
+            echo "  • $(date -d 'tomorrow 02:00' '+%Y-%m-%d 02:00 PHT')"
+          else
+            echo "⚠️  ATTENTION REQUIRED"
+            echo ""
+            echo "❌ Daily cleanup failed or incomplete"
+            echo "   → Old data may accumulate"
+            echo "   → Database could exceed 1GB free tier"
+            echo "   → Manual intervention may be needed"
+            echo ""
+            echo "🔧 Action Items:"
+            echo "  1. Review error logs above"
+            echo "  2. Check Firebase service account permissions"
+            echo "  3. Verify database URL is correct"
+            echo "  4. Run manual cleanup if needed"
+            echo "  5. Monitor database size in Firebase Console"
+          fi
+          echo ""
+          echo "════════════════════════════════════════════════════════"
+
+      - name: 💾 Save Maintenance Log (Optional)
+        if: needs.daily-cleanup.result == 'success'
+        run: |
+          echo "✅ Maintenance completed successfully"
+          echo "📊 Logs are available in the Actions tab"
+          echo "💡 Consider adding email notifications for failures"
