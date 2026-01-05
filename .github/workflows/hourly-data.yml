@@ -1,0 +1,26 @@
+name: Hourly Data Aggregation
+
+on:
+  schedule:
+    # Runs at minute 5 of EVERY hour (1:05, 2:05, 3:05...)
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  aggregate:
+    name: ⏱️ Hourly Aggregation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "18" }
+
+      - name: Install Dependencies
+        working-directory: ./scripts
+        run: npm install firebase-admin
+
+      - name: Run Aggregation
+        working-directory: ./scripts
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: node hourly-aggregation.js
