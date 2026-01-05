@@ -2,11 +2,20 @@
 const admin = require('firebase-admin');
 
 // 1. Initialize Firebase (Uses the Service Account from GitHub Secrets)
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// We use a try-catch to give a clear error if the secret is still missing
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} catch (error) {
+  console.error('❌ FATAL ERROR: Could not parse FIREBASE_SERVICE_ACCOUNT.');
+  console.error('Please check if the secret is correctly added to GitHub Actions.');
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://your-project-id-default-rtdb.asia-southeast1.firebasedatabase.app" // ⚠️ REPLACE WITH YOUR ACTUAL DATABASE URL
+  // ✅ UPDATED: Your actual database URL
+  databaseURL: "https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 
 const db = admin.database();
@@ -15,7 +24,6 @@ async function runAggregation() {
   console.log('Build started: Calculating Daily Summaries...');
 
   // 2. Calculate "Yesterday" in PHT (UTC+8)
-  // GitHub Runners are in UTC. We add 8 hours to get PHT, then subtract 1 day.
   const nowUtc = new Date();
   const phtOffset = 8 * 60 * 60 * 1000;
   const nowPht = new Date(nowUtc.getTime() + phtOffset);
@@ -69,12 +77,10 @@ async function runAggregation() {
     }
   });
 
-  // Calculate actual rain that fell today (Max - Min)
-  // Note: This logic assumes the bucket resets or accumulates. 
-  // If it reset to 0 in the middle of the day, this simple logic handles the bulk.
+  // Calculate actual rain that fell today
   let dailyRain = 0;
   if (records.length > 0) {
-      dailyRain = maxRainBucket; // Simplified: Assuming bucket resets daily or is the total for the day
+      dailyRain = maxRainBucket; 
   }
 
   const summary = {
