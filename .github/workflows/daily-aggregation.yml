@@ -23,6 +23,6 @@ jobs:
 
       - name: Run Aggregation Script
         env:
-          # We will set this secret in the next step
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          # ✅ UPDATED: Now points to the secret you already created
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
         run: node scripts/aggregate-daily.js
