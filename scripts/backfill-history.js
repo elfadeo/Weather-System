@@ -12,7 +12,7 @@ admin.initializeApp({
 const db = admin.database();
 
 async function backfillData() {
-  console.log("🚀 Starting History Backfill (Customized for your ESP32)...");
+  console.log("🚀 Starting History Backfill (Including Rain Rate)...");
   console.log("------------------------------------------------");
   
   // 1. Download Raw Data
@@ -29,14 +29,14 @@ async function backfillData() {
   console.log(`✅ Found ${rawKeys.length} raw records.`);
 
   // 2. Group Data by Hour
-  console.log("⚙️  Calculating hourly averages...");
+  console.log("⚙️  Calculating hourly averages & rates...");
   const hourlyGroups = {};
 
   rawKeys.forEach(key => {
     const record = rawData[key];
     if (!record.timestamp) return;
 
-    // Create a unique key for this hour (e.g., "2023-10-25-14")
+    // Create a unique key for this hour
     const date = new Date(record.timestamp);
     const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
 
@@ -44,18 +44,22 @@ async function backfillData() {
       hourlyGroups[hourKey] = {
         temps: [],
         hums: [],
-        rainMax: 0, // We track the HIGHEST value seen in this hour
+        rates: [], // 🆕 Array to store rain rates
+        rainMax: 0,
         timestamp: new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), 0, 0).getTime()
       };
     }
 
-    // Aggregate Temperature & Humidity (Average)
+    // Aggregate Temp & Humidity
     if (record.temperature !== undefined) hourlyGroups[hourKey].temps.push(Number(record.temperature));
     if (record.humidity !== undefined) hourlyGroups[hourKey].hums.push(Number(record.humidity));
 
-    // Aggregate Rainfall (Max)
-    // Your ESP32 sends 'rainfall_hourly_mm' which counts up (0.2 -> 0.4 -> 0.6...)
-    // So the total rain for the hour is simply the HIGHEST value recorded.
+    // 🆕 Aggregate Rain Rate (mm/hr)
+    if (record.rainRateEstimated_mm_hr_bucket !== undefined) {
+      hourlyGroups[hourKey].rates.push(Number(record.rainRateEstimated_mm_hr_bucket));
+    }
+
+    // Aggregate Total Rainfall (Max value logic)
     if (record.rainfall_hourly_mm !== undefined) {
       const val = Number(record.rainfall_hourly_mm);
       if (val > hourlyGroups[hourKey].rainMax) {
@@ -74,6 +78,12 @@ async function backfillData() {
     const avgTemp = group.temps.reduce((a, b) => a + b, 0) / group.temps.length;
     const avgHum = group.hums.reduce((a, b) => a + b, 0) / group.hums.length;
     
+    // 🆕 Calculate Average Rain Rate
+    let avgRate = 0;
+    if (group.rates.length > 0) {
+      avgRate = group.rates.reduce((a, b) => a + b, 0) / group.rates.length;
+    }
+
     const updateId = `hourly_${group.timestamp}`;
 
     updates[`sensor_logs_hourly/${updateId}`] = {
@@ -81,9 +91,10 @@ async function backfillData() {
       avgTemperature: Number(avgTemp.toFixed(1)),
       avgHumidity: Number(avgHum.toFixed(1)),
       
-      // ✅ CORRECTED: Uses the max value found in that hour
-      totalRainfall: Number(group.rainMax.toFixed(2)), 
+      // 🆕 Now we save the Rain Rate!
+      avgRainRate: Number(avgRate.toFixed(1)),
       
+      totalRainfall: Number(group.rainMax.toFixed(2)), 
       recordCount: group.temps.length,
       aggregation_type: 'hourly'
     };
@@ -96,7 +107,7 @@ async function backfillData() {
 
   console.log("------------------------------------------------");
   console.log("🎉 BACKFILL COMPLETE!");
-  console.log("👉 Refresh your Dashboard. 'Last 30 Days' should now work!");
+  console.log("👉 Refresh your Report. 'Rain Rate' should now appear!");
   process.exit(0);
 }
 
