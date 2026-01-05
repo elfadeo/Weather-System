@@ -102,7 +102,8 @@ export function useDataAggregation() {
 
       if (hourlyValues.length > 0) {
         const firstValue = hourlyValues[0]
-        const lastValue = hourlyValues[lastValue.length - 1]
+        // ✅ FIXED: Used 'hourlyValues.length' instead of 'lastValue.length'
+        const lastValue = hourlyValues[hourlyValues.length - 1]
 
         if (lastValue >= firstValue) {
           return lastValue - firstValue
@@ -149,7 +150,6 @@ export function useDataAggregation() {
   }
 
   /**
-   * 🟢 FIX APPLIED HERE:
    * Handle pre-aggregated data and correctly calculate Rain Rate
    */
   const aggregatePreAggregatedData = (rawData, groupByValue) => {
@@ -171,8 +171,8 @@ export function useDataAggregation() {
           humidityCount: 0,
           rainfallSum: 0,
           rainfallCount: 0,
-          rainRateSum: 0, // ✅ Initialize Rate Sum
-          rainRateCount: 0, // ✅ Initialize Rate Count
+          rainRateSum: 0,
+          rainRateCount: 0,
           recordCount: 0,
         })
       }
@@ -200,7 +200,7 @@ export function useDataAggregation() {
         group.rainfallCount++
       }
 
-      // ✅ NEW: Rain Rate Logic
+      // Rain Rate
       const rate = getFieldValue(record, 'avgRainRate', 'rainRate')
       if (rate !== null) {
         group.rainRateSum += rate
@@ -218,7 +218,6 @@ export function useDataAggregation() {
         humidity:
           group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
 
-        // ✅ NEW: Calculate Average Rain Rate
         rainfallRate:
           group.rainRateCount > 0 ? (group.rainRateSum / group.rainRateCount).toFixed(1) : 'N/A',
 
