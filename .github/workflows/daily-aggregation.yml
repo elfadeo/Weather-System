@@ -1,0 +1,28 @@
+name: Daily Weather Aggregation
+
+on:
+  schedule:
+    # Runs at 16:30 UTC = 12:30 AM Philippines Time (Next Day)
+    - cron: "30 16 * * *"
+  workflow_dispatch: # Allows you to click "Run Now" manually for testing
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Dependencies
+        run: npm install firebase-admin
+
+      - name: Run Aggregation Script
+        env:
+          # We will set this secret in the next step
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/aggregate-daily.js

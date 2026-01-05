@@ -1,10 +1,6 @@
 export function useDataAggregation() {
   /**
    * Get field value from record, trying multiple field names
-   * ENHANCED: Now handles both raw and aggregated data formats
-   * @param {Object} record - The data record
-   * @param {...string} fields - Field names to try
-   * @returns {number|null} - Numeric value or null
    */
   const getFieldValue = (record, ...fields) => {
     if (!record || !fields?.length) return null
@@ -146,15 +142,15 @@ export function useDataAggregation() {
   }
 
   /**
-   * NEW: Check if record is pre-aggregated data
+   * Check if record is pre-aggregated data
    */
   const isAggregatedRecord = (record) => {
     return record.aggregation_type === 'daily' || record.aggregation_type === 'hourly'
   }
 
   /**
-   * NEW: Handle pre-aggregated data differently
-   * Pre-aggregated data already has averages, just need to re-group if needed
+   * 🟢 FIX APPLIED HERE:
+   * Handle pre-aggregated data and correctly calculate Rain Rate
    */
   const aggregatePreAggregatedData = (rawData, groupByValue) => {
     const result = []
@@ -175,30 +171,40 @@ export function useDataAggregation() {
           humidityCount: 0,
           rainfallSum: 0,
           rainfallCount: 0,
+          rainRateSum: 0, // ✅ Initialize Rate Sum
+          rainRateCount: 0, // ✅ Initialize Rate Count
           recordCount: 0,
         })
       }
 
       const group = groups.get(key)
 
-      // For pre-aggregated data, we already have averages
-      // Just sum them up and count for re-averaging
+      // Temperature
       const temp = getFieldValue(record, 'temperature', 'avgTemperature')
       if (temp !== null) {
         group.tempSum += temp
         group.tempCount++
       }
 
+      // Humidity
       const hum = getFieldValue(record, 'humidity', 'avgHumidity')
       if (hum !== null) {
         group.humiditySum += hum
         group.humidityCount++
       }
 
+      // Total Rainfall
       const rain = getFieldValue(record, 'totalRainfall', 'rainfall_hourly_mm')
       if (rain !== null) {
         group.rainfallSum += rain
         group.rainfallCount++
+      }
+
+      // ✅ NEW: Rain Rate Logic
+      const rate = getFieldValue(record, 'avgRainRate', 'rainRate')
+      if (rate !== null) {
+        group.rainRateSum += rate
+        group.rainRateCount++
       }
 
       group.recordCount++
@@ -211,7 +217,11 @@ export function useDataAggregation() {
         temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
         humidity:
           group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-        rainfallRate: 'N/A', // Not available in pre-aggregated data
+
+        // ✅ NEW: Calculate Average Rain Rate
+        rainfallRate:
+          group.rainRateCount > 0 ? (group.rainRateSum / group.rainRateCount).toFixed(1) : 'N/A',
+
         periodRainfall:
           group.rainfallCount > 0 ? (group.rainfallSum / group.rainfallCount).toFixed(2) : 'N/A',
         count: group.recordCount,
@@ -224,12 +234,11 @@ export function useDataAggregation() {
 
   /**
    * Aggregate raw data into periods
-   * ENHANCED: Now detects and handles pre-aggregated data
    */
   const aggregateData = (rawData, groupByValue, getFieldValueFn) => {
     if (!rawData.length) return []
 
-    // NEW: Check if we're dealing with pre-aggregated data
+    // Check if we're dealing with pre-aggregated data
     const firstRecord = rawData[0]
     if (isAggregatedRecord(firstRecord)) {
       console.log(
@@ -346,6 +355,6 @@ export function useDataAggregation() {
   return {
     getFieldValue,
     aggregateData,
-    isAggregatedRecord, // NEW: Export for external use
+    isAggregatedRecord,
   }
 }
