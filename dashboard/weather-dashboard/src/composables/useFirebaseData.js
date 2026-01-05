@@ -1,5 +1,14 @@
 import { ref } from 'vue'
-import { getDatabase, ref as dbRef, query, orderByChild, startAt, endAt, get, off } from 'firebase/database'
+import {
+  getDatabase,
+  ref as dbRef,
+  query,
+  orderByChild,
+  startAt,
+  endAt,
+  get,
+  off,
+} from 'firebase/database'
 
 // Global state to survive component reloads
 const rawReportData = ref([])
@@ -45,12 +54,7 @@ export function useFirebaseData() {
       console.log(`Fetching from: ${collectionName} (Range: ${durationHours.toFixed(1)}h)`)
 
       const dataRef = dbRef(db, collectionName)
-      const dataQuery = query(
-        dataRef,
-        orderByChild('timestamp'),
-        startAt(startTs),
-        endAt(endTs)
-      )
+      const dataQuery = query(dataRef, orderByChild('timestamp'), startAt(startTs), endAt(endTs))
 
       // Use get() for one-time fetch (Faster for large datasets)
       const snapshot = await get(dataQuery)
@@ -69,12 +73,11 @@ export function useFirebaseData() {
         rawReportData.value = data
         console.log(`✅ Loaded ${data.length} records`)
       } else {
-        console.log("⚠️ No data found in this range.")
+        console.log('⚠️ No data found in this range.')
         rawReportData.value = []
       }
-
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error('Error fetching data:', error)
       loadingMessage.value = 'Error loading data'
     } finally {
       loadingProgress.value = 100
@@ -88,6 +91,6 @@ export function useFirebaseData() {
     loadingProgress,
     loadingMessage,
     fetchData,
-    cleanup
+    cleanup,
   }
 }
