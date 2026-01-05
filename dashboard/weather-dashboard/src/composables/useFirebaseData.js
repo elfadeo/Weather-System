@@ -163,9 +163,11 @@ export function useFirebaseData() {
           // Transform daily aggregate to match expected format
           data.push({
             timestamp: val.timestamp,
+            // MAPPING: Convert script names to frontend names
             temperature: val.avgTemperature,
             humidity: val.avgHumidity,
             rainfall_hourly_mm: val.totalRainfall,
+
             // Store min/max for reference
             temp_min: val.minTemperature,
             temp_max: val.maxTemperature,
@@ -220,9 +222,11 @@ export function useFirebaseData() {
           // Transform hourly aggregate to match expected format
           data.push({
             timestamp: val.timestamp,
+            // MAPPING: Convert script names to frontend names
             temperature: val.avgTemperature,
             humidity: val.avgHumidity,
             rainfall_hourly_mm: val.totalRainfall,
+
             // Store min/max for reference
             temp_min: val.minTemperature,
             temp_max: val.maxTemperature,

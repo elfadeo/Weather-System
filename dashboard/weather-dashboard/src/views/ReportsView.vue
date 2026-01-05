@@ -41,21 +41,32 @@ import TimeRangePresets from '@/components/Reports/TimeRangePresets.vue'
 import FilterSection from '@/components/Reports/FilterSection.vue'
 import DataTable from '@/components/Reports/DataTable.vue'
 
-// State
+// ----------------------------------------------------------------------------
+// STATE
+// ----------------------------------------------------------------------------
 const startDateTime = ref('')
 const endDateTime = ref('')
 const groupBy = ref('hourly')
 const activePreset = ref('last24h')
 const isExporting = ref(false)
 
-// Composables
+// ----------------------------------------------------------------------------
+// COMPOSABLES
+// ----------------------------------------------------------------------------
 const { formatDateTimeLocal, timePresets } = useTimePresets()
 const { rawReportData, isLoading, loadingProgress, loadingMessage, fetchData, cleanup } =
   useFirebaseData()
 const { aggregateData, getFieldValue } = useDataAggregation()
 const { exportCSV, exportPDF } = useExport()
 
-// Time Preset Handling
+// ----------------------------------------------------------------------------
+// TIME RANGE HANDLING
+// ----------------------------------------------------------------------------
+
+/**
+ * Applies a time preset and automatically selects the best grouping.
+ * FIXED: Now allows Hourly view for up to 48h, and Daily view for up to 60 days.
+ */
 const applyTimePreset = (presetValue) => {
   activePreset.value = presetValue
   const now = new Date()
@@ -67,10 +78,16 @@ const applyTimePreset = (presetValue) => {
 
   if (preset.hours) {
     start.setHours(now.getHours() - preset.hours)
-    groupBy.value = preset.hours <= 12 ? 'hourly' : 'daily'
+    // 👇 UPDATED LOGIC:
+    // If range is 48 hours or less, use Hourly. Otherwise Daily.
+    // This ensures "Last 24h" shows 24 hourly bars.
+    groupBy.value = preset.hours <= 48 ? 'hourly' : 'daily'
   } else if (preset.days) {
     start.setDate(now.getDate() - preset.days)
-    groupBy.value = preset.days <= 7 ? 'daily' : 'weekly'
+    // 👇 UPDATED LOGIC:
+    // If range is 60 days or less, use Daily. Otherwise Weekly.
+    // This ensures "Last 30 Days" shows 30 daily bars.
+    groupBy.value = preset.days <= 60 ? 'daily' : 'weekly'
   }
 
   startDateTime.value = formatDateTimeLocal(start)
@@ -80,7 +97,10 @@ const onCustomRangeSelected = () => {
   activePreset.value = 'custom'
 }
 
-// Computed Properties
+// ----------------------------------------------------------------------------
+// COMPUTED PROPERTIES
+// ----------------------------------------------------------------------------
+
 const dataTimeRange = computed(() => {
   if (!rawReportData.value.length) return 'No data'
 
@@ -105,10 +125,14 @@ const dataTimeRange = computed(() => {
 })
 
 const aggregatedData = computed(() => {
+  // Pass the raw data and the unified field getter to the aggregator
   return aggregateData(rawReportData.value, groupBy.value, getFieldValue)
 })
 
-// Export Functions
+// ----------------------------------------------------------------------------
+// EXPORT FUNCTIONS
+// ----------------------------------------------------------------------------
+
 const exportToCSV = () => {
   if (!aggregatedData.value.length) return
   isExporting.value = 'csv'
@@ -135,13 +159,18 @@ const exportToPDF = () => {
   }
 }
 
-// Watchers
+// ----------------------------------------------------------------------------
+// LIFECYCLE & WATCHERS
+// ----------------------------------------------------------------------------
+
 watch([startDateTime, endDateTime], () => {
-  fetchData(startDateTime.value, endDateTime.value)
+  if (startDateTime.value && endDateTime.value) {
+    fetchData(startDateTime.value, endDateTime.value)
+  }
 })
 
-// Lifecycle
 onMounted(() => {
+  // Default to Last 24 Hours on load
   applyTimePreset('last24h')
 })
 
@@ -153,5 +182,6 @@ onUnmounted(() => {
 <style scoped>
 .reports-page {
   min-height: 100vh;
+  background-color: #f8fafc; /* Light gray background for contrast */
 }
 </style>
