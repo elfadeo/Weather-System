@@ -120,12 +120,16 @@ async function generateWeatherSummary() {
       return;
     }
 
+    // FIXED: Sort data points by timestamp
+    dataPoints.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
     // Show sample of first data point for debugging
     const samplePoint = dataPoints[0];
     console.log('\n📋 Sample data point structure:');
     console.log(`   temperature: ${samplePoint.temperature}`);
     console.log(`   humidity: ${samplePoint.humidity}`);
     console.log(`   rainfall_total_estimated_mm_bucket: ${samplePoint.rainfall_total_estimated_mm_bucket}`);
+    console.log(`   rainfall_daily_mm: ${samplePoint.rainfall_daily_mm}`);
     console.log(`   timestamp: ${samplePoint.timestamp}\n`);
 
     // Calculate statistical metrics
@@ -136,15 +140,75 @@ async function generateWeatherSummary() {
     let validTempCount = 0;
     let validHumidityCount = 0;
     
-    // Calculate rainfall accumulation
+    // FIXED: Calculate rainfall accumulation properly
     const firstReading = dataPoints[0];
     const lastReading = dataPoints[dataPoints.length - 1];
     
-    const firstRainfallTotal = firstReading.rainfall_total_estimated_mm_bucket || 0;
-    const lastRainfallTotal = lastReading.rainfall_total_estimated_mm_bucket || 0;
-    const totalRainfall = Math.max(0, lastRainfallTotal - firstRainfallTotal);
+    // Try multiple field names for rainfall
+    const getFieldValue = (record, ...fields) => {
+      for (const field of fields) {
+        const value = record[field];
+        if (value !== undefined && value !== null && !isNaN(value)) {
+          return Number(value);
+        }
+      }
+      return 0;
+    };
+    
+    const firstRainfallTotal = getFieldValue(
+      firstReading,
+      'rainfall_daily_mm',
+      'rainfall_total_estimated_mm_bucket',
+      'rainfall_cumulative_mm'
+    );
+    
+    const lastRainfallTotal = getFieldValue(
+      lastReading,
+      'rainfall_daily_mm',
+      'rainfall_total_estimated_mm_bucket',
+      'rainfall_cumulative_mm'
+    );
+    
+    console.log(`🌧️  Rainfall calculation:`);
+    console.log(`   First reading: ${firstRainfallTotal}mm at ${new Date(firstReading.timestamp).toISOString()}`);
+    console.log(`   Last reading: ${lastRainfallTotal}mm at ${new Date(lastReading.timestamp).toISOString()}`);
+    
+    // FIXED: Handle counter resets properly
+    let totalRainfall = 0;
+    
+    if (lastRainfallTotal >= firstRainfallTotal) {
+      // Normal case: counter increased
+      totalRainfall = lastRainfallTotal - firstRainfallTotal;
+      console.log(`   Calculation: ${lastRainfallTotal} - ${firstRainfallTotal} = ${totalRainfall}mm`);
+    } else {
+      // Counter reset detected - sum across all readings
+      console.log(`   ⚠️  Counter reset detected!`);
+      let previousValue = firstRainfallTotal;
+      
+      for (let i = 1; i < dataPoints.length; i++) {
+        const currentValue = getFieldValue(
+          dataPoints[i],
+          'rainfall_daily_mm',
+          'rainfall_total_estimated_mm_bucket',
+          'rainfall_cumulative_mm'
+        );
+        
+        if (currentValue >= previousValue) {
+          totalRainfall += currentValue - previousValue;
+        } else {
+          // Reset occurred
+          totalRainfall += previousValue; // Add what accumulated before reset
+          totalRainfall += currentValue;  // Add new counter value
+        }
+        
+        previousValue = currentValue;
+      }
+      console.log(`   Calculation (with resets): ${totalRainfall}mm`);
+    }
+    
+    totalRainfall = Math.max(0, totalRainfall); // Ensure non-negative
 
-    console.log('📊 Processing data points...');
+    console.log('\n📊 Processing data points...');
     
     dataPoints.forEach((point, index) => {
       // Temperature
@@ -236,7 +300,7 @@ async function generateWeatherSummary() {
       details: {
         "Avg Temp": `${avgTemp.toFixed(1)}°C`,
         "Avg Humidity": `${avgHumidity.toFixed(0)}%`,
-        "Total Rainfall 24h Est": `${totalRainfall.toFixed(1)}mm`,
+        "Total Rainfall 24h": `${totalRainfall.toFixed(1)}mm`,
         "Temp Range": `${minTemp.toFixed(1)}°C - ${maxTemp.toFixed(1)}°C`
       },
       dataPoints: dataPoints.length,
