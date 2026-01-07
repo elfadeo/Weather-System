@@ -1,3 +1,4 @@
+// C:\Users\PC\Desktop\weather-monitoring-system\scripts\backfill-history.js
 const admin = require('firebase-admin');
 
 // ⚠️ Ensure service-account.json is in the same folder
@@ -5,14 +6,13 @@ const serviceAccount = require('./service-account.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  // ⚠️ YOUR DATABASE URL
   databaseURL: "https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app" 
 });
 
 const db = admin.database();
 
 async function backfillData() {
-  console.log("🚀 Starting History Backfill (Including Rain Rate)...");
+  console.log("🚀 Starting History Backfill (Hourly Aggregates)...");
   console.log("------------------------------------------------");
   
   // 1. Download Raw Data
@@ -29,85 +29,185 @@ async function backfillData() {
   console.log(`✅ Found ${rawKeys.length} raw records.`);
 
   // 2. Group Data by Hour
-  console.log("⚙️  Calculating hourly averages & rates...");
+  console.log("⚙️  Calculating hourly averages & totals...");
   const hourlyGroups = {};
 
   rawKeys.forEach(key => {
     const record = rawData[key];
     if (!record.timestamp) return;
 
-    // Create a unique key for this hour
-    const date = new Date(record.timestamp);
-    const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
+    // FIXED: Create proper hour key using local time components
+    const date = new Date(Number(record.timestamp));
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const hour = date.getHours();
+    
+    const hourKey = `${year}-${month}-${day}-${hour}`;
 
     if (!hourlyGroups[hourKey]) {
       hourlyGroups[hourKey] = {
         temps: [],
         hums: [],
-        rates: [], // 🆕 Array to store rain rates
-        rainMax: 0,
-        timestamp: new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), 0, 0).getTime()
+        rates: [], // Rain rates in mm/hr
+        rainfallReadings: [], // FIXED: Track all rainfall readings
+        // FIXED: Proper timestamp for start of hour
+        timestamp: new Date(year, month, day, hour, 0, 0).getTime()
       };
     }
 
-    // Aggregate Temp & Humidity
-    if (record.temperature !== undefined) hourlyGroups[hourKey].temps.push(Number(record.temperature));
-    if (record.humidity !== undefined) hourlyGroups[hourKey].hums.push(Number(record.humidity));
+    const group = hourlyGroups[hourKey];
 
-    // 🆕 Aggregate Rain Rate (mm/hr)
-    if (record.rainRateEstimated_mm_hr_bucket !== undefined) {
-      hourlyGroups[hourKey].rates.push(Number(record.rainRateEstimated_mm_hr_bucket));
+    // Aggregate Temp & Humidity
+    if (record.temperature !== undefined && record.temperature !== null && record.temperature !== '') {
+      const temp = Number(record.temperature);
+      if (!isNaN(temp)) group.temps.push(temp);
+    }
+    
+    if (record.humidity !== undefined && record.humidity !== null && record.humidity !== '') {
+      const hum = Number(record.humidity);
+      if (!isNaN(hum)) group.hums.push(hum);
     }
 
-    // Aggregate Total Rainfall (Max value logic)
-    if (record.rainfall_hourly_mm !== undefined) {
-      const val = Number(record.rainfall_hourly_mm);
-      if (val > hourlyGroups[hourKey].rainMax) {
-        hourlyGroups[hourKey].rainMax = val;
+    // FIXED: Aggregate Rain Rate - check multiple possible field names
+    const rainRateFields = [
+      'rainRateEstimated_mm_hr_bucket',
+      'rainRate_mm_hr',
+      'rainRate_mm',
+      'rainRate'
+    ];
+    
+    for (const field of rainRateFields) {
+      if (record[field] !== undefined && record[field] !== null && record[field] !== '') {
+        const rate = Number(record[field]);
+        if (!isNaN(rate) && rate > 0) {
+          group.rates.push(rate);
+          break; // Use first valid field found
+        }
       }
+    }
+
+    // FIXED: Collect all rainfall readings for proper calculation
+    const timestamp = Number(record.timestamp);
+    const hourlyMm = Number(
+      record.rainfall_hourly_mm || record.rainfall_hourly || record.rain_mm_hour || 0
+    );
+    const dailyMm = Number(
+      record.rainfall_daily_mm || 
+      record.rainfall_total_estimated_mm_bucket || 
+      record.rainfall_cumulative_mm || 0
+    );
+
+    if (!isNaN(timestamp) && (hourlyMm > 0 || dailyMm > 0)) {
+      group.rainfallReadings.push({
+        timestamp,
+        hourly: isNaN(hourlyMm) ? 0 : hourlyMm,
+        daily: isNaN(dailyMm) ? 0 : dailyMm
+      });
     }
   });
 
-  // 3. Prepare Updates
+  // 3. Calculate Hourly Totals & Prepare Updates
+  console.log("⚙️  Processing hourly groups...");
   const updates = {};
   let count = 0;
+  let skipped = 0;
 
-  Object.values(hourlyGroups).forEach(group => {
-    if (group.temps.length === 0) return;
+  Object.entries(hourlyGroups).forEach(([hourKey, group]) => {
+    if (group.temps.length === 0) {
+      skipped++;
+      return;
+    }
 
+    // Calculate averages
     const avgTemp = group.temps.reduce((a, b) => a + b, 0) / group.temps.length;
     const avgHum = group.hums.reduce((a, b) => a + b, 0) / group.hums.length;
     
-    // 🆕 Calculate Average Rain Rate
+    // FIXED: Calculate Average Rain Rate (not sum, not max)
     let avgRate = 0;
     if (group.rates.length > 0) {
       avgRate = group.rates.reduce((a, b) => a + b, 0) / group.rates.length;
     }
 
+    // FIXED: Calculate hourly rainfall total properly
+    let hourlyRainfall = 0;
+    
+    if (group.rainfallReadings.length > 0) {
+      // Sort by timestamp
+      const sorted = group.rainfallReadings.sort((a, b) => a.timestamp - b.timestamp);
+      
+      // For hourly aggregation: take the maximum hourly value
+      // (the hourly counter shows mm accumulated in that specific hour)
+      const hourlyValues = sorted.map(r => r.hourly).filter(v => v > 0);
+      
+      if (hourlyValues.length > 0) {
+        // Take the maximum value (final accumulated amount for this hour)
+        hourlyRainfall = Math.max(...hourlyValues);
+      }
+    }
+
+    // Format the update ID to match the expected format
     const updateId = `hourly_${group.timestamp}`;
 
     updates[`sensor_logs_hourly/${updateId}`] = {
       timestamp: group.timestamp,
-      avgTemperature: Number(avgTemp.toFixed(1)),
-      avgHumidity: Number(avgHum.toFixed(1)),
+      aggregation_type: 'hourly',
       
-      // 🆕 Now we save the Rain Rate!
-      avgRainRate: Number(avgRate.toFixed(1)),
+      // Temperature
+      avgTemperature: Number(avgTemp.toFixed(2)),
       
-      totalRainfall: Number(group.rainMax.toFixed(2)), 
+      // Humidity
+      avgHumidity: Number(avgHum.toFixed(2)),
+      
+      // Rain Rate (average of all readings in mm/hr)
+      avgRainRate: Number(avgRate.toFixed(2)),
+      
+      // Total Rainfall (maximum hourly value in mm)
+      totalRainfall: Number(hourlyRainfall.toFixed(2)),
+      
+      // Metadata
       recordCount: group.temps.length,
-      aggregation_type: 'hourly'
+      rainfallReadings: group.rainfallReadings.length,
+      generatedAt: admin.database.ServerValue.TIMESTAMP
     };
     count++;
   });
 
+  console.log(`✓ Processed ${count} hourly summaries`);
+  if (skipped > 0) {
+    console.log(`⚠️  Skipped ${skipped} hours with no data`);
+  }
+
   // 4. Upload to Firebase
-  console.log(`📤 Uploading ${count} hourly summaries...`);
+  console.log(`📤 Uploading ${count} hourly summaries to Firebase...`);
+  
+  if (count === 0) {
+    console.log("⚠️  No summaries to upload!");
+    process.exit(0);
+  }
+
   await db.ref().update(updates);
 
   console.log("------------------------------------------------");
   console.log("🎉 BACKFILL COMPLETE!");
-  console.log("👉 Refresh your Report. 'Rain Rate' should now appear!");
+  console.log(`✅ Created ${count} hourly summary records`);
+  console.log("👉 Refresh your Report. Data should now be accurate!");
+  console.log("------------------------------------------------");
+  
+  // Display sample of what was created
+  const sampleKeys = Object.keys(updates).slice(0, 3);
+  console.log("\n📊 Sample summaries created:");
+  sampleKeys.forEach(key => {
+    const data = updates[key];
+    const date = new Date(data.timestamp);
+    console.log(`   ${date.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit',
+      minute: '2-digit'
+    })}: Temp=${data.avgTemperature}°C, Rain=${data.totalRainfall}mm, Rate=${data.avgRainRate}mm/hr`);
+  });
+  
   process.exit(0);
 }
 

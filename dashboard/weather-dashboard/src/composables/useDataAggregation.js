@@ -12,6 +12,7 @@ export function useDataAggregation() {
         return Number(value)
       }
     }
+
     return null
   }
 
@@ -91,6 +92,7 @@ export function useDataAggregation() {
 
   /**
    * Calculate period rainfall from readings
+   * Handles cumulative counters and counter resets properly
    */
   const calculatePeriodRainfall = (rainfallReadings, groupByValue) => {
     if (!rainfallReadings.length) return 0
@@ -98,48 +100,48 @@ export function useDataAggregation() {
     const sorted = rainfallReadings.sort((a, b) => a.timestamp - b.timestamp)
 
     if (groupByValue === 'hourly') {
+      // For hourly: take the maximum hourly value
+      // The hourly counter shows mm accumulated in that specific hour
       const hourlyValues = sorted.map((r) => r.hourly).filter((v) => v > 0)
 
-      if (hourlyValues.length > 0) {
-        const firstValue = hourlyValues[0]
-        // ✅ FIXED: Used 'hourlyValues.length' instead of 'lastValue.length'
-        const lastValue = hourlyValues[hourlyValues.length - 1]
+      if (hourlyValues.length === 0) return 0
 
-        if (lastValue >= firstValue) {
-          return lastValue - firstValue
-        } else {
-          return lastValue
-        }
-      }
-      return 0
+      // Take the maximum value (final accumulated amount for this hour)
+      return Math.max(...hourlyValues)
     }
 
-    // For daily, weekly, monthly, yearly
-    const firstDaily = sorted[0].daily
-    const lastDaily = sorted[sorted.length - 1].daily
+    // For daily, weekly, monthly, yearly: calculate from daily cumulative counter
+    const firstReading = sorted[0]
+    const lastReading = sorted[sorted.length - 1]
 
+    const firstDaily = firstReading.daily
+    const lastDaily = lastReading.daily
+
+    // Normal case: counter increased
     if (lastDaily >= firstDaily) {
       return lastDaily - firstDaily
     }
 
-    // Handle counter reset - sum hourly readings
-    const hourlyMap = new Map()
+    // Counter reset detected - sum up rainfall between resets
+    let totalRainfall = 0
+    let previousDaily = firstDaily
 
-    sorted.forEach((reading) => {
-      const date = new Date(reading.timestamp)
-      const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`
+    for (let i = 1; i < sorted.length; i++) {
+      const currentDaily = sorted[i].daily
 
-      const current = hourlyMap.get(hourKey)
-      if (
-        !current ||
-        reading.hourly > current.hourly ||
-        (reading.hourly === current.hourly && reading.timestamp > current.timestamp)
-      ) {
-        hourlyMap.set(hourKey, reading)
+      if (currentDaily >= previousDaily) {
+        // Normal increment
+        totalRainfall += currentDaily - previousDaily
+      } else {
+        // Counter reset: add what accumulated before reset, then add new counter value
+        totalRainfall += previousDaily
+        totalRainfall += currentDaily
       }
-    })
 
-    return Array.from(hourlyMap.values()).reduce((sum, reading) => sum + reading.hourly, 0)
+      previousDaily = currentDaily
+    }
+
+    return totalRainfall
   }
 
   /**
@@ -150,7 +152,11 @@ export function useDataAggregation() {
   }
 
   /**
-   * Handle pre-aggregated data and correctly calculate Rain Rate
+   * Handle pre-aggregated data (from daily_summaries or sensor_logs_hourly)
+   * When aggregating already-aggregated data:
+   * - Temperature/Humidity: average the averages
+   * - Rain Rate: average the rates
+   * - Rainfall: SUM the totals (not average!)
    */
   const aggregatePreAggregatedData = (rawData, groupByValue) => {
     const result = []
@@ -169,8 +175,7 @@ export function useDataAggregation() {
           tempCount: 0,
           humiditySum: 0,
           humidityCount: 0,
-          rainfallSum: 0,
-          rainfallCount: 0,
+          rainfallSum: 0, // Sum for total rainfall
           rainRateSum: 0,
           rainRateCount: 0,
           recordCount: 0,
@@ -179,28 +184,28 @@ export function useDataAggregation() {
 
       const group = groups.get(key)
 
-      // Temperature
-      const temp = getFieldValue(record, 'temperature', 'avgTemperature')
+      // Temperature - average of averages
+      const temp = getFieldValue(record, 'avgTemperature', 'temperature')
       if (temp !== null) {
         group.tempSum += temp
         group.tempCount++
       }
 
-      // Humidity
-      const hum = getFieldValue(record, 'humidity', 'avgHumidity')
+      // Humidity - average of averages
+      const hum = getFieldValue(record, 'avgHumidity', 'humidity')
       if (hum !== null) {
         group.humiditySum += hum
         group.humidityCount++
       }
 
-      // Total Rainfall
+      // Total Rainfall - SUM (not average!)
+      // When combining hourly records into daily, or daily into weekly, etc.
       const rain = getFieldValue(record, 'totalRainfall', 'rainfall_hourly_mm')
       if (rain !== null) {
         group.rainfallSum += rain
-        group.rainfallCount++
       }
 
-      // Rain Rate
+      // Rain Rate - average of averages
       const rate = getFieldValue(record, 'avgRainRate', 'rainRate')
       if (rate !== null) {
         group.rainRateSum += rate
@@ -217,12 +222,9 @@ export function useDataAggregation() {
         temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
         humidity:
           group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-
         rainfallRate:
           group.rainRateCount > 0 ? (group.rainRateSum / group.rainRateCount).toFixed(1) : 'N/A',
-
-        periodRainfall:
-          group.rainfallCount > 0 ? (group.rainfallSum / group.rainfallCount).toFixed(2) : 'N/A',
+        periodRainfall: group.rainfallSum.toFixed(2), // Total sum, not average
         count: group.recordCount,
         sortKey: key,
       })
@@ -232,7 +234,8 @@ export function useDataAggregation() {
   }
 
   /**
-   * Aggregate raw data into periods
+   * Aggregate raw sensor data into periods
+   * This is used when working directly with sensor_logs
    */
   const aggregateData = (rawData, groupByValue, getFieldValueFn) => {
     if (!rawData.length) return []
@@ -246,10 +249,10 @@ export function useDataAggregation() {
       return aggregatePreAggregatedData(rawData, groupByValue)
     }
 
-    // Original logic for raw sensor data
+    // Process raw sensor data
     const groups = new Map()
 
-    // Group data
+    // Group data by period
     rawData.forEach((record) => {
       const result = getGroupKey(record, groupByValue)
       if (!result) return
@@ -272,33 +275,34 @@ export function useDataAggregation() {
 
       const group = groups.get(key)
 
-      // Temperature
+      // Temperature - average
       const temp = getFieldValueFn(record, 'temperature', 'temp')
       if (temp !== null) {
         group.tempSum += temp
         group.tempCount++
       }
 
-      // Humidity
+      // Humidity - average
       const hum = getFieldValueFn(record, 'humidity', 'hum')
       if (hum !== null) {
         group.humiditySum += hum
         group.humidityCount++
       }
 
-      // Rain rate
+      // Rain rate - average
       const rainRate = getFieldValueFn(
         record,
         'rainRateEstimated_mm_hr_bucket',
         'rainRate_mm_hr',
         'rainRate_mm',
+        'rainRate',
       )
       if (rainRate !== null) {
         group.rainfallRateSum += rainRate
         group.rainfallRateCount++
       }
 
-      // Rainfall readings
+      // Rainfall readings - collect for proper total calculation
       const timestamp = Number(record.timestamp)
       const hourlyMm = getFieldValueFn(
         record,
@@ -333,15 +337,25 @@ export function useDataAggregation() {
         calculatePeriodRainfall(group.rainfallReadings, groupByValue),
       )
 
+      // Calculate rain rate display
+      let rainfallRateDisplay
+      if (group.rainfallRateCount > 0) {
+        // Use actual rain rate data
+        rainfallRateDisplay = (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
+      } else if (periodRainfall > 0 && groupByValue === 'hourly') {
+        // For hourly data without rate: use total rainfall as estimate
+        // (mm in an hour ≈ mm/hr rate)
+        rainfallRateDisplay = periodRainfall.toFixed(2)
+      } else {
+        rainfallRateDisplay = 'N/A'
+      }
+
       result.push({
         period: group.label,
         temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
         humidity:
           group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-        rainfallRate:
-          group.rainfallRateCount > 0
-            ? (group.rainfallRateSum / group.rainfallRateCount).toFixed(2)
-            : 'N/A',
+        rainfallRate: rainfallRateDisplay,
         periodRainfall: periodRainfall.toFixed(2),
         count: group.recordCount,
         sortKey: key,

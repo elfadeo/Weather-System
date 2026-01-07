@@ -5,7 +5,7 @@
 // What it does:
 // 1. Fetches all sensor readings from the previous hour
 // 2. Calculates min, max, avg for temperature and humidity
-// 3. Sums total rainfall
+// 3. Calculates total rainfall and average rain rate
 // 4. Saves compressed hourly record to sensor_logs_hourly
 //
 // Usage: node hourly-aggregation.js
@@ -41,7 +41,7 @@ async function createHourlyAggregate() {
     lastHourStart.setMinutes(0, 0, 0);
     lastHourStart.setHours(lastHourStart.getHours() - 1);
     const hourStart = lastHourStart.getTime();
-    const hourEnd = hourStart + (60 * 60 * 1000);
+    const hourEnd = hourStart + (60 * 60 * 1000) - 1; // End at :59:59.999
     
     const hourKey = formatHourKey(lastHourStart);
     
@@ -91,47 +91,125 @@ async function createHourlyAggregate() {
     // Calculate aggregates
     console.log('📊 Calculating aggregates...');
     
-    let tempSum = 0, humSum = 0, rainTotal = 0, count = 0;
+    let tempSum = 0, humSum = 0, count = 0;
     let minTemp = Infinity, maxTemp = -Infinity;
     let minHum = Infinity, maxHum = -Infinity;
+    
+    // FIXED: Properly track rainfall data
+    let rainRateSum = 0, rainRateCount = 0;
+    const rainfallReadings = [];
     
     snapshot.forEach(child => {
       const data = child.val();
       
-      if (data.temperature != null) {
+      // Temperature
+      if (data.temperature != null && !isNaN(data.temperature)) {
         tempSum += data.temperature;
         minTemp = Math.min(minTemp, data.temperature);
         maxTemp = Math.max(maxTemp, data.temperature);
       }
       
-      if (data.humidity != null) {
+      // Humidity
+      if (data.humidity != null && !isNaN(data.humidity)) {
         humSum += data.humidity;
         minHum = Math.min(minHum, data.humidity);
         maxHum = Math.max(maxHum, data.humidity);
       }
       
-      if (data.rainfall_hourly_mm != null) {
-        rainTotal += data.rainfall_hourly_mm;
+      // FIXED: Rain Rate (average of all readings)
+      const rainRateFields = [
+        'rainRateEstimated_mm_hr_bucket',
+        'rainRate_mm_hr',
+        'rainRate_mm',
+        'rainRate'
+      ];
+      
+      for (const field of rainRateFields) {
+        if (data[field] != null && !isNaN(data[field])) {
+          const rate = parseFloat(data[field]);
+          if (rate > 0) {
+            rainRateSum += rate;
+            rainRateCount++;
+            break; // Use first valid field
+          }
+        }
+      }
+      
+      // FIXED: Collect rainfall readings for proper calculation
+      const timestamp = parseInt(data.timestamp);
+      const hourlyMm = parseFloat(
+        data.rainfall_hourly_mm || data.rainfall_hourly || data.rain_mm_hour || 0
+      );
+      const dailyMm = parseFloat(
+        data.rainfall_daily_mm || 
+        data.rainfall_total_estimated_mm_bucket || 
+        data.rainfall_cumulative_mm || 0
+      );
+      
+      if (!isNaN(timestamp) && (hourlyMm > 0 || dailyMm > 0)) {
+        rainfallReadings.push({
+          timestamp,
+          hourly: isNaN(hourlyMm) ? 0 : hourlyMm,
+          daily: isNaN(dailyMm) ? 0 : dailyMm
+        });
       }
       
       count++;
     });
     
+    // FIXED: Calculate hourly rainfall total properly
+    let hourlyRainfall = 0;
+    
+    if (rainfallReadings.length > 0) {
+      // Sort by timestamp
+      const sorted = rainfallReadings.sort((a, b) => a.timestamp - b.timestamp);
+      
+      // For hourly aggregation, we look at the hourly counter
+      // which represents mm accumulated in that hour
+      const hourlyValues = sorted.map(r => r.hourly).filter(v => v > 0);
+      
+      if (hourlyValues.length > 0) {
+        // Take the maximum hourly value seen during this hour
+        // (assuming the hourly counter shows cumulative for the current hour)
+        hourlyRainfall = Math.max(...hourlyValues);
+        
+        console.log(`🌧️  Rainfall readings: ${hourlyValues.length} values, max=${hourlyRainfall}mm`);
+      }
+    }
+    
+    // Calculate averages
+    const avgTemp = count > 0 ? parseFloat((tempSum / count).toFixed(1)) : 0;
+    const avgHum = count > 0 ? Math.round(humSum / count) : 0;
+    const avgRainRate = rainRateCount > 0 ? parseFloat((rainRateSum / rainRateCount).toFixed(2)) : 0;
+    
     // Prepare hourly aggregate data
     const hourlyData = {
       timestamp: hourStart,
       hour: lastHourStart.toISOString(),
-      avgTemperature: count > 0 ? parseFloat((tempSum / count).toFixed(1)) : 0,
+      aggregation_type: 'hourly', // ADDED: Mark as aggregated data
+      
+      // Temperature
+      avgTemperature: avgTemp,
       minTemperature: minTemp !== Infinity ? minTemp : 0,
       maxTemperature: maxTemp !== -Infinity ? maxTemp : 0,
-      totalRainfall: parseFloat(rainTotal.toFixed(2)),
-      avgHumidity: count > 0 ? Math.round(humSum / count) : 0,
+      
+      // Humidity
+      avgHumidity: avgHum,
       minHumidity: minHum !== Infinity ? minHum : 0,
       maxHumidity: maxHum !== -Infinity ? maxHum : 0,
-      recordCount: count
+      
+      // Rainfall
+      totalRainfall: parseFloat(hourlyRainfall.toFixed(2)), // Total mm in this hour
+      avgRainRate: avgRainRate, // Average rate in mm/hr
+      
+      // Metadata
+      recordCount: count,
+      rainfallReadings: rainfallReadings.length,
+      generatedAt: admin.database.ServerValue.TIMESTAMP
     };
     
     console.log(`✓ Processed ${count} sensor readings`);
+    console.log(`✓ Found ${rainfallReadings.length} rainfall data points`);
     console.log('');
     
     // Save to database
@@ -161,6 +239,8 @@ async function createHourlyAggregate() {
     console.log('');
     console.log('🌧️  Rainfall:');
     console.log(`   Total: ${hourlyData.totalRainfall}mm`);
+    console.log(`   Avg Rate: ${hourlyData.avgRainRate}mm/hr`);
+    console.log(`   Data Points: ${hourlyData.rainfallReadings}`);
     console.log('');
     console.log('════════════════════════════════════════════════════════');
     console.log('✅ Hourly aggregation completed successfully!');
