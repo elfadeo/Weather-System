@@ -228,12 +228,13 @@ const conditionStyles = computed(() => {
   return styles[type] || styles['notable']
 })
 
-// Get icon for each metric
+// FIXED: Get icon for each metric - updated field names
 const getMetricIcon = (key) => {
   const iconMap = {
     'Avg Temp': 'ph:thermometer-simple-bold',
     'Avg Humidity': 'ph:drop-bold',
-    'Total Rainfall (24h Est.)': 'ph:cloud-rain-bold',
+    'Total Rainfall 24h': 'ph:cloud-rain-bold', // FIXED: Removed "Est" suffix
+    'Total Rainfall 24h Est': 'ph:cloud-rain-bold', // Keep old name for backward compatibility
     'Temp Range': 'ph:arrows-out-simple-bold',
     'Wind Speed': 'ph:wind-bold',
     Pressure: 'ph:gauge-bold',
