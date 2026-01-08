@@ -18,6 +18,7 @@ export function useDataAggregation() {
 
   /**
    * Get grouping key and label for a record
+   * FIXED: Now uses UTC consistently to prevent timezone discrepancies
    */
   const getGroupKey = (record, period) => {
     if (!record?.timestamp) return null
@@ -25,10 +26,11 @@ export function useDataAggregation() {
     const date = new Date(Number(record.timestamp))
     if (Number.isNaN(date.getTime())) return null
 
-    const year = date.getFullYear()
-    const month = date.getMonth()
-    const day = date.getDate()
-    const hour = date.getHours()
+    // Use UTC methods to ensure consistency across devices
+    const year = date.getUTCFullYear()
+    const month = date.getUTCMonth()
+    const day = date.getUTCDate()
+    const hour = date.getUTCHours()
 
     switch (period) {
       case 'hourly':
@@ -40,6 +42,7 @@ export function useDataAggregation() {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
+            timeZone: 'UTC',
           }),
         }
 
@@ -50,33 +53,47 @@ export function useDataAggregation() {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
+            timeZone: 'UTC',
           }),
         }
 
       case 'weekly': {
-        const tmp = new Date(date)
-        const dayOfWeek = tmp.getDay()
+        // Create UTC date for week calculation
+        const tmp = new Date(Date.UTC(year, month, day))
+        const dayOfWeek = tmp.getUTCDay()
         const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-        tmp.setDate(tmp.getDate() - daysSinceMonday)
-        tmp.setHours(0, 0, 0, 0)
+        tmp.setUTCDate(tmp.getUTCDate() - daysSinceMonday)
+        tmp.setUTCHours(0, 0, 0, 0)
 
         const startOfWeek = tmp
         const endOfWeek = new Date(startOfWeek)
-        endOfWeek.setDate(startOfWeek.getDate() + 6)
+        endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6)
 
         const localIso = (d) =>
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+          `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
 
         return {
           key: localIso(startOfWeek),
-          label: `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+          label: `${startOfWeek.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'UTC',
+          })} - ${endOfWeek.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'UTC',
+          })}`,
         }
       }
 
       case 'monthly':
         return {
           key: `${year}-${String(month + 1).padStart(2, '0')}-01`,
-          label: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          label: date.toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'UTC',
+          }),
         }
 
       case 'yearly':

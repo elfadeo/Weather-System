@@ -23,40 +23,37 @@ export const TIME_RANGES = {
   YEARLY: 'yearly',
 }
 
-// Proper timezone conversion for PHT (UTC+8)
-const toPHT = (timestamp) => {
+// FIXED: Use UTC consistently instead of PHT conversion
+// This ensures the same grouping across all devices regardless of timezone
+const formatUTC = (timestamp, format) => {
   const date = new Date(timestamp)
-  const PHT_OFFSET = 8 * 60 * 60 * 1000
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000
-  return new Date(utc + PHT_OFFSET)
-}
-
-const formatPHT = (date, format) => {
-  const pht = toPHT(date)
 
   const formats = {
     datetime: () =>
-      pht.toLocaleString('en-US', {
+      date.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
+        timeZone: 'UTC',
       }),
     date: () =>
-      pht.toLocaleDateString('en-US', {
+      date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
+        timeZone: 'UTC',
       }),
     month: () =>
-      pht.toLocaleString('en-US', {
+      date.toLocaleString('en-US', {
         month: 'short',
         year: 'numeric',
+        timeZone: 'UTC',
       }),
-    year: () => pht.getFullYear().toString(),
+    year: () => date.getUTCFullYear().toString(),
   }
 
-  return formats[format] ? formats[format]() : pht.toISOString()
+  return formats[format] ? formats[format]() : date.toISOString()
 }
 
 const isMobile = () =>
@@ -226,7 +223,7 @@ export function useChartsData() {
 
   // Process last 7 readings (Live)
   const processLast7 = (records) => ({
-    labels: records.map((r) => formatPHT(r.timestamp, 'datetime')),
+    labels: records.map((r) => formatUTC(r.timestamp, 'datetime')),
     temperature: records.map((r) => Number(r.temperature) || 0),
     humidity: records.map((r) => Number(r.humidity) || 0),
     rainfall: records.map((r) => getRainRate(r)),
@@ -313,44 +310,66 @@ export function useChartsData() {
     return processAggregated(sampled, range)
   }
 
+  // FIXED: Use UTC methods for consistent grouping across all devices
   const getGroupKey = (timestamp, range) => {
-    const pht = toPHT(timestamp)
+    const date = new Date(timestamp)
+
+    // Use UTC methods instead of local time
+    const year = date.getUTCFullYear()
+    const month = date.getUTCMonth()
+    const day = date.getUTCDate()
+
     if (range === TIME_RANGES.WEEKLY) {
-      const dayOfWeek = pht.getDay()
+      // Calculate week start using UTC
+      const utcDate = new Date(Date.UTC(year, month, day))
+      const dayOfWeek = utcDate.getUTCDay()
       const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-      const monday = new Date(pht)
-      monday.setDate(pht.getDate() - daysSinceMonday)
-      monday.setHours(0, 0, 0, 0)
-      const y = monday.getFullYear()
-      const m = String(monday.getMonth() + 1).padStart(2, '0')
-      const d = String(monday.getDate()).padStart(2, '0')
+      const monday = new Date(utcDate)
+      monday.setUTCDate(utcDate.getUTCDate() - daysSinceMonday)
+      monday.setUTCHours(0, 0, 0, 0)
+
+      const y = monday.getUTCFullYear()
+      const m = String(monday.getUTCMonth() + 1).padStart(2, '0')
+      const d = String(monday.getUTCDate()).padStart(2, '0')
       return `${y}-${m}-${d}`
     }
+
     if (range === TIME_RANGES.MONTHLY) {
-      const y = pht.getFullYear()
-      const m = String(pht.getMonth() + 1).padStart(2, '0')
+      const y = year
+      const m = String(month + 1).padStart(2, '0')
       return `${y}-${m}-01`
     }
+
     if (range === TIME_RANGES.YEARLY) {
-      return `${pht.getFullYear()}-01-01`
+      return `${year}-01-01`
     }
-    return pht.toISOString()
+
+    return date.toISOString()
   }
 
+  // FIXED: Use UTC-based formatting
   const formatTimestamp = (timestamp, range) => {
-    if (range === TIME_RANGES.LAST_7) return formatPHT(timestamp, 'datetime')
+    if (range === TIME_RANGES.LAST_7) return formatUTC(timestamp, 'datetime')
+
     if (range === TIME_RANGES.WEEKLY) {
-      const pht = toPHT(timestamp)
-      const dayOfWeek = pht.getDay()
+      const date = new Date(timestamp)
+      const year = date.getUTCFullYear()
+      const month = date.getUTCMonth()
+      const day = date.getUTCDate()
+
+      const utcDate = new Date(Date.UTC(year, month, day))
+      const dayOfWeek = utcDate.getUTCDay()
       const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-      const monday = new Date(pht)
-      monday.setDate(pht.getDate() - daysSinceMonday)
+      const monday = new Date(utcDate)
+      monday.setUTCDate(utcDate.getUTCDate() - daysSinceMonday)
       const sunday = new Date(monday)
-      sunday.setDate(monday.getDate() + 6)
-      return `${formatPHT(monday.getTime(), 'date')} - ${formatPHT(sunday.getTime(), 'date')}`
+      sunday.setUTCDate(monday.getUTCDate() + 6)
+
+      return `${formatUTC(monday.getTime(), 'date')} - ${formatUTC(sunday.getTime(), 'date')}`
     }
-    if (range === TIME_RANGES.MONTHLY) return formatPHT(timestamp, 'month')
-    return formatPHT(timestamp, 'year')
+
+    if (range === TIME_RANGES.MONTHLY) return formatUTC(timestamp, 'month')
+    return formatUTC(timestamp, 'year')
   }
 
   const updateAvailabilityInfo = (records, range) => {
