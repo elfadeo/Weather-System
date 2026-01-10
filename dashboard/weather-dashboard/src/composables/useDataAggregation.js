@@ -18,7 +18,7 @@ export function useDataAggregation() {
 
   /**
    * Get grouping key and label for a record
-   * FIXED: Now uses UTC consistently to prevent timezone discrepancies
+   * FIXED: Now uses local timezone to match user's location
    */
   const getGroupKey = (record, period) => {
     if (!record?.timestamp) return null
@@ -26,11 +26,11 @@ export function useDataAggregation() {
     const date = new Date(Number(record.timestamp))
     if (Number.isNaN(date.getTime())) return null
 
-    // Use UTC methods to ensure consistency across devices
-    const year = date.getUTCFullYear()
-    const month = date.getUTCMonth()
-    const day = date.getUTCDate()
-    const hour = date.getUTCHours()
+    // Use local timezone methods
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const day = date.getDate()
+    const hour = date.getHours()
 
     switch (period) {
       case 'hourly':
@@ -42,7 +42,6 @@ export function useDataAggregation() {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true,
-            timeZone: 'UTC',
           }),
         }
 
@@ -53,35 +52,32 @@ export function useDataAggregation() {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
-            timeZone: 'UTC',
           }),
         }
 
       case 'weekly': {
-        // Create UTC date for week calculation
-        const tmp = new Date(Date.UTC(year, month, day))
-        const dayOfWeek = tmp.getUTCDay()
+        // Calculate week start using local timezone
+        const tmp = new Date(year, month, day)
+        const dayOfWeek = tmp.getDay()
         const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-        tmp.setUTCDate(tmp.getUTCDate() - daysSinceMonday)
-        tmp.setUTCHours(0, 0, 0, 0)
+        tmp.setDate(tmp.getDate() - daysSinceMonday)
+        tmp.setHours(0, 0, 0, 0)
 
         const startOfWeek = tmp
         const endOfWeek = new Date(startOfWeek)
-        endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6)
+        endOfWeek.setDate(startOfWeek.getDate() + 6)
 
         const localIso = (d) =>
-          `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
         return {
           key: localIso(startOfWeek),
           label: `${startOfWeek.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            timeZone: 'UTC',
           })} - ${endOfWeek.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            timeZone: 'UTC',
           })}`,
         }
       }
@@ -92,7 +88,6 @@ export function useDataAggregation() {
           label: date.toLocaleDateString('en-US', {
             month: 'short',
             year: 'numeric',
-            timeZone: 'UTC',
           }),
         }
 

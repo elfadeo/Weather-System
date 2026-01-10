@@ -23,8 +23,7 @@ export const TIME_RANGES = {
   YEARLY: 'yearly',
 }
 
-// FIXED: Use UTC consistently instead of PHT conversion
-// This ensures the same grouping across all devices regardless of timezone
+// FIXED: Use local timezone instead of UTC
 const formatUTC = (timestamp, format) => {
   const date = new Date(timestamp)
 
@@ -36,21 +35,18 @@ const formatUTC = (timestamp, format) => {
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'UTC',
       }),
     date: () =>
       date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        timeZone: 'UTC',
       }),
     month: () =>
       date.toLocaleString('en-US', {
         month: 'short',
         year: 'numeric',
-        timeZone: 'UTC',
       }),
-    year: () => date.getUTCFullYear().toString(),
+    year: () => date.getFullYear().toString(),
   }
 
   return formats[format] ? formats[format]() : date.toISOString()
@@ -310,27 +306,27 @@ export function useChartsData() {
     return processAggregated(sampled, range)
   }
 
-  // FIXED: Use UTC methods for consistent grouping across all devices
+  // FIXED: Use local timezone for consistent grouping
   const getGroupKey = (timestamp, range) => {
     const date = new Date(timestamp)
 
-    // Use UTC methods instead of local time
-    const year = date.getUTCFullYear()
-    const month = date.getUTCMonth()
-    const day = date.getUTCDate()
+    // Use local time methods instead of UTC
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const day = date.getDate()
 
     if (range === TIME_RANGES.WEEKLY) {
-      // Calculate week start using UTC
-      const utcDate = new Date(Date.UTC(year, month, day))
-      const dayOfWeek = utcDate.getUTCDay()
+      // Calculate week start using local time
+      const localDate = new Date(year, month, day)
+      const dayOfWeek = localDate.getDay()
       const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-      const monday = new Date(utcDate)
-      monday.setUTCDate(utcDate.getUTCDate() - daysSinceMonday)
-      monday.setUTCHours(0, 0, 0, 0)
+      const monday = new Date(localDate)
+      monday.setDate(localDate.getDate() - daysSinceMonday)
+      monday.setHours(0, 0, 0, 0)
 
-      const y = monday.getUTCFullYear()
-      const m = String(monday.getUTCMonth() + 1).padStart(2, '0')
-      const d = String(monday.getUTCDate()).padStart(2, '0')
+      const y = monday.getFullYear()
+      const m = String(monday.getMonth() + 1).padStart(2, '0')
+      const d = String(monday.getDate()).padStart(2, '0')
       return `${y}-${m}-${d}`
     }
 
@@ -347,23 +343,23 @@ export function useChartsData() {
     return date.toISOString()
   }
 
-  // FIXED: Use UTC-based formatting
+  // FIXED: Use local timezone formatting
   const formatTimestamp = (timestamp, range) => {
     if (range === TIME_RANGES.LAST_7) return formatUTC(timestamp, 'datetime')
 
     if (range === TIME_RANGES.WEEKLY) {
       const date = new Date(timestamp)
-      const year = date.getUTCFullYear()
-      const month = date.getUTCMonth()
-      const day = date.getUTCDate()
+      const year = date.getFullYear()
+      const month = date.getMonth()
+      const day = date.getDate()
 
-      const utcDate = new Date(Date.UTC(year, month, day))
-      const dayOfWeek = utcDate.getUTCDay()
+      const localDate = new Date(year, month, day)
+      const dayOfWeek = localDate.getDay()
       const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-      const monday = new Date(utcDate)
-      monday.setUTCDate(utcDate.getUTCDate() - daysSinceMonday)
+      const monday = new Date(localDate)
+      monday.setDate(localDate.getDate() - daysSinceMonday)
       const sunday = new Date(monday)
-      sunday.setUTCDate(monday.getUTCDate() + 6)
+      sunday.setDate(monday.getDate() + 6)
 
       return `${formatUTC(monday.getTime(), 'date')} - ${formatUTC(sunday.getTime(), 'date')}`
     }
