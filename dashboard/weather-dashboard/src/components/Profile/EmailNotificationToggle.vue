@@ -22,10 +22,7 @@
       </div>
 
       <div class="flex-shrink-0 ml-auto flex items-center">
-        <ToggleSwitch
-          :model-value="modelValue"
-          @update:model-value="$emit('update:modelValue', $event)"
-        />
+        <ToggleSwitch :model-value="modelValue" @update:model-value="handleToggle" />
       </div>
     </div>
 
@@ -69,30 +66,30 @@ import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import ToggleSwitch from '@/components/common/ToggleSwitch.vue'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '@/firebase'
 
 defineProps({
   modelValue: Boolean,
   userEmail: String,
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 
 const googlePhoto = ref(null)
+const currentUser = ref(null)
 
 onMounted(() => {
   const auth = getAuth()
 
-  // Wait for Firebase to initialize the user session
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      // 1. Try the main photoURL (Standard)
+      currentUser.value = user
+
       if (user.photoURL) {
         googlePhoto.value = user.photoURL
         console.log('Found Main Photo:', user.photoURL)
-      }
-      // 2. Try digging into the 'providerData' (Specific to Google Sign-In)
-      else if (user.providerData && user.providerData.length > 0) {
-        // Find the provider that has a photo
+      } else if (user.providerData && user.providerData.length > 0) {
         const providerWithPhoto = user.providerData.find((p) => p.photoURL)
         if (providerWithPhoto) {
           googlePhoto.value = providerWithPhoto.photoURL
@@ -102,6 +99,28 @@ onMounted(() => {
     }
   })
 })
+
+const handleToggle = async (value) => {
+  emit('update:modelValue', value)
+
+  if (currentUser.value) {
+    try {
+      await setDoc(
+        doc(db, 'users', currentUser.value.uid),
+        {
+          email: currentUser.value.email,
+          emailNotificationsEnabled: value,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true },
+      )
+
+      console.log(`✅ Email notifications ${value ? 'enabled' : 'disabled'}`)
+    } catch (error) {
+      console.error('❌ Error updating email notifications:', error)
+    }
+  }
+}
 
 const getInitials = (email) => {
   if (!email) return '?'

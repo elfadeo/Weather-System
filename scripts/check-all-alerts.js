@@ -553,7 +553,7 @@ async function getEmailRecipients() {
     
     // Get all users who have email notifications enabled
     const usersSnapshot = await firestore.collection('users')
-      .where('emailNotifications', '==', true)
+      .where('emailNotificationsEnabled', '==', true)  // ✅ CHANGED: from 'emailNotifications' to 'emailNotificationsEnabled'
       .get();
     
     const recipients = [];
